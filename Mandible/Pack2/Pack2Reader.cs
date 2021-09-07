@@ -12,15 +12,27 @@ namespace Mandible.Pack2
         protected const uint ASSET_COMPRESSION_INDICATOR = 2712847316;
 
         protected readonly SafeFileHandle _packFileHandle;
+        protected readonly FileStream _packFileStream;
 
         protected Pack2Header? _cachedHeader;
         protected IReadOnlyList<Asset2Header>? _cachedAssetHeaders;
 
+        /// <summary>
+        /// Gets a value indicating whether or not this <see cref="Pack2Reader"/> instance has been disposed.
+        /// </summary>
         public bool IsDisposed { get; protected set; }
 
         public Pack2Reader(string packLocation)
         {
-            _packFileHandle = File.OpenHandle(packLocation);
+            _packFileHandle = File.OpenHandle(
+                packLocation,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                FileOptions.RandomAccess | FileOptions.Asynchronous
+            );
+
+            _packFileStream = new FileStream(_packFileHandle, FileAccess.Read, 16384, true);
         }
 
         /// <summary>
@@ -51,16 +63,20 @@ namespace Mandible.Pack2
             if (_cachedAssetHeaders is not null)
                 return _cachedAssetHeaders;
 
-            List<Asset2Header> assetHeaders = new();
             Pack2Header header = await ReadHeaderAsync(ct).ConfigureAwait(false);
-            Memory<byte> headerBuffer = new(new byte[Asset2Header.SIZE * header.AssetCount]);
+            List<Asset2Header> assetHeaders = new();
 
-            await RandomAccess.ReadAsync(_packFileHandle, headerBuffer, (long)header.AssetMapOffset, ct).ConfigureAwait(false);
+            Memory<byte> assetHeadersBuffer = new(new byte[header.AssetCount * Asset2Header.SIZE]);
 
-            for (int i = 0; i < header.AssetCount; i += Asset2Header.SIZE)
+            await RandomAccess.ReadAsync(_packFileHandle, assetHeadersBuffer, (long)header.AssetMapOffset, ct).ConfigureAwait(false);
+
+            for (uint i = 0; i < header.AssetCount; i++)
             {
-                Memory<byte> assetHeader = headerBuffer.Slice(i, i + Asset2Header.SIZE);
-                assetHeaders.Add(Asset2Header.Deserialise(assetHeader.Span));
+                int baseOffset = (int)i * Asset2Header.SIZE;
+                Memory<byte> assetHeaderData = assetHeadersBuffer.Slice(baseOffset, Asset2Header.SIZE);
+
+                Asset2Header assetHeader = Asset2Header.Deserialise(assetHeaderData.Span);
+                assetHeaders.Add(assetHeader);
             }
 
             _cachedAssetHeaders = assetHeaders;
@@ -73,15 +89,16 @@ namespace Mandible.Pack2
         /// <param name="assetHeader">The asset to retrieve.</param>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
         /// <returns>A stream of the asset data.</returns>
-        public async Task<ReadOnlyMemory<byte>> GetAssetStream(Asset2Header assetHeader, CancellationToken ct = default)
+        public async Task<ReadOnlyMemory<byte>> ReadAssetData(Asset2Header assetHeader, CancellationToken ct = default)
         {
             byte[] data;
-            using FileStream fs = new(_packFileHandle, FileAccess.Read, 16384, true);
+            _packFileStream.Seek((long)assetHeader.DataOffset, SeekOrigin.Begin);
 
             if (assetHeader.ZipStatus == AssetZipDefinition.Zipped || assetHeader.ZipStatus == AssetZipDefinition.ZippedAlternate)
             {
+                // Read the compression information
                 Memory<byte> compressionBlock = new(new byte[8]);
-                await fs.ReadAsync(compressionBlock, ct).ConfigureAwait(false);
+                await _packFileStream.ReadAsync(compressionBlock, ct).ConfigureAwait(false);
 
                 uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(compressionBlock.Span);
                 uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(compressionBlock[4..8].Span);
@@ -89,14 +106,16 @@ namespace Mandible.Pack2
                 if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
                     throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
 
+                // Read the data
                 data = new byte[decompressedLength];
-                using DeflateStream dfs = new(fs, CompressionMode.Decompress, true);
+                using DeflateStream dfs = new(_packFileStream, CompressionMode.Decompress, true);
 
                 await dfs.ReadAsync(data, ct).ConfigureAwait(false);
             }
             else
             {
                 data = new byte[assetHeader.DataSize];
+                await _packFileStream.ReadAsync(data, ct).ConfigureAwait(false);
             }
 
             return data;
@@ -115,6 +134,7 @@ namespace Mandible.Pack2
                 if (disposing)
                 {
                     _packFileHandle.Dispose();
+                    _packFileStream.Dispose();
                 }
 
                 _cachedAssetHeaders = null;
