@@ -1,4 +1,6 @@
-﻿namespace Mandible.Util
+﻿using System.Diagnostics;
+
+namespace Mandible.Util
 {
     /// <summary>
     /// Calculates CRC-64 hashes in a manner suitable for pack files.
@@ -34,7 +36,10 @@
             Dictionary<ulong, string> hashedNamePairs = new();
 
             foreach (string element in nameList)
-                hashedNamePairs.Add(Calculate(element), element);
+            {
+                if (!hashedNamePairs.TryAdd(Calculate(element), element))
+                    Debug.WriteLine("Could not add a hash of the given name to the list, as it was already present: " + element);
+            }
 
             return hashedNamePairs;
         }

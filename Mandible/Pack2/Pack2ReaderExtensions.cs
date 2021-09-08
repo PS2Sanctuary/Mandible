@@ -32,7 +32,7 @@ namespace Mandible.Pack2
                     FileOptions.Asynchronous
                 );
 
-                ReadOnlyMemory<byte> assetData = await reader.ReadAssetData(assetHeader, ct).ConfigureAwait(false);
+                ReadOnlyMemory<byte> assetData = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
                 await RandomAccess.WriteAsync(outputHandle, assetData, 0, ct).ConfigureAwait(false);
             }
         }
@@ -76,7 +76,7 @@ namespace Mandible.Pack2
                     FileOptions.Asynchronous
                 );
 
-                ReadOnlyMemory<byte> assetData = await reader.ReadAssetData(assetHeader, ct).ConfigureAwait(false);
+                ReadOnlyMemory<byte> assetData = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
                 await RandomAccess.WriteAsync(outputHandle, assetData, 0, ct).ConfigureAwait(false);
             }
         }

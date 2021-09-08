@@ -1,8 +1,6 @@
 ﻿using Mandible.Pack2;
 using Mandible.Util;
-using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
-using System.Linq;
 
 namespace Mandible.Cli
 {
@@ -14,25 +12,60 @@ namespace Mandible.Cli
             CancellationToken ct = cts.Token;
             Console.CancelKeyPress += (_, __) => cts.Cancel();
 
-            if (args.Length != 2)
+            if (args.Length != 3)
             {
-                Console.WriteLine("Usage: <packFilePath> <outputFolder>");
+                Console.WriteLine("Usage: <packFolderPath> <outputFolderPath> <namelistPath>");
                 return;
             }
 
-            using Pack2Reader reader = new(args[0]);
+            if (!Directory.Exists(args[0]))
+                throw new DirectoryNotFoundException("Pack folder directory does not exist: " + args[0]);
 
-            await PrintPackHeader(reader, ct).ConfigureAwait(false);
+            if (!Directory.Exists(args[1]))
+                throw new DirectoryNotFoundException("Output directory does not exist: " + args[1]);
+
+            if (!File.Exists(args[2]))
+                throw new FileNotFoundException("Namelist file does not exist: " + args[2]);
 
             Stopwatch stopwatch = new();
             stopwatch.Start();
 
-            await WriteAssets(reader, args[1], ct).ConfigureAwait(false);
+            string[] namelist = await File.ReadAllLinesAsync(args[2], ct).ConfigureAwait(false);
+            Dictionary<ulong, string> hashedNamePairs = PackCrc64.HashStrings(namelist);
 
             stopwatch.Stop();
-            Console.WriteLine("Wrote assets in {0}", stopwatch.Elapsed);
+            Console.WriteLine("Generated name hashes in {0}", stopwatch.Elapsed);
 
-            Console.WriteLine("Done!");
+            IEnumerable<string> packFiles = Directory.EnumerateFiles(args[0]);
+
+            stopwatch.Reset();
+            stopwatch.Start();
+
+            foreach (string file in packFiles)
+            {
+                await ExportPackAssets(file, args[1], hashedNamePairs, ct).ConfigureAwait(false);
+            }
+
+            stopwatch.Stop();
+            Console.WriteLine("Wrote all assets in {0}", stopwatch.Elapsed);
+        }
+
+        private static async ValueTask ExportPackAssets(string packFilePath, string outputPath, Dictionary<ulong, string> hashedNamePairs, CancellationToken ct = default)
+        {
+            Stopwatch stopwatch = new();
+            stopwatch.Start();
+            Console.WriteLine("Exporting {0}", packFilePath);
+
+            using Pack2Reader reader = new(packFilePath);
+            outputPath = Path.Combine(outputPath, Path.GetFileNameWithoutExtension(packFilePath));
+
+            if (!Directory.Exists(outputPath))
+                Directory.CreateDirectory(outputPath);
+
+            await reader.ExportAll(outputPath, hashedNamePairs, ct).ConfigureAwait(false);
+
+            stopwatch.Stop();
+            Console.WriteLine("Completed exporting in {0}", stopwatch.Elapsed);
         }
 
         private static async Task PrintPackHeader(Pack2Reader reader, CancellationToken ct = default)

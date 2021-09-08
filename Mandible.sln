@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mandible", "Mandible\Mandib
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mandible.Cli", "Mandible.Cli\Mandible.Cli.csproj", "{2838CEEF-6657-40B6-BEE4-2682FAC90B36}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mandible.Tests", "Mandible.Tests\Mandible.Tests.csproj", "{AB75BE2D-295C-477A-A69F-2A243EC26580}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mandible.Tests", "Mandible.Tests\Mandible.Tests.csproj", "{AB75BE2D-295C-477A-A69F-2A243EC26580}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mandible.Benchmarks", "Mandible.Benchmarks\Mandible.Benchmarks.csproj", "{D16F0A49-20C5-40B6-8B7D-D3E25D45CB39}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{AB75BE2D-295C-477A-A69F-2A243EC26580}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB75BE2D-295C-477A-A69F-2A243EC26580}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB75BE2D-295C-477A-A69F-2A243EC26580}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D16F0A49-20C5-40B6-8B7D-D3E25D45CB39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D16F0A49-20C5-40B6-8B7D-D3E25D45CB39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D16F0A49-20C5-40B6-8B7D-D3E25D45CB39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D16F0A49-20C5-40B6-8B7D-D3E25D45CB39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

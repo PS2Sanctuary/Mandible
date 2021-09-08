@@ -1,4 +1,5 @@
 ﻿using ICSharpCode.SharpZipLib.Zip.Compression;
+using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using Microsoft.Win32.SafeHandles;
 using System.Buffers;
 using System.Buffers.Binary;
@@ -13,6 +14,8 @@ namespace Mandible.Pack2
         protected const uint ASSET_COMPRESSION_INDICATOR = 2712847316;
 
         protected readonly SafeFileHandle _packFileHandle;
+        protected readonly FileStream _packFileStream;
+        protected readonly InflaterInputStream _inflaterStream;
         protected readonly Inflater _inflater;
         protected readonly ArrayPool<byte> _arrayPool;
 
@@ -97,13 +100,13 @@ namespace Mandible.Pack2
         /// <param name="assetHeader">The asset to retrieve.</param>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
         /// <returns>A stream of the asset data.</returns>
-        public virtual async Task<ReadOnlyMemory<byte>> ReadAssetData(Asset2Header assetHeader, CancellationToken ct = default)
+        public virtual async Task<ReadOnlyMemory<byte>> ReadAssetDataAsync(Asset2Header assetHeader, CancellationToken ct = default)
         {
             // We can't use the array pool here, because the data is being returned to the user.
             byte[] data = new byte[assetHeader.DataSize];
             Memory<byte> dataMem = new(data);
 
-            await RandomAccess.ReadAsync(_packFileHandle, data, (long)assetHeader.DataOffset, ct).ConfigureAwait(false);
+            await RandomAccess.ReadAsync(_packFileHandle, dataMem, (long)assetHeader.DataOffset, ct).ConfigureAwait(false);
 
             if (assetHeader.ZipStatus == AssetZipDefinition.Zipped || assetHeader.ZipStatus == AssetZipDefinition.ZippedAlternate)
             {
