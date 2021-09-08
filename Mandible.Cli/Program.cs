@@ -1,5 +1,6 @@
 ﻿using Mandible.Pack2;
 using Microsoft.Win32.SafeHandles;
+using System.Diagnostics;
 
 namespace Mandible.Cli
 {
@@ -19,40 +20,47 @@ namespace Mandible.Cli
 
             using Pack2Reader reader = new(args[0]);
 
+            await PrintPackHeader(reader, ct).ConfigureAwait(false);
+
+            Stopwatch stopwatch = new();
+            stopwatch.Start();
+
+            await WriteAssets(reader, args[1], ct).ConfigureAwait(false);
+
+            stopwatch.Stop();
+            Console.WriteLine("Wrote assets in {0}", stopwatch.Elapsed);
+
+            Console.WriteLine("Done!");
+        }
+
+        private static async Task PrintPackHeader(Pack2Reader reader, CancellationToken ct = default)
+        {
             Pack2Header header = await reader.ReadHeaderAsync(ct).ConfigureAwait(false);
             Console.WriteLine("Header: ");
             Console.WriteLine("\t- Asset Count: {0}", header.AssetCount);
             Console.WriteLine("\t- Packet Length: {0}", header.Length);
+        }
 
+        private static async Task WriteAssets(Pack2Reader reader, string outputPath, CancellationToken ct = default)
+        {
             IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
 
-            Asset2Header unzippedAsset = assetHeaders.First(h => h.ZipStatus is AssetZipDefinition.Unzipped or AssetZipDefinition.UnzippedAlternate);
-            Asset2Header zippedAsset = assetHeaders.First(h => h.ZipStatus is AssetZipDefinition.Zipped or AssetZipDefinition.ZippedAlternate);
+            foreach (Asset2Header assetHeader in assetHeaders)
+            {
+                using SafeFileHandle outputHandle = File.OpenHandle(
+                    Path.Combine(outputPath, assetHeader.NameHash.ToString()),
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.Read,
+                    FileOptions.Asynchronous
+                );
 
-            using SafeFileHandle unzippedHandle = File.OpenHandle(
-                Path.Combine(args[1], unzippedAsset.NameHash.ToString()),
-                FileMode.Create,
-                FileAccess.Write,
-                FileShare.Read,
-                FileOptions.Asynchronous
-            );
+                Console.WriteLine("Reading asset data for {0}...", assetHeader.NameHash);
+                ReadOnlyMemory<byte> assetData = await reader.ReadAssetData(assetHeader, ct).ConfigureAwait(false);
 
-            using SafeFileHandle zippedHandle = File.OpenHandle(
-                Path.Combine(args[1],
-                zippedAsset.NameHash.ToString()),
-                FileMode.Create,
-                FileAccess.Write,
-                FileShare.Read,
-                FileOptions.Asynchronous
-            );
-
-            Console.WriteLine("Reading assets...");
-            ReadOnlyMemory<byte> unzippedData = await reader.ReadAssetData(unzippedAsset, ct).ConfigureAwait(false);
-            ReadOnlyMemory<byte> zippedData = await reader.ReadAssetData(zippedAsset, ct).ConfigureAwait(false);
-
-            Console.WriteLine("Writing assets...");
-            await RandomAccess.WriteAsync(unzippedHandle, unzippedData, 0, ct).ConfigureAwait(false);
-            await RandomAccess.WriteAsync(zippedHandle, zippedData, 0, ct).ConfigureAwait(false);
+                Console.WriteLine("Writing asset data for {0}...", assetHeader.NameHash);
+                await RandomAccess.WriteAsync(outputHandle, assetData, 0, ct).ConfigureAwait(false);
+            }
         }
     }
 }

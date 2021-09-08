@@ -5,7 +5,9 @@ VisualStudioVersion = 17.0.31612.314
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mandible", "Mandible\Mandible.csproj", "{87B2AB12-F55F-44FA-AD31-8E0AA108D761}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mandible.Cli", "Mandible.Cli\Mandible.Cli.csproj", "{2838CEEF-6657-40B6-BEE4-2682FAC90B36}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mandible.Cli", "Mandible.Cli\Mandible.Cli.csproj", "{2838CEEF-6657-40B6-BEE4-2682FAC90B36}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mandible.Tests", "Mandible.Tests\Mandible.Tests.csproj", "{AB75BE2D-295C-477A-A69F-2A243EC26580}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{2838CEEF-6657-40B6-BEE4-2682FAC90B36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2838CEEF-6657-40B6-BEE4-2682FAC90B36}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2838CEEF-6657-40B6-BEE4-2682FAC90B36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB75BE2D-295C-477A-A69F-2A243EC26580}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB75BE2D-295C-477A-A69F-2A243EC26580}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB75BE2D-295C-477A-A69F-2A243EC26580}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB75BE2D-295C-477A-A69F-2A243EC26580}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

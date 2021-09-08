@@ -43,7 +43,7 @@ namespace Mandible.Pack2
         /// </summary>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
         /// <returns>The pack header.</returns>
-        public async Task<Pack2Header> ReadHeaderAsync(CancellationToken ct = default)
+        public virtual async Task<Pack2Header> ReadHeaderAsync(CancellationToken ct = default)
         {
             if (_cachedHeader is not null)
                 return _cachedHeader.Value;
@@ -63,7 +63,7 @@ namespace Mandible.Pack2
         /// </summary>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
         /// <returns>The list of asset headers.</returns>
-        public async Task<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(CancellationToken ct = default)
+        public virtual async Task<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(CancellationToken ct = default)
         {
             if (_cachedAssetHeaders is not null)
                 return _cachedAssetHeaders;
@@ -97,7 +97,7 @@ namespace Mandible.Pack2
         /// <param name="assetHeader">The asset to retrieve.</param>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
         /// <returns>A stream of the asset data.</returns>
-        public async Task<ReadOnlyMemory<byte>> ReadAssetData(Asset2Header assetHeader, CancellationToken ct = default)
+        public virtual async Task<ReadOnlyMemory<byte>> ReadAssetData(Asset2Header assetHeader, CancellationToken ct = default)
         {
             // We can't use the array pool here, because the data is being returned to the user.
             byte[] data = new byte[assetHeader.DataSize];
