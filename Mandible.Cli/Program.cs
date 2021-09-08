@@ -1,6 +1,8 @@
 ﻿using Mandible.Pack2;
+using Mandible.Util;
 using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Mandible.Cli
 {
@@ -43,24 +45,28 @@ namespace Mandible.Cli
 
         private static async Task WriteAssets(Pack2Reader reader, string outputPath, CancellationToken ct = default)
         {
-            IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
-
-            foreach (Asset2Header assetHeader in assetHeaders)
-            {
-                using SafeFileHandle outputHandle = File.OpenHandle(
-                    Path.Combine(outputPath, assetHeader.NameHash.ToString()),
-                    FileMode.Create,
-                    FileAccess.Write,
-                    FileShare.Read,
-                    FileOptions.Asynchronous
-                );
-
-                Console.WriteLine("Reading asset data for {0}...", assetHeader.NameHash);
-                ReadOnlyMemory<byte> assetData = await reader.ReadAssetData(assetHeader, ct).ConfigureAwait(false);
-
-                Console.WriteLine("Writing asset data for {0}...", assetHeader.NameHash);
-                await RandomAccess.WriteAsync(outputHandle, assetData, 0, ct).ConfigureAwait(false);
-            }
+            Dictionary<ulong, string> tileNames = GetTileNames();
+            await reader.ExportNamed(outputPath, tileNames, ct).ConfigureAwait(false);
         }
+
+        private static Dictionary<ulong, string> GetTileNames()
+        {
+            Dictionary<ulong, string> tileNames = new();
+
+            for (int i = -64; i < 64; i += 16)
+            {
+                for (int j = -64; j < 64; j += 16)
+                {
+                    string name = $"Amerish_Tile_{ GetNumberString(i) }_{ GetNumberString(j) }_LOD2.dds";
+                    ulong hash = PackCrc64.Calculate(name);
+                    tileNames.Add(hash, name);
+                }
+            }
+
+            return tileNames;
+        }
+
+        private static string GetNumberString(int number)
+            => number < 0 ? number.ToString("d2") : number.ToString("d3");
     }
 }

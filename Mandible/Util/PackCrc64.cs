@@ -25,6 +25,21 @@
         }
 
         /// <summary>
+        /// Hashes a list of strings.
+        /// </summary>
+        /// <param name="nameList">The strings to hash.</param>
+        /// <returns>A dictionary mapping the hash to its original string.</returns>
+        public static Dictionary<ulong, string> HashStrings(IEnumerable<string> nameList)
+        {
+            Dictionary<ulong, string> hashedNamePairs = new();
+
+            foreach (string element in nameList)
+                hashedNamePairs.Add(Calculate(element), element);
+
+            return hashedNamePairs;
+        }
+
+        /// <summary>
         /// Rhett's CRC table.
         /// </summary>
         private static readonly ulong[] CRC_TABLE = new ulong[]
