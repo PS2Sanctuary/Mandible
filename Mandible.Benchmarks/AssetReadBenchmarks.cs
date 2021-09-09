@@ -13,6 +13,7 @@ namespace Mandible.Benchmarks
         private const int DATA_LENGTH = 102400;
 
         private readonly Inflater _inflater;
+        private readonly Zlib.Inflater _myInflater;
 
         [AllowNull]
         private string _dataFile;
@@ -21,12 +22,11 @@ namespace Mandible.Benchmarks
         private SafeFileHandle _fileHandle;
         [AllowNull]
         private FileStream _fileStream;
-        [AllowNull]
-        private InflaterInputStream _inflaterStream;
 
         public AssetReadBenchmarks()
         {
             _inflater = new Inflater();
+            _myInflater = new Zlib.Inflater();
         }
 
         [GlobalSetup]
@@ -60,11 +60,36 @@ namespace Mandible.Benchmarks
             // TODO: Compare with differing FileShare
             _fileHandle = File.OpenHandle(_dataFile, FileMode.Open, FileAccess.Read, FileShare.None, FileOptions.Asynchronous | FileOptions.RandomAccess);
             _fileStream = new(_fileHandle, FileAccess.Read, DATA_LENGTH); // NOTE - we're using a perfect buffer size here.
-            _inflaterStream = new(_fileStream);
         }
 
         [Benchmark]
         public async Task<ReadOnlyMemory<byte>> RandomAccessAsync()
+        {
+            // Read uncompressed block
+            byte[] data = new byte[DATA_LENGTH];
+            Memory<byte> dataMem = new(data);
+
+            await RandomAccess.ReadAsync(_fileHandle, dataMem, 0).ConfigureAwait(false);
+
+            // Read compressed block
+            await RandomAccess.ReadAsync(_fileHandle, dataMem, DATA_LENGTH).ConfigureAwait(false);
+            uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(dataMem[0..4].Span);
+            uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(dataMem[4..8].Span);
+
+            if (compressionIndicator != COMPRESSION_INDICATOR)
+                throw new InvalidDataException("Compression indicator not found");
+
+            _inflater.SetInput(data[8..]);
+
+            data = new byte[decompressedLength];
+            _inflater.Inflate(data);
+
+            _inflater.Reset();
+            return data;
+        }
+
+        // [Benchmark]
+        public async ValueTask<ReadOnlyMemory<byte>> RandomAccessValueTaskAsync()
         {
             // Read uncompressed block
             byte[] data = new byte[DATA_LENGTH];
@@ -116,6 +141,58 @@ namespace Mandible.Benchmarks
         }
 
         [Benchmark]
+        public async Task<ReadOnlyMemory<byte>> RandomAccessAsyncMyInflater()
+        {
+            // Read uncompressed block
+            byte[] data = new byte[DATA_LENGTH];
+            Memory<byte> dataMem = new(data);
+
+            await RandomAccess.ReadAsync(_fileHandle, dataMem, 0).ConfigureAwait(false);
+
+            // Read compressed block
+            await RandomAccess.ReadAsync(_fileHandle, dataMem, DATA_LENGTH).ConfigureAwait(false);
+            uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(dataMem[0..4].Span);
+            uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(dataMem[4..8].Span);
+
+            if (compressionIndicator != COMPRESSION_INDICATOR)
+                throw new InvalidDataException("Compression indicator not found");
+
+            _myInflater.SetInput(data[8..]);
+
+            data = new byte[decompressedLength];
+            _myInflater.Inflate(data);
+
+            _myInflater.Reset();
+            return data;
+        }
+
+        [Benchmark]
+        public ReadOnlySpan<byte> RandomAccessSyncMyInflater()
+        {
+            // Read uncompressed block
+            byte[] data = new byte[DATA_LENGTH];
+            Span<byte> dataSpan = new(data);
+
+            RandomAccess.Read(_fileHandle, dataSpan, 0);
+
+            // Read compressed block
+            RandomAccess.Read(_fileHandle, dataSpan, DATA_LENGTH);
+            uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(dataSpan[0..4]);
+            uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(dataSpan[4..8]);
+
+            if (compressionIndicator != COMPRESSION_INDICATOR)
+                throw new InvalidDataException("Compression indicator not found");
+
+            _myInflater.SetInput(data[8..]);
+
+            data = new byte[decompressedLength];
+            _myInflater.Inflate(data);
+
+            _myInflater.Reset();
+            return data;
+        }
+
+        // [Benchmark]
         public async Task<ReadOnlyMemory<byte>> StreamAsync()
         {
             byte[] data = new byte[DATA_LENGTH];
@@ -131,7 +208,11 @@ namespace Mandible.Benchmarks
             if (compressionIndicator != COMPRESSION_INDICATOR)
                 throw new InvalidDataException("Compression indicator not found");
 
-            await _inflaterStream.ReadAsync(dataMem).ConfigureAwait(false);
+            using InflaterInputStream inflaterStream = new(_fileStream)
+            {
+                IsStreamOwner = false
+            };
+            await inflaterStream.ReadAsync(dataMem).ConfigureAwait(false);
 
             // Read uncompressed block
             _fileStream.Seek(0, SeekOrigin.Begin);
@@ -140,7 +221,7 @@ namespace Mandible.Benchmarks
             return data;
         }
 
-        [Benchmark]
+        // [Benchmark]
         public ReadOnlySpan<byte> StreamSync()
         {
             byte[] data = new byte[DATA_LENGTH];
@@ -156,7 +237,11 @@ namespace Mandible.Benchmarks
             if (compressionIndicator != COMPRESSION_INDICATOR)
                 throw new InvalidDataException("Compression indicator not found");
 
-            _inflaterStream.Read(dataMem);
+            using InflaterInputStream inflaterStream = new(_fileStream)
+            {
+                IsStreamOwner = false
+            };
+            inflaterStream.Read(dataMem);
 
             // Read uncompressed block
             _fileStream.Seek(0, SeekOrigin.Begin);
@@ -170,7 +255,6 @@ namespace Mandible.Benchmarks
         {
             _fileHandle.Dispose();
             _fileStream.Dispose();
-            _inflaterStream.Dispose();
             File.Delete(_dataFile);
         }
     }

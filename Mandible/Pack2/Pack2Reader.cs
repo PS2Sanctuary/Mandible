@@ -1,5 +1,4 @@
 ﻿using ICSharpCode.SharpZipLib.Zip.Compression;
-using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using Microsoft.Win32.SafeHandles;
 using System.Buffers;
 using System.Buffers.Binary;
@@ -14,8 +13,6 @@ namespace Mandible.Pack2
         protected const uint ASSET_COMPRESSION_INDICATOR = 2712847316;
 
         protected readonly SafeFileHandle _packFileHandle;
-        protected readonly FileStream _packFileStream;
-        protected readonly InflaterInputStream _inflaterStream;
         protected readonly Inflater _inflater;
         protected readonly ArrayPool<byte> _arrayPool;
 
