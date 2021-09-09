@@ -10,7 +10,6 @@ namespace Mandible.Util
         /// <summary>
         /// Calculates the CRC-64 hash of the given characters.
         /// </summary>
-        /// <remarks>Original implementation at <see href="https://github.com/brhumphe/dbg-pack/blob/master/DbgPack/hash.py"/>.</remarks>
         /// <param name="characters">The characters to hash.</param>
         /// <returns>The CRC-64 hash.</returns>
         public static ulong Calculate(ReadOnlySpan<char> characters)
