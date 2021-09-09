@@ -43,8 +43,7 @@ namespace Mandible.Cli
 
             foreach (string file in packFiles)
             {
-                // await ExportPackAssetsAsync(file, args[1], hashedNamePairs, ct).ConfigureAwait(false);
-                ExportPackAssets(file, args[1], hashedNamePairs);
+                await ExportPackAssetsAsync(file, args[1], hashedNamePairs, ct).ConfigureAwait(false);
             }
 
             stopwatch.Stop();
@@ -64,24 +63,6 @@ namespace Mandible.Cli
                 Directory.CreateDirectory(outputPath);
 
             await reader.ExportAllAsync(outputPath, hashedNamePairs, ct).ConfigureAwait(false);
-
-            stopwatch.Stop();
-            Console.WriteLine("Completed exporting in {0}", stopwatch.Elapsed);
-        }
-
-        private static void ExportPackAssets(string packFilePath, string outputPath, Dictionary<ulong, string> hashedNamePairs)
-        {
-            Stopwatch stopwatch = new();
-            stopwatch.Start();
-            Console.WriteLine("Exporting {0}", packFilePath);
-
-            using Pack2Reader reader = new(packFilePath);
-            outputPath = Path.Combine(outputPath, Path.GetFileNameWithoutExtension(packFilePath));
-
-            if (!Directory.Exists(outputPath))
-                Directory.CreateDirectory(outputPath);
-
-            reader.ExportAll(outputPath, hashedNamePairs);
 
             stopwatch.Stop();
             Console.WriteLine("Completed exporting in {0}", stopwatch.Elapsed);
