@@ -43,14 +43,15 @@ namespace Mandible.Cli
 
             foreach (string file in packFiles)
             {
-                await ExportPackAssets(file, args[1], hashedNamePairs, ct).ConfigureAwait(false);
+                // await ExportPackAssetsAsync(file, args[1], hashedNamePairs, ct).ConfigureAwait(false);
+                ExportPackAssets(file, args[1], hashedNamePairs);
             }
 
             stopwatch.Stop();
             Console.WriteLine("Wrote all assets in {0}", stopwatch.Elapsed);
         }
 
-        private static async ValueTask ExportPackAssets(string packFilePath, string outputPath, Dictionary<ulong, string> hashedNamePairs, CancellationToken ct = default)
+        private static async ValueTask ExportPackAssetsAsync(string packFilePath, string outputPath, Dictionary<ulong, string> hashedNamePairs, CancellationToken ct = default)
         {
             Stopwatch stopwatch = new();
             stopwatch.Start();
@@ -62,7 +63,25 @@ namespace Mandible.Cli
             if (!Directory.Exists(outputPath))
                 Directory.CreateDirectory(outputPath);
 
-            await reader.ExportAll(outputPath, hashedNamePairs, ct).ConfigureAwait(false);
+            await reader.ExportAllAsync(outputPath, hashedNamePairs, ct).ConfigureAwait(false);
+
+            stopwatch.Stop();
+            Console.WriteLine("Completed exporting in {0}", stopwatch.Elapsed);
+        }
+
+        private static void ExportPackAssets(string packFilePath, string outputPath, Dictionary<ulong, string> hashedNamePairs)
+        {
+            Stopwatch stopwatch = new();
+            stopwatch.Start();
+            Console.WriteLine("Exporting {0}", packFilePath);
+
+            using Pack2Reader reader = new(packFilePath);
+            outputPath = Path.Combine(outputPath, Path.GetFileNameWithoutExtension(packFilePath));
+
+            if (!Directory.Exists(outputPath))
+                Directory.CreateDirectory(outputPath);
+
+            reader.ExportAll(outputPath, hashedNamePairs);
 
             stopwatch.Stop();
             Console.WriteLine("Completed exporting in {0}", stopwatch.Elapsed);
@@ -76,10 +95,10 @@ namespace Mandible.Cli
             Console.WriteLine("\t- Packet Length: {0}", header.Length);
         }
 
-        private static async Task WriteAssets(Pack2Reader reader, string outputPath, CancellationToken ct = default)
+        private static async Task WriteAmerishTileAssets(Pack2Reader reader, string outputPath, CancellationToken ct = default)
         {
             Dictionary<ulong, string> tileNames = GetTileNames();
-            await reader.ExportNamed(outputPath, tileNames, ct).ConfigureAwait(false);
+            await reader.ExportNamedAsync(outputPath, tileNames, ct).ConfigureAwait(false);
         }
 
         private static Dictionary<ulong, string> GetTileNames()

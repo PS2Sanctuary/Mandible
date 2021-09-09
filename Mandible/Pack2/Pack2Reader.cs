@@ -59,6 +59,25 @@ namespace Mandible.Pack2
         }
 
         /// <summary>
+        /// Reads the pack header. Subsequent calls return a cached value.
+        /// </summary>
+        /// <returns>The pack header.</returns>
+        public virtual Pack2Header ReadHeader()
+        {
+            if (_cachedHeader is not null)
+                return _cachedHeader.Value;
+
+            byte[] data = _arrayPool.Rent(Pack2Header.SIZE);
+            Span<byte> headerBuffer = new(data, 0, Pack2Header.SIZE);
+
+            RandomAccess.Read(_packFileHandle, headerBuffer, 0);
+            _cachedHeader = Pack2Header.Deserialise(headerBuffer);
+
+            _arrayPool.Return(data);
+            return _cachedHeader.Value;
+        }
+
+        /// <summary>
         /// Gets the asset header list. Subsequent calls return a cached value.
         /// </summary>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
@@ -92,6 +111,38 @@ namespace Mandible.Pack2
         }
 
         /// <summary>
+        /// Gets the asset header list. Subsequent calls return a cached value.
+        /// </summary>
+        /// <returns>The list of asset headers.</returns>
+        public virtual IReadOnlyList<Asset2Header> ReadAssetHeaders()
+        {
+            if (_cachedAssetHeaders is not null)
+                return _cachedAssetHeaders;
+
+            Pack2Header header = ReadHeader();
+            List<Asset2Header> assetHeaders = new();
+
+            int bufferSize = (int)header.AssetCount * Asset2Header.SIZE;
+            byte[] data = _arrayPool.Rent(bufferSize);
+            Span<byte> assetHeadersBuffer = new(data, 0, bufferSize);
+
+            RandomAccess.Read(_packFileHandle, assetHeadersBuffer, (long)header.AssetMapOffset);
+
+            for (uint i = 0; i < header.AssetCount; i++)
+            {
+                int baseOffset = (int)i * Asset2Header.SIZE;
+                Span<byte> assetHeaderData = assetHeadersBuffer.Slice(baseOffset, Asset2Header.SIZE);
+
+                Asset2Header assetHeader = Asset2Header.Deserialise(assetHeaderData);
+                assetHeaders.Add(assetHeader);
+            }
+
+            _cachedAssetHeaders = assetHeaders;
+            _arrayPool.Return(data);
+            return _cachedAssetHeaders;
+        }
+
+        /// <summary>
         /// Gets a stream to retrieve the unzipped asset data. Note that the asset data is stored and returned in big endian format.
         /// </summary>
         /// <param name="assetHeader">The asset to retrieve.</param>
@@ -110,6 +161,40 @@ namespace Mandible.Pack2
                 // Read the compression information
                 uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(dataMem[0..4].Span);
                 uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(dataMem[4..8].Span);
+
+                if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
+                    throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
+
+                // Read the data
+                _inflater.SetInput(data[8..]);
+
+                data = new byte[decompressedLength];
+                _inflater.Inflate(data);
+
+                _inflater.Reset();
+            }
+
+            return data;
+        }
+
+        /// <summary>
+        /// Gets a stream to retrieve the unzipped asset data. Note that the asset data is stored and returned in big endian format.
+        /// </summary>
+        /// <param name="assetHeader">The asset to retrieve.</param>
+        /// <returns>A stream of the asset data.</returns>
+        public virtual ReadOnlySpan<byte> ReadAssetData(Asset2Header assetHeader)
+        {
+            // We can't use the array pool here, because the data is being returned to the user.
+            byte[] data = new byte[assetHeader.DataSize];
+            Span<byte> dataMem = new(data);
+
+            RandomAccess.Read(_packFileHandle, dataMem, (long)assetHeader.DataOffset);
+
+            if (assetHeader.ZipStatus == AssetZipDefinition.Zipped || assetHeader.ZipStatus == AssetZipDefinition.ZippedAlternate)
+            {
+                // Read the compression information
+                uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(dataMem[0..4]);
+                uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(dataMem[4..8]);
 
                 if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
                     throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
