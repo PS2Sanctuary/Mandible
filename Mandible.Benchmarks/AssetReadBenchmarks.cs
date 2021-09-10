@@ -4,6 +4,7 @@ using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using Microsoft.Win32.SafeHandles;
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
+using System.IO.Compression;
 
 namespace Mandible.Benchmarks
 {
@@ -168,6 +169,32 @@ namespace Mandible.Benchmarks
         }
 
         [Benchmark]
+        public async Task<ReadOnlyMemory<byte>> ZlibStreamAsync()
+        {
+            byte[] data = new byte[DATA_LENGTH];
+            Memory<byte> dataMem = new(data);
+
+            // Read compressed block
+            _fileStream.Seek(DATA_LENGTH, SeekOrigin.Begin);
+            await _fileStream.ReadAsync(dataMem[0..8]).ConfigureAwait(false);
+
+            uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(dataMem[0..4].Span);
+            uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(dataMem[4..8].Span);
+
+            if (compressionIndicator != COMPRESSION_INDICATOR)
+                throw new InvalidDataException("Compression indicator not found");
+
+            using ZLibStream inflaterStream = new(_fileStream, CompressionMode.Decompress, true);
+            await inflaterStream.ReadAsync(dataMem).ConfigureAwait(false);
+
+            // Read uncompressed block
+            _fileStream.Seek(0, SeekOrigin.Begin);
+            await _fileStream.ReadAsync(dataMem).ConfigureAwait(false);
+
+            return data;
+        }
+
+        [Benchmark]
         public ReadOnlySpan<byte> StreamSync()
         {
             byte[] data = new byte[DATA_LENGTH];
@@ -187,6 +214,32 @@ namespace Mandible.Benchmarks
             {
                 IsStreamOwner = false
             };
+            inflaterStream.Read(dataMem);
+
+            // Read uncompressed block
+            _fileStream.Seek(0, SeekOrigin.Begin);
+            _fileStream.Read(dataMem);
+
+            return data;
+        }
+
+        [Benchmark]
+        public ReadOnlySpan<byte> ZlibStreamSync()
+        {
+            byte[] data = new byte[DATA_LENGTH];
+            Span<byte> dataMem = new(data);
+
+            // Read compressed block
+            _fileStream.Seek(DATA_LENGTH, SeekOrigin.Begin);
+            _fileStream.Read(dataMem[0..8]);
+
+            uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(dataMem[0..4]);
+            uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(dataMem[4..8]);
+
+            if (compressionIndicator != COMPRESSION_INDICATOR)
+                throw new InvalidDataException("Compression indicator not found");
+
+            using ZLibStream inflaterStream = new(_fileStream, CompressionMode.Decompress, true);
             inflaterStream.Read(dataMem);
 
             // Read uncompressed block

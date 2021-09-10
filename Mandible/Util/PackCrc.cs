@@ -3,40 +3,40 @@
 namespace Mandible.Util
 {
     /// <summary>
-    /// Calculates CRC-64 hashes in a manner suitable for pack files.
+    /// Contains functions to calculate CRC hashes in a manner suitable for pack files.
     /// </summary>
-    public static class PackCrc64
+    public static class PackCrc
     {
         /// <summary>
-        /// Calculates the CRC-64 hash of the given characters.
+        /// Calculates a CRC-64 hash of the given characters.
         /// </summary>
         /// <param name="characters">The characters to hash.</param>
         /// <returns>The CRC-64 hash.</returns>
-        public static ulong Calculate(ReadOnlySpan<char> characters)
+        public static ulong Calculate64(ReadOnlySpan<char> characters)
         {
             ulong hash = ulong.MaxValue;
 
             foreach (char c in characters)
             {
                 byte tableIndex = (byte)((byte)hash ^ char.ToUpperInvariant(c));
-                hash = CRC_TABLE[tableIndex] ^ hash >> 8;
+                hash = CRC64_TABLE[tableIndex] ^ hash >> 8;
             }
 
             return hash ^ ulong.MaxValue;
         }
 
         /// <summary>
-        /// Hashes a list of strings.
+        /// Hashes a list of strings using the CRC-64 algorithm. Duplicate entries will not be added to the resulting dictionary.
         /// </summary>
         /// <param name="nameList">The strings to hash.</param>
         /// <returns>A dictionary mapping the hash to its original string.</returns>
-        public static Dictionary<ulong, string> HashStrings(IEnumerable<string> nameList)
+        public static Dictionary<ulong, string> HashStrings64(IEnumerable<string> nameList)
         {
             Dictionary<ulong, string> hashedNamePairs = new();
 
             foreach (string element in nameList)
             {
-                if (!hashedNamePairs.TryAdd(Calculate(element), element))
+                if (!hashedNamePairs.TryAdd(Calculate64(element), element))
                     Debug.WriteLine("Could not add a hash of the given name to the list, as it was already present: " + element);
             }
 
@@ -44,9 +44,9 @@ namespace Mandible.Util
         }
 
         /// <summary>
-        /// Rhett's CRC table.
+        /// "Jones" coefficient table for our CRC-64 algorithm.
         /// </summary>
-        private static readonly ulong[] CRC_TABLE = new ulong[]
+        private static readonly ulong[] CRC64_TABLE = new ulong[]
         {
             0x0000000000000000, 0x7ad870c830358979,
             0xf5b0e190606b12f2, 0x8f689158505e9b8b,

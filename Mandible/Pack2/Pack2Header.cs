@@ -69,7 +69,7 @@ namespace Mandible.Pack2
 
         public ReadOnlySpan<byte> Serialise()
         {
-            byte[] data = new byte[160];
+            byte[] data = new byte[32 + Checksum.Length];
             Span<byte> dataSpan = data.AsSpan();
 
             // Write the magic bytes

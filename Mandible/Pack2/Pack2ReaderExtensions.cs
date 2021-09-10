@@ -75,7 +75,7 @@ namespace Mandible.Pack2
         /// <returns>A <see cref="Task"/> representing the asynchonous operation.</returns>
         public static async Task ExportAllAsync(this Pack2Reader reader, string outputPath, IEnumerable<string>? nameList = null, CancellationToken ct = default)
         {
-            Dictionary<ulong, string> hashedNamePairs = nameList is null ? new() : PackCrc64.HashStrings(nameList);
+            Dictionary<ulong, string> hashedNamePairs = nameList is null ? new() : PackCrc.HashStrings64(nameList);
             await ExportAllAsync(reader, outputPath, hashedNamePairs, ct).ConfigureAwait(false);
         }
 
@@ -87,7 +87,7 @@ namespace Mandible.Pack2
         /// <param name="nameList">An optional namelist so the assets can be exported with sane file names.</param>
         public static void ExportAll(this Pack2Reader reader, string outputPath, IEnumerable<string>? nameList = null)
         {
-            Dictionary<ulong, string> hashedNamePairs = nameList is null ? new() : PackCrc64.HashStrings(nameList);
+            Dictionary<ulong, string> hashedNamePairs = nameList is null ? new() : PackCrc.HashStrings64(nameList);
             ExportAll(reader, outputPath, hashedNamePairs);
         }
 
@@ -159,7 +159,7 @@ namespace Mandible.Pack2
         /// <returns>A <see cref="Task"/> representing the asynchonous operation.</returns>
         public static async Task ExportNamedAsync(this Pack2Reader reader, string outputPath, IEnumerable<string> nameList, CancellationToken ct = default)
         {
-            Dictionary<ulong, string> hashedNamePairs = PackCrc64.HashStrings(nameList);
+            Dictionary<ulong, string> hashedNamePairs = PackCrc.HashStrings64(nameList);
             await ExportNamedAsync(reader, outputPath, hashedNamePairs, ct).ConfigureAwait(false);
         }
 
@@ -171,7 +171,7 @@ namespace Mandible.Pack2
         /// <param name="nameList">A list of the original file names.</param>
         public static void ExportNamed(this Pack2Reader reader, string outputPath, IEnumerable<string> nameList)
         {
-            Dictionary<ulong, string> hashedNamePairs = PackCrc64.HashStrings(nameList);
+            Dictionary<ulong, string> hashedNamePairs = PackCrc.HashStrings64(nameList);
             ExportNamed(reader, outputPath, hashedNamePairs);
         }
     }

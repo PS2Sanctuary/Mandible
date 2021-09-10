@@ -48,6 +48,6 @@ Data | `byte[]` | `...` | The asset data.
 Name | Type | Example | Description
 -- | -- | -- | --
 Name Hash | `uint_64` | `f3 62 01 0d 88 db 26 00` | A CRC64 hash of the UPPERCASE asset name. This CRC variant uses "Jones" coefficients and a value of `0xffffffffffffffff` for both the initial value and final XOR out.
-Asset Offset | `uint_64` | `00 94 02 00 00 00 00 00` | The offset of the asset data within the pack.
+Asset Offset | `uint_64` | `00 94 02 00 00 00 00 00` | The offset of the asset data within the pack.    
 Stored data size | `uint_64` | `97 01 00 00 00 00 00 00` | The size of the stored asset data.
 Compression Indicator | `uint_32` | `11 00 00 00` | Compressed: `0x11/0x01`; Uncompressed: `0x10/0x00`.
