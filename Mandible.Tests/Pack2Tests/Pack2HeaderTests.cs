@@ -1,4 +1,5 @@
 ﻿using Mandible.Pack2;
+using System;
 using Xunit;
 
 namespace Mandible.Tests.Pack2Tests

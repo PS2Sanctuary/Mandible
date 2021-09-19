@@ -1,7 +1,12 @@
 ﻿using ICSharpCode.SharpZipLib.Zip.Compression;
 using Microsoft.Win32.SafeHandles;
+using System;
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Mandible.Pack2
 {

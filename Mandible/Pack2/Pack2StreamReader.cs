@@ -1,6 +1,12 @@
-﻿using System.Buffers;
+﻿using ICSharpCode.SharpZipLib.Zip.Compression;
+using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
+using System;
+using System.Buffers;
 using System.Buffers.Binary;
-using System.IO.Compression;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Mandible.Pack2
 {
@@ -187,7 +193,10 @@ namespace Mandible.Pack2
                     throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
 
                 Memory<byte> data = new byte[decompressedLength];
-                using ZLibStream inflaterStream = new(_baseStream, CompressionMode.Decompress, true);
+                using InflaterInputStream inflaterStream = new(_baseStream, new Inflater(), AVERAGE_ASSET_SIZE)
+                {
+                    IsStreamOwner = false
+                };
                 await inflaterStream.ReadAsync(data, ct).ConfigureAwait(false);
 
                 return data;
@@ -226,7 +235,10 @@ namespace Mandible.Pack2
                     throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
 
                 Span<byte> data = new byte[decompressedLength];
-                using ZLibStream inflaterStream = new(_baseStream, CompressionMode.Decompress, true);
+                using InflaterInputStream inflaterStream = new(_baseStream, new Inflater(), AVERAGE_ASSET_SIZE)
+                {
+                    IsStreamOwner = false
+                };
                 inflaterStream.Read(data);
 
                 return data;
