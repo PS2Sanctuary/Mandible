@@ -1,4 +1,5 @@
 ﻿using ICSharpCode.SharpZipLib.Zip.Compression;
+using Mandible.Zlib;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Buffers;
@@ -18,7 +19,7 @@ namespace Mandible.Pack2
         protected const uint ASSET_COMPRESSION_INDICATOR = 2712847316;
 
         protected readonly SafeFileHandle _packFileHandle;
-        protected readonly Inflater _inflater;
+        // protected readonly Inflater _inflater;
         protected readonly ArrayPool<byte> _arrayPool;
 
         protected Pack2Header? _cachedHeader;
@@ -39,7 +40,7 @@ namespace Mandible.Pack2
                 FileOptions.RandomAccess | FileOptions.Asynchronous
             );
 
-            _inflater = new Inflater();
+            // _inflater = new Inflater();
             _arrayPool = ArrayPool<byte>.Shared;
         }
 
@@ -170,13 +171,34 @@ namespace Mandible.Pack2
                 if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
                     throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
 
-                // Read the data
-                _inflater.SetInput(data[8..]);
+                byte[] decompressed = await Task.Run(() =>
+                {
+                    byte[] decompData = new byte[decompressedLength];
 
-                data = new byte[decompressedLength];
-                _inflater.Inflate(data);
+                    unsafe
+                    {
+                        fixed (byte* compDataPtr = data[8..])
+                        {
+                            fixed (byte* decompDataPtr = decompData)
+                            {
+                                ZlibNG.zng_stream zngStream = ZlibNGHelpers.GetInflateStream((uint)data.Length, compDataPtr);
 
-                _inflater.Reset();
+                                ZlibNGHelpers.InitialiseInflate(&zngStream);
+
+                                zngStream.next_out = decompDataPtr;
+                                zngStream.avail_out = decompressedLength;
+
+                                CompressionResult res = ZlibNG.Inflate(&zngStream, ZlibFlushType.NoFlush);
+                                ZlibNGHelpers.EndInflate(&zngStream);
+
+                                if (res != CompressionResult.OK && res != CompressionResult.StreamEnd)
+                                    throw new ZlibNGCompressionException("Failed to inflate stream.", res);
+                            }
+                        }
+                    }
+
+                    return decompData;
+                }).ConfigureAwait(false);
             }
 
             return data;
@@ -204,13 +226,29 @@ namespace Mandible.Pack2
                 if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
                     throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
 
-                // Read the data
-                _inflater.SetInput(data[8..]);
+                byte[] decompData = new byte[decompressedLength];
 
-                data = new byte[decompressedLength];
-                _inflater.Inflate(data);
+                unsafe
+                {
+                    fixed (byte* compDataPtr = data)
+                    {
+                        fixed (byte* decompDataPtr = decompData)
+                        {
+                            ZlibNG.zng_stream zngStream = ZlibNGHelpers.GetInflateStream((uint)data.Length - 8, compDataPtr + 8);
 
-                _inflater.Reset();
+                            ZlibNGHelpers.InitialiseInflate(&zngStream);
+
+                            zngStream.next_out = decompDataPtr;
+                            zngStream.avail_out = decompressedLength;
+
+                            CompressionResult res = ZlibNG.Inflate(&zngStream, ZlibFlushType.NoFlush);
+                            ZlibNGHelpers.EndInflate(&zngStream);
+
+                            if (res != CompressionResult.OK && res != CompressionResult.StreamEnd)
+                                throw new ZlibNGCompressionException("Failed to inflate stream.", res);
+                        }
+                    }
+                }
             }
 
             return data;

@@ -67,7 +67,8 @@ namespace Mandible.Cli
             if (!Directory.Exists(outputPath))
                 Directory.CreateDirectory(outputPath);
 
-            await reader.ExportAllAsync(outputPath, hashedNamePairs, ct).ConfigureAwait(false);
+            // await reader.ExportAllAsync(outputPath, hashedNamePairs, ct).ConfigureAwait(false);
+            reader.ExportAll(outputPath, hashedNamePairs); // TODO: Test async
 
             stopwatch.Stop();
             Console.WriteLine("Completed exporting in {0}", stopwatch.Elapsed);
