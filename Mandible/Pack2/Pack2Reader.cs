@@ -1,5 +1,4 @@
-﻿using ICSharpCode.SharpZipLib.Zip.Compression;
-using Mandible.Zlib;
+﻿using Mandible.Zlib;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Buffers;
@@ -16,11 +15,11 @@ namespace Mandible.Pack2
         /// <summary>
         /// The indicator placed in front of an asset data block to indicate that it has been compressed.
         /// </summary>
-        protected const uint ASSET_COMPRESSION_INDICATOR = 2712847316;
+        protected const uint ASSET_COMPRESSION_INDICATOR = 0xA1B2C3D4;
 
         protected readonly SafeFileHandle _packFileHandle;
-        // protected readonly Inflater _inflater;
-        protected readonly ArrayPool<byte> _arrayPool;
+        protected readonly ZngInflater _inflater;
+        protected readonly MemoryPool<byte> _memoryPool;
 
         protected Pack2Header? _cachedHeader;
         protected IReadOnlyList<Asset2Header>? _cachedAssetHeaders;
@@ -32,7 +31,8 @@ namespace Mandible.Pack2
 
         public Pack2Reader(string packLocation)
         {
-            _packFileHandle = File.OpenHandle(
+            _packFileHandle = File.OpenHandle
+            (
                 packLocation,
                 FileMode.Open,
                 FileAccess.Read,
@@ -40,8 +40,8 @@ namespace Mandible.Pack2
                 FileOptions.RandomAccess | FileOptions.Asynchronous
             );
 
-            // _inflater = new Inflater();
-            _arrayPool = ArrayPool<byte>.Shared;
+            _memoryPool = MemoryPool<byte>.Shared;
+            _inflater = new ZngInflater();
         }
 
         /// <summary>
@@ -54,13 +54,12 @@ namespace Mandible.Pack2
             if (_cachedHeader is not null)
                 return _cachedHeader.Value;
 
-            byte[] data = _arrayPool.Rent(Pack2Header.SIZE);
-            Memory<byte> headerBuffer = new(data, 0, Pack2Header.SIZE);
+            using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.SIZE);
+            Memory<byte> headerBuffer = data.Memory[..Pack2Header.SIZE];
 
             await RandomAccess.ReadAsync(_packFileHandle, headerBuffer, 0, ct).ConfigureAwait(false);
             _cachedHeader = Pack2Header.Deserialise(headerBuffer.Span);
 
-            _arrayPool.Return(data);
             return _cachedHeader.Value;
         }
 
@@ -73,13 +72,12 @@ namespace Mandible.Pack2
             if (_cachedHeader is not null)
                 return _cachedHeader.Value;
 
-            byte[] data = _arrayPool.Rent(Pack2Header.SIZE);
-            Span<byte> headerBuffer = new(data, 0, Pack2Header.SIZE);
+            using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.SIZE);
+            Span<byte> headerBuffer = data.Memory[..Pack2Header.SIZE].Span;
 
             RandomAccess.Read(_packFileHandle, headerBuffer, 0);
             _cachedHeader = Pack2Header.Deserialise(headerBuffer);
 
-            _arrayPool.Return(data);
             return _cachedHeader.Value;
         }
 
@@ -97,8 +95,8 @@ namespace Mandible.Pack2
             List<Asset2Header> assetHeaders = new();
 
             int bufferSize = (int)header.AssetCount * Asset2Header.SIZE;
-            byte[] data = _arrayPool.Rent(bufferSize);
-            Memory<byte> assetHeadersBuffer = new(data, 0, bufferSize);
+            using IMemoryOwner<byte> data = _memoryPool.Rent(bufferSize);
+            Memory<byte> assetHeadersBuffer = data.Memory[..bufferSize];
 
             await RandomAccess.ReadAsync(_packFileHandle, assetHeadersBuffer, (long)header.AssetMapOffset, ct).ConfigureAwait(false);
 
@@ -112,7 +110,6 @@ namespace Mandible.Pack2
             }
 
             _cachedAssetHeaders = assetHeaders;
-            _arrayPool.Return(data);
             return _cachedAssetHeaders;
         }
 
@@ -129,8 +126,8 @@ namespace Mandible.Pack2
             List<Asset2Header> assetHeaders = new();
 
             int bufferSize = (int)header.AssetCount * Asset2Header.SIZE;
-            byte[] data = _arrayPool.Rent(bufferSize);
-            Span<byte> assetHeadersBuffer = new(data, 0, bufferSize);
+            using IMemoryOwner<byte> data = _memoryPool.Rent(bufferSize);
+            Span<byte> assetHeadersBuffer = data.Memory[..bufferSize].Span;
 
             RandomAccess.Read(_packFileHandle, assetHeadersBuffer, (long)header.AssetMapOffset);
 
@@ -144,7 +141,6 @@ namespace Mandible.Pack2
             }
 
             _cachedAssetHeaders = assetHeaders;
-            _arrayPool.Return(data);
             return _cachedAssetHeaders;
         }
 
@@ -156,52 +152,33 @@ namespace Mandible.Pack2
         /// <returns>A stream of the asset data.</returns>
         public virtual async Task<ReadOnlyMemory<byte>> ReadAssetDataAsync(Asset2Header assetHeader, CancellationToken ct = default)
         {
-            // We can't use the array pool here, because the data is being returned to the user.
-            byte[] data = new byte[assetHeader.DataSize];
-            Memory<byte> dataMem = new(data);
-
-            await RandomAccess.ReadAsync(_packFileHandle, dataMem, (long)assetHeader.DataOffset, ct).ConfigureAwait(false);
+            Memory<byte> output = new byte[assetHeader.DataSize];
+            await RandomAccess.ReadAsync(_packFileHandle, output, (long)assetHeader.DataOffset, ct).ConfigureAwait(false);
 
             if (assetHeader.ZipStatus == AssetZipDefinition.Zipped || assetHeader.ZipStatus == AssetZipDefinition.ZippedAlternate)
             {
                 // Read the compression information
-                uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(dataMem[0..4].Span);
-                uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(dataMem[4..8].Span);
+                uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(output[..4].Span);
+                uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(output[4..8].Span);
 
                 if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
                     throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
 
-                byte[] decompressed = await Task.Run(() =>
-                {
-                    byte[] decompData = new byte[decompressedLength];
-
-                    unsafe
+                output = await Task.Run
+                (
+                    () =>
                     {
-                        fixed (byte* compDataPtr = data[8..])
-                        {
-                            fixed (byte* decompDataPtr = decompData)
-                            {
-                                ZlibNG.zng_stream zngStream = ZlibNGHelpers.GetInflateStream((uint)data.Length, compDataPtr);
+                        Memory<byte> decompData = new byte[decompressedLength];
 
-                                ZlibNGHelpers.InitialiseInflate(&zngStream);
+                        _inflater.Inflate(output[8..].Span, decompData.Span);
+                        _inflater.Reset();
 
-                                zngStream.next_out = decompDataPtr;
-                                zngStream.avail_out = decompressedLength;
-
-                                CompressionResult res = ZlibNG.Inflate(&zngStream, ZlibFlushType.NoFlush);
-                                ZlibNGHelpers.EndInflate(&zngStream);
-
-                                if (res != CompressionResult.OK && res != CompressionResult.StreamEnd)
-                                    throw new ZlibNGCompressionException("Failed to inflate stream.", res);
-                            }
-                        }
+                        return decompData;
                     }
-
-                    return decompData;
-                }).ConfigureAwait(false);
+                ).ConfigureAwait(false);
             }
 
-            return data;
+            return output;
         }
 
         /// <summary>
@@ -211,47 +188,27 @@ namespace Mandible.Pack2
         /// <returns>A stream of the asset data.</returns>
         public virtual ReadOnlySpan<byte> ReadAssetData(Asset2Header assetHeader)
         {
-            // We can't use the array pool here, because the data is being returned to the user.
-            byte[] data = new byte[assetHeader.DataSize];
-            Span<byte> dataMem = new(data);
-
-            RandomAccess.Read(_packFileHandle, dataMem, (long)assetHeader.DataOffset);
+            Span<byte> output = new byte[assetHeader.DataSize];
+            RandomAccess.Read(_packFileHandle, output, (long)assetHeader.DataOffset);
 
             if (assetHeader.ZipStatus == AssetZipDefinition.Zipped || assetHeader.ZipStatus == AssetZipDefinition.ZippedAlternate)
             {
                 // Read the compression information
-                uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(dataMem[0..4]);
-                uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(dataMem[4..8]);
+                uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(output[..4]);
+                uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(output[4..8]);
 
                 if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
                     throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
 
-                byte[] decompData = new byte[decompressedLength];
+                Span<byte> decompData = new byte[decompressedLength];
 
-                unsafe
-                {
-                    fixed (byte* compDataPtr = data)
-                    {
-                        fixed (byte* decompDataPtr = decompData)
-                        {
-                            ZlibNG.zng_stream zngStream = ZlibNGHelpers.GetInflateStream((uint)data.Length - 8, compDataPtr + 8);
+                _inflater.Inflate(output[8..], decompData);
+                _inflater.Reset();
 
-                            ZlibNGHelpers.InitialiseInflate(&zngStream);
-
-                            zngStream.next_out = decompDataPtr;
-                            zngStream.avail_out = decompressedLength;
-
-                            CompressionResult res = ZlibNG.Inflate(&zngStream, ZlibFlushType.NoFlush);
-                            ZlibNGHelpers.EndInflate(&zngStream);
-
-                            if (res != CompressionResult.OK && res != CompressionResult.StreamEnd)
-                                throw new ZlibNGCompressionException("Failed to inflate stream.", res);
-                        }
-                    }
-                }
+                output = decompData;
             }
 
-            return data;
+            return output;
         }
 
         public void Dispose()
@@ -267,6 +224,7 @@ namespace Mandible.Pack2
                 if (disposing)
                 {
                     _packFileHandle.Dispose();
+                    _inflater.Dispose();
                 }
 
                 _cachedAssetHeaders = null;

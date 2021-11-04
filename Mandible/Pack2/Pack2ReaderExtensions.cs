@@ -16,10 +16,18 @@ namespace Mandible.Pack2
         /// </summary>
         /// <param name="reader">The pack reader.</param>
         /// <param name="outputPath">The path to export the assets to.</param>
-        /// <param name="hashedNamePairs">A mapping of CRC-64 hashes to their original file name strings, so the assets can be exported with sane file names.</param>
+        /// <param name="hashedNamePairs">
+        /// A mapping of CRC-64 hashes to their original file name strings, so the assets can be exported with sane file names.
+        /// </param>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
         /// <returns>A <see cref="Task"/> representing the asynchonous operation.</returns>
-        public static async Task ExportAllAsync(this Pack2Reader reader, string outputPath, Dictionary<ulong, string> hashedNamePairs, CancellationToken ct = default)
+        public static async Task ExportAllAsync
+        (
+            this Pack2Reader reader,
+            string outputPath,
+            Dictionary<ulong, string> hashedNamePairs,
+            CancellationToken ct = default
+        )
         {
             if (!Directory.Exists(outputPath))
                 throw new DirectoryNotFoundException(outputPath);
@@ -48,8 +56,15 @@ namespace Mandible.Pack2
         /// </summary>
         /// <param name="reader">The pack reader.</param>
         /// <param name="outputPath">The path to export the assets to.</param>
-        /// <param name="hashedNamePairs">A mapping of CRC-64 hashes to their original file name strings, so the assets can be exported with sane file names.</param>
-        public static void ExportAll(this Pack2Reader reader, string outputPath, Dictionary<ulong, string> hashedNamePairs)
+        /// <param name="hashedNamePairs">
+        /// A mapping of CRC-64 hashes to their original file name strings, so the assets can be exported with sane file names.
+        /// </param>
+        public static void ExportAll
+        (
+            this Pack2Reader reader,
+            string outputPath,
+            Dictionary<ulong, string> hashedNamePairs
+        )
         {
             if (!Directory.Exists(outputPath))
                 throw new DirectoryNotFoundException(outputPath);
@@ -79,7 +94,13 @@ namespace Mandible.Pack2
         /// <param name="nameList">An optional namelist so the assets can be exported with sane file names.</param>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
         /// <returns>A <see cref="Task"/> representing the asynchonous operation.</returns>
-        public static async Task ExportAllAsync(this Pack2Reader reader, string outputPath, IEnumerable<string>? nameList = null, CancellationToken ct = default)
+        public static async Task ExportAllAsync
+        (
+            this Pack2Reader reader,
+            string outputPath,
+            IEnumerable<string>? nameList = null,
+            CancellationToken ct = default
+        )
         {
             Dictionary<ulong, string> hashedNamePairs = nameList is null ? new() : PackCrc.HashStrings64(nameList);
             await ExportAllAsync(reader, outputPath, hashedNamePairs, ct).ConfigureAwait(false);
@@ -91,7 +112,12 @@ namespace Mandible.Pack2
         /// <param name="reader">The pack reader.</param>
         /// <param name="outputPath">The path to export the assets to.</param>
         /// <param name="nameList">An optional namelist so the assets can be exported with sane file names.</param>
-        public static void ExportAll(this Pack2Reader reader, string outputPath, IEnumerable<string>? nameList = null)
+        public static void ExportAll
+        (
+            this Pack2Reader reader,
+            string outputPath,
+            IEnumerable<string>? nameList = null
+        )
         {
             Dictionary<ulong, string> hashedNamePairs = nameList is null ? new() : PackCrc.HashStrings64(nameList);
             ExportAll(reader, outputPath, hashedNamePairs);
@@ -105,7 +131,12 @@ namespace Mandible.Pack2
         /// <param name="hashedNamePairs">A mapping of CRC-64 hashes to the original file name strings.</param>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
         /// <returns>A <see cref="Task"/> representing the asynchonous operation.</returns>
-        public static async Task ExportNamedAsync(this Pack2Reader reader, string outputPath, Dictionary<ulong, string> hashedNamePairs, CancellationToken ct = default)
+        public static async Task ExportNamedAsync
+        (
+            this Pack2Reader reader,
+            string outputPath, Dictionary<ulong, string> hashedNamePairs,
+            CancellationToken ct = default
+        )
         {
             if (!Directory.Exists(outputPath))
                 throw new DirectoryNotFoundException(outputPath);
@@ -133,7 +164,12 @@ namespace Mandible.Pack2
         /// <param name="reader">The pack reader.</param>
         /// <param name="outputPath">The path to export the assets to.</param>
         /// <param name="hashedNamePairs">A mapping of CRC-64 hashes to the original file name strings.</param>
-        public static void ExportNamed(this Pack2Reader reader, string outputPath, Dictionary<ulong, string> hashedNamePairs)
+        public static void ExportNamed
+        (
+            this Pack2Reader reader,
+            string outputPath,
+            Dictionary<ulong, string> hashedNamePairs
+        )
         {
             if (!Directory.Exists(outputPath))
                 throw new DirectoryNotFoundException(outputPath);
@@ -163,7 +199,13 @@ namespace Mandible.Pack2
         /// <param name="nameList">A list of the original file names.</param>
         /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
         /// <returns>A <see cref="Task"/> representing the asynchonous operation.</returns>
-        public static async Task ExportNamedAsync(this Pack2Reader reader, string outputPath, IEnumerable<string> nameList, CancellationToken ct = default)
+        public static async Task ExportNamedAsync
+        (
+            this Pack2Reader reader,
+            string outputPath,
+            IEnumerable<string> nameList,
+            CancellationToken ct = default
+        )
         {
             Dictionary<ulong, string> hashedNamePairs = PackCrc.HashStrings64(nameList);
             await ExportNamedAsync(reader, outputPath, hashedNamePairs, ct).ConfigureAwait(false);
@@ -175,7 +217,12 @@ namespace Mandible.Pack2
         /// <param name="reader">The pack reader.</param>
         /// <param name="outputPath">The path to export the assets to.</param>
         /// <param name="nameList">A list of the original file names.</param>
-        public static void ExportNamed(this Pack2Reader reader, string outputPath, IEnumerable<string> nameList)
+        public static void ExportNamed
+        (
+            this Pack2Reader reader,
+            string outputPath,
+            IEnumerable<string> nameList
+        )
         {
             Dictionary<ulong, string> hashedNamePairs = PackCrc.HashStrings64(nameList);
             ExportNamed(reader, outputPath, hashedNamePairs);

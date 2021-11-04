@@ -1,5 +1,6 @@
 ﻿using Mandible.Pack2;
 using Mandible.Util;
+using Mandible.Zlib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,6 +17,8 @@ namespace Mandible.Cli
             CancellationTokenSource cts = new();
             CancellationToken ct = cts.Token;
             Console.CancelKeyPress += (_, __) => cts.Cancel();
+
+            Console.WriteLine("zlib-ng version: {0}", Zng.Version());
 
             if (args.Length != 3)
             {
@@ -47,15 +50,18 @@ namespace Mandible.Cli
             stopwatch.Start();
 
             foreach (string file in packFiles)
-            {
-                await ExportPackAssetsAsync(file, args[1], hashedNamePairs, ct).ConfigureAwait(false);
-            }
+                ExportPackAssets(file, args[1], hashedNamePairs);
 
             stopwatch.Stop();
             Console.WriteLine("Wrote all assets in {0}", stopwatch.Elapsed);
         }
 
-        private static async ValueTask ExportPackAssetsAsync(string packFilePath, string outputPath, Dictionary<ulong, string> hashedNamePairs, CancellationToken ct = default)
+        private static void ExportPackAssets
+        (
+            string packFilePath,
+            string outputPath,
+            Dictionary<ulong, string> hashedNamePairs
+        )
         {
             Stopwatch stopwatch = new();
             stopwatch.Start();
@@ -67,8 +73,7 @@ namespace Mandible.Cli
             if (!Directory.Exists(outputPath))
                 Directory.CreateDirectory(outputPath);
 
-            // await reader.ExportAllAsync(outputPath, hashedNamePairs, ct).ConfigureAwait(false);
-            reader.ExportAll(outputPath, hashedNamePairs); // TODO: Test async
+            reader.ExportAll(outputPath, hashedNamePairs);
 
             stopwatch.Stop();
             Console.WriteLine("Completed exporting in {0}", stopwatch.Elapsed);
@@ -84,11 +89,11 @@ namespace Mandible.Cli
 
         private static async Task WriteAmerishTileAssets(Pack2Reader reader, string outputPath, CancellationToken ct = default)
         {
-            Dictionary<ulong, string> tileNames = GetTileNames();
+            Dictionary<ulong, string> tileNames = GenerateAmerishTileNamesForLod2();
             await reader.ExportNamedAsync(outputPath, tileNames, ct).ConfigureAwait(false);
         }
 
-        private static Dictionary<ulong, string> GetTileNames()
+        private static Dictionary<ulong, string> GenerateAmerishTileNamesForLod2()
         {
             Dictionary<ulong, string> tileNames = new();
 
@@ -96,7 +101,7 @@ namespace Mandible.Cli
             {
                 for (int j = -64; j < 64; j += 16)
                 {
-                    string name = $"Amerish_Tile_{ GetNumberString(i) }_{ GetNumberString(j) }_LOD2.dds";
+                    string name = $"Amerish_Tile_{ GetTileCoordinateString(i) }_{ GetTileCoordinateString(j) }_LOD2.dds";
                     ulong hash = PackCrc.Calculate64(name);
                     tileNames.Add(hash, name);
                 }
@@ -105,7 +110,7 @@ namespace Mandible.Cli
             return tileNames;
         }
 
-        private static string GetNumberString(int number)
+        private static string GetTileCoordinateString(int number)
             => number < 0 ? number.ToString("d2") : number.ToString("d3");
     }
 }
