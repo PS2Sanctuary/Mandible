@@ -57,7 +57,6 @@ namespace Mandible.Zlib
     /// </summary>
     public sealed unsafe partial class ZngInflater : IDisposable
     {
-        private readonly GCHandle _streamHandle;
         private readonly ZngStream* _streamPtr;
 
         /// <summary>
@@ -78,8 +77,8 @@ namespace Mandible.Zlib
                 Opaque = IntPtr.Zero,
             };
 
-            _streamHandle = GCHandle.Alloc(stream, GCHandleType.Pinned);
-            _streamPtr = (ZngStream*)_streamHandle.AddrOfPinnedObject();
+            _streamPtr = (ZngStream*)Marshal.AllocHGlobal(sizeof(ZngStream));
+            Marshal.StructureToPtr(stream, (IntPtr)_streamPtr, false);
 
             CompressionResult initResult = _InflateInit(_streamPtr, Zng._Version(), sizeof(ZngStream));
             if (initResult is not CompressionResult.OK)
@@ -145,7 +144,8 @@ namespace Mandible.Zlib
             if (!IsDisposed)
             {
                 _InflateEnd(_streamPtr);
-                _streamHandle.Free();
+                Marshal.DestroyStructure<ZngStream>((IntPtr)_streamPtr);
+                Marshal.FreeHGlobal((IntPtr)_streamPtr);
 
                 IsDisposed = true;
             }

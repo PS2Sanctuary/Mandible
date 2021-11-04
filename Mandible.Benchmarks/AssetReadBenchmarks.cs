@@ -1,6 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using ICSharpCode.SharpZipLib.Zip.Compression;
 using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
+using Mandible.Zlib;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Buffers.Binary;
@@ -11,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace Mandible.Benchmarks
 {
+    [MemoryDiagnoser]
     public class AssetReadBenchmarks
     {
         private const uint COMPRESSION_INDICATOR = 2712847316;
@@ -45,9 +47,9 @@ namespace Mandible.Benchmarks
 
             RandomAccess.Write(handle, data, 0);
 
-            byte[] compressionInfo = new byte[8];
+            Span<byte> compressionInfo = new byte[8];
             BinaryPrimitives.WriteUInt32BigEndian(compressionInfo, COMPRESSION_INDICATOR);
-            BinaryPrimitives.WriteUInt32BigEndian(compressionInfo.AsSpan(4, 4), DATA_LENGTH);
+            BinaryPrimitives.WriteUInt32BigEndian(compressionInfo[4..], DATA_LENGTH);
             RandomAccess.Write(handle, compressionInfo, DATA_LENGTH);
 
             Deflater deflater = new(Deflater.BEST_COMPRESSION);

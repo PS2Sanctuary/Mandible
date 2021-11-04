@@ -20,7 +20,7 @@ namespace Mandible.Zlib
 
         public override string ToString()
         {
-            return $"Error: {ErrorCode} | {Message}";
+            return $"ZlibCompressionException | Error: {ErrorCode}, {Message}";
         }
     }
 }

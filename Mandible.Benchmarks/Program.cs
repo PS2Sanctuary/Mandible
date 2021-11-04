@@ -1,5 +1,4 @@
-﻿using BenchmarkDotNet.Reports;
-using BenchmarkDotNet.Running;
+﻿using BenchmarkDotNet.Running;
 
 namespace Mandible.Benchmarks
 {
@@ -7,7 +6,7 @@ namespace Mandible.Benchmarks
     {
         public static void Main(string[] args)
         {
-            Summary summary = BenchmarkRunner.Run<AssetReadBenchmarks>();
+            BenchmarkRunner.Run<InflateBenchmarks>(args: args);
         }
     }
 }
