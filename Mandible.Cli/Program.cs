@@ -79,6 +79,19 @@ namespace Mandible.Cli
             Console.WriteLine("Completed exporting in {0}", stopwatch.Elapsed);
         }
 
+        private static void RunFLUtils(string[] args)
+        {
+            Process? p = Process.Start(new ProcessStartInfo
+            {
+                FileName = "python",
+                Arguments = "C:\\Users\\carls\\source\\repos\\_PS2Modding\\_External\\forgelight-toolbox_inUse\\FLUtils\\fl_pack.py "
+                            + $"unpack -n {args[2]} -o {args[1]} {string.Join(" ", Directory.EnumerateFiles(args[0]))}",
+                CreateNoWindow = false
+            });
+
+            p?.WaitForExit();
+        }
+
         private static async Task PrintPackHeader(Pack2Reader reader, CancellationToken ct = default)
         {
             Pack2Header header = await reader.ReadHeaderAsync(ct).ConfigureAwait(false);
