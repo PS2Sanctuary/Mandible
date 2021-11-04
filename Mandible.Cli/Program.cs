@@ -1,4 +1,5 @@
 ﻿using Mandible.Pack2;
+using Mandible.Services;
 using Mandible.Util;
 using Mandible.Zlib;
 using System;
@@ -67,7 +68,8 @@ namespace Mandible.Cli
             stopwatch.Start();
             Console.WriteLine("Exporting {0}", packFilePath);
 
-            using Pack2Reader reader = new(packFilePath);
+            using RandomAccessDataReaderService dataReader = new(packFilePath);
+            using Pack2Reader reader = new(dataReader);
             outputPath = Path.Combine(outputPath, Path.GetFileNameWithoutExtension(packFilePath));
 
             if (!Directory.Exists(outputPath))

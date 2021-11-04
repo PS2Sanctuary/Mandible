@@ -7,9 +7,17 @@ using System.Threading.Tasks;
 
 namespace Mandible.Services
 {
-    public class RandomAccessDataReaderService : IDataReaderService
+    /// <summary>
+    /// Represents an interface for reading data using the <see cref="RandomAccess"/> API.
+    /// </summary>
+    public class RandomAccessDataReaderService : IDataReaderService, IDisposable
     {
         private readonly SafeFileHandle _fileHandle;
+
+        /// <summary>
+        /// Gets a value indicating whether or not this instance has been disposed.
+        /// </summary>
+        public bool IsDisposed { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RandomAccessDataReaderService"/> class.
@@ -27,14 +35,28 @@ namespace Mandible.Services
             );
         }
 
+        /// <inheritdoc />
         public int Read(Span<byte> buffer, long offset)
         {
             return RandomAccess.Read(_fileHandle, buffer, offset);
         }
 
+        /// <inheritdoc />
         public async ValueTask<int> ReadAsync(Memory<byte> buffer, long offset, CancellationToken ct = default)
         {
             return await RandomAccess.ReadAsync(_fileHandle, buffer, offset, ct).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            if (!IsDisposed)
+            {
+                _fileHandle.Dispose();
+
+                IsDisposed = true;
+                GC.SuppressFinalize(this);
+            }
         }
     }
 }

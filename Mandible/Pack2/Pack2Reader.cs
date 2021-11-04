@@ -1,4 +1,5 @@
-﻿using Mandible.Zlib;
+﻿using Mandible.Abstractions.Services;
+using Mandible.Zlib;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Buffers;
@@ -17,7 +18,7 @@ namespace Mandible.Pack2
         /// </summary>
         protected const uint ASSET_COMPRESSION_INDICATOR = 0xA1B2C3D4;
 
-        protected readonly SafeFileHandle _packFileHandle;
+        protected readonly IDataReaderService _dataReader;
         protected readonly ZngInflater _inflater;
         protected readonly MemoryPool<byte> _memoryPool;
 
@@ -29,16 +30,9 @@ namespace Mandible.Pack2
         /// </summary>
         public bool IsDisposed { get; protected set; }
 
-        public Pack2Reader(string packLocation)
+        public Pack2Reader(IDataReaderService dataReader)
         {
-            _packFileHandle = File.OpenHandle
-            (
-                packLocation,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read,
-                FileOptions.RandomAccess | FileOptions.Asynchronous
-            );
+            _dataReader = dataReader;
 
             _memoryPool = MemoryPool<byte>.Shared;
             _inflater = new ZngInflater();
@@ -57,7 +51,7 @@ namespace Mandible.Pack2
             using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.SIZE);
             Memory<byte> headerBuffer = data.Memory[..Pack2Header.SIZE];
 
-            await RandomAccess.ReadAsync(_packFileHandle, headerBuffer, 0, ct).ConfigureAwait(false);
+            await _dataReader.ReadAsync(headerBuffer, 0, ct).ConfigureAwait(false);
             _cachedHeader = Pack2Header.Deserialise(headerBuffer.Span);
 
             return _cachedHeader.Value;
@@ -75,7 +69,7 @@ namespace Mandible.Pack2
             using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.SIZE);
             Span<byte> headerBuffer = data.Memory[..Pack2Header.SIZE].Span;
 
-            RandomAccess.Read(_packFileHandle, headerBuffer, 0);
+            _dataReader.Read(headerBuffer, 0);
             _cachedHeader = Pack2Header.Deserialise(headerBuffer);
 
             return _cachedHeader.Value;
@@ -98,7 +92,7 @@ namespace Mandible.Pack2
             using IMemoryOwner<byte> data = _memoryPool.Rent(bufferSize);
             Memory<byte> assetHeadersBuffer = data.Memory[..bufferSize];
 
-            await RandomAccess.ReadAsync(_packFileHandle, assetHeadersBuffer, (long)header.AssetMapOffset, ct).ConfigureAwait(false);
+            await _dataReader.ReadAsync(assetHeadersBuffer, (long)header.AssetMapOffset, ct).ConfigureAwait(false);
 
             for (uint i = 0; i < header.AssetCount; i++)
             {
@@ -129,7 +123,7 @@ namespace Mandible.Pack2
             using IMemoryOwner<byte> data = _memoryPool.Rent(bufferSize);
             Span<byte> assetHeadersBuffer = data.Memory[..bufferSize].Span;
 
-            RandomAccess.Read(_packFileHandle, assetHeadersBuffer, (long)header.AssetMapOffset);
+            _dataReader.Read(assetHeadersBuffer, (long)header.AssetMapOffset);
 
             for (uint i = 0; i < header.AssetCount; i++)
             {
@@ -153,7 +147,7 @@ namespace Mandible.Pack2
         public virtual async Task<ReadOnlyMemory<byte>> ReadAssetDataAsync(Asset2Header assetHeader, CancellationToken ct = default)
         {
             Memory<byte> output = new byte[assetHeader.DataSize];
-            await RandomAccess.ReadAsync(_packFileHandle, output, (long)assetHeader.DataOffset, ct).ConfigureAwait(false);
+            await _dataReader.ReadAsync(output, (long)assetHeader.DataOffset, ct).ConfigureAwait(false);
 
             if (assetHeader.ZipStatus == AssetZipDefinition.Zipped || assetHeader.ZipStatus == AssetZipDefinition.ZippedAlternate)
             {
@@ -189,7 +183,7 @@ namespace Mandible.Pack2
         public virtual ReadOnlySpan<byte> ReadAssetData(Asset2Header assetHeader)
         {
             Span<byte> output = new byte[assetHeader.DataSize];
-            RandomAccess.Read(_packFileHandle, output, (long)assetHeader.DataOffset);
+            _dataReader.Read(output, (long)assetHeader.DataOffset);
 
             if (assetHeader.ZipStatus == AssetZipDefinition.Zipped || assetHeader.ZipStatus == AssetZipDefinition.ZippedAlternate)
             {
@@ -223,7 +217,6 @@ namespace Mandible.Pack2
             {
                 if (disposing)
                 {
-                    _packFileHandle.Dispose();
                     _inflater.Dispose();
                 }
 

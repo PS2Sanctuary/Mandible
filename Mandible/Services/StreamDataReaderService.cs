@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace Mandible.Services
 {
-    /// <inheritdoc cref="IDataReaderService"/>
+    /// <summary>
+    /// Represents an interface for reading data from a stream.
+    /// </summary>
     public class StreamDataReaderService : IDataReaderService
     {
         private readonly long _baseOffset;
