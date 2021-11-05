@@ -21,7 +21,7 @@ namespace Mandible.Zng.Exceptions
 
         public override string ToString()
         {
-            return $"ZlibCompressionException | Error: {ErrorCode}, {Message}";
+            return $"ZngCompressionException | Error: {ErrorCode}, {Message}";
         }
     }
 }

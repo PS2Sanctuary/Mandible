@@ -90,7 +90,7 @@ namespace Mandible.Zng.Deflate
 
             CompressionResult initResult = _DeflateInit(_streamPtr, compressionLevel, Zlib._Version(), sizeof(ZngStream));
             if (initResult is not CompressionResult.OK)
-                GenerateCompressionError(initResult, "Failed to initialize");
+                GenerateCompressionError(initResult, "Failed to initialize deflater");
         }
 
         /// <summary>
@@ -108,16 +108,13 @@ namespace Mandible.Zng.Deflate
             {
                 fixed (byte* nextOut = output)
                 {
-                    CompressionResult deflateResult = CompressionResult.StreamEnd;
-
                     (*_streamPtr).NextIn = nextIn;
                     (*_streamPtr).AvailableIn = (uint)input.Length;
 
                     (*_streamPtr).NextOut = nextOut;
                     (*_streamPtr).AvailableOut = (uint)output.Length;
 
-                    deflateResult = _Deflate(_streamPtr, DeflateFlushMethod.Finish);
-
+                    CompressionResult deflateResult = _Deflate(_streamPtr, DeflateFlushMethod.Finish);
                     if (deflateResult is not CompressionResult.StreamEnd)
                         GenerateCompressionError(deflateResult, "Failed to inflate");
                 }
@@ -144,7 +141,7 @@ namespace Mandible.Zng.Deflate
 
             CompressionResult result = _DeflateReset(_streamPtr);
             if (result is not CompressionResult.OK)
-                GenerateCompressionError(result, "Failed to reset inflater");
+                GenerateCompressionError(result, "Failed to reset deflater");
         }
 
         /// <inheritdoc />

@@ -1,7 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using ICSharpCode.SharpZipLib.Zip.Compression;
 using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
-using Mandible.Zlib;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Buffers.Binary;

@@ -10,10 +10,4 @@
     <ProjectReference Include="..\Mandible.Zng\Mandible.Zng.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="zlib-ng2.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
