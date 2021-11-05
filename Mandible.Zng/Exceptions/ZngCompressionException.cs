@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Mandible.Zng.Core;
+using System;
 
-namespace Mandible.Zlib
+namespace Mandible.Zng.Exceptions
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "RCS1194:Implement exception constructors.")]
     public class ZngCompressionException : Exception

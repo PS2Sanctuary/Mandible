@@ -1,6 +1,5 @@
 ﻿using Mandible.Abstractions.Services;
-using Mandible.Zlib;
-using Microsoft.Win32.SafeHandles;
+using Mandible.Zng.Inflate;
 using System;
 using System.Buffers;
 using System.Buffers.Binary;
@@ -156,7 +155,12 @@ namespace Mandible.Pack2
                 uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(output[4..8].Span);
 
                 if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
-                    throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
+                {
+                    throw new InvalidDataException
+                    (
+                        "The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data."
+                    );
+                }
 
                 output = await Task.Run
                 (
@@ -192,7 +196,12 @@ namespace Mandible.Pack2
                 uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(output[4..8]);
 
                 if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
-                    throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
+                {
+                    throw new InvalidDataException
+                    (
+                        "The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data."
+                    );
+                }
 
                 Span<byte> decompData = new byte[decompressedLength];
 
@@ -205,6 +214,7 @@ namespace Mandible.Pack2
             return output;
         }
 
+        /// <inheritdoc />
         public void Dispose()
         {
             Dispose(disposing: true);

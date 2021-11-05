@@ -1,7 +1,6 @@
 ﻿using Mandible.Pack2;
 using Mandible.Services;
 using Mandible.Util;
-using Mandible.Zlib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,7 +18,7 @@ namespace Mandible.Cli
             CancellationToken ct = cts.Token;
             Console.CancelKeyPress += (_, __) => cts.Cancel();
 
-            Console.WriteLine("zlib-ng version: {0}", Zng.Version());
+            Console.WriteLine("zlib-ng version: {0}", Zng.Core.Zlib.Version());
 
             if (args.Length != 3)
             {

@@ -1,11 +1,17 @@
-﻿using System;
+﻿using Mandible.Zng.Core;
+using Mandible.Zng.Exceptions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Mandible.Zlib
+namespace Mandible.Zng.Inflate
 {
     public sealed unsafe partial class ZngInflater
     {
-        public const string LibraryName = Zng.LibraryName;
+        public const string LibraryName = Zlib.LibraryName;
 
         /// <summary>
         /// Initializes the internal stream state for decompression.
@@ -23,7 +29,7 @@ namespace Mandible.Zlib
         private static extern CompressionResult _InflateInit(ZngStream* stream, byte* version, int streamSize);
 
         [DllImport(LibraryName, EntryPoint = "zng_inflate")]
-        private static extern CompressionResult _Inflate(ZngStream* stream, FlushType flushMethod);
+        private static extern CompressionResult _Inflate(ZngStream* stream, InflateFlushMethod flushMethod);
 
         /// <summary>
         /// Frees any dynamically allocated data structures for the given stream.
@@ -80,7 +86,7 @@ namespace Mandible.Zlib
             _streamPtr = (ZngStream*)Marshal.AllocHGlobal(sizeof(ZngStream));
             Marshal.StructureToPtr(stream, (IntPtr)_streamPtr, false);
 
-            CompressionResult initResult = _InflateInit(_streamPtr, Zng._Version(), sizeof(ZngStream));
+            CompressionResult initResult = _InflateInit(_streamPtr, Zlib._Version(), sizeof(ZngStream));
             if (initResult is not CompressionResult.OK)
                 GenerateCompressionError(initResult, "Failed to initialize");
         }
@@ -107,7 +113,7 @@ namespace Mandible.Zlib
                     (*_streamPtr).NextOut = nextOut;
                     (*_streamPtr).AvailableOut = (uint)output.Length;
 
-                    inflateResult =  _Inflate(_streamPtr, FlushType.Finish);
+                    inflateResult = _Inflate(_streamPtr, InflateFlushMethod.Finish);
 
                     if (inflateResult is not CompressionResult.StreamEnd)
                         GenerateCompressionError(inflateResult, "Failed to inflate");
@@ -129,13 +135,9 @@ namespace Mandible.Zlib
             (*_streamPtr).NextOut = (byte*)IntPtr.Zero;
             (*_streamPtr).AvailableOut = 0;
 
-            CompressionResult result = _InflateEnd(_streamPtr);
+            CompressionResult result = _InflateReset(_streamPtr);
             if (result is not CompressionResult.OK)
-                GenerateCompressionError(result, "Reset: Failed to end inflater.");
-
-            result = _InflateInit(_streamPtr, Zng._Version(), sizeof(ZngStream));
-            if (result is not CompressionResult.OK)
-                GenerateCompressionError(result, "Reset: Failed to re-initialize inflater.");
+                GenerateCompressionError(result, "Failed to reset inflater");
         }
 
         /// <inheritdoc />
@@ -155,7 +157,7 @@ namespace Mandible.Zlib
 
         private void Checks()
         {
-            Zng.ThrowIfInvalidVersion();
+            Zlib.ThrowIfInvalidVersion();
 
             if (IsDisposed)
                 throw new ObjectDisposedException(nameof(ZngInflater));

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Mandible.Zlib
+namespace Mandible.Zng.Exceptions
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "RCS1194:Implement exception constructors.")]
     public class ZngVersionException : Exception
@@ -8,9 +8,9 @@ namespace Mandible.Zlib
         public byte ExpectedMajorVersion { get; }
         public string? ActualVersion { get; }
 
-        public ZngVersionException(byte expectedMajorVersoin, string? actualVersion)
+        public ZngVersionException(byte expectedMajorVersion, string? actualVersion)
         {
-            ExpectedMajorVersion = expectedMajorVersoin;
+            ExpectedMajorVersion = expectedMajorVersion;
             ActualVersion = actualVersion;
         }
 

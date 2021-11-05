@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Mandible.Zng.Exceptions;
+using System;
 using System.Runtime.InteropServices;
 
-namespace Mandible.Zlib
+namespace Mandible.Zng.Core
 {
-    public sealed unsafe partial class Zng
+    public sealed unsafe partial class Zlib
     {
         /// <summary>
         /// Gets the major version of zlib-ng that this wrapper was based on.
@@ -19,7 +20,7 @@ namespace Mandible.Zlib
         internal static extern byte* _Version();
     }
 
-    public sealed unsafe partial class Zng
+    public sealed unsafe partial class Zlib
     {
         public static string? Version()
             => Marshal.PtrToStringAnsi((IntPtr)_Version());

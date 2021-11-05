@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Mandible.Zlib
+namespace Mandible.Zng.Core
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct InternalState
-    {
-    }
-
+    /// <summary>
+    /// Represents the stream used by the deflate and inflate algorithms.
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct ZngStream
     {
@@ -49,7 +47,7 @@ namespace Mandible.Zlib
         /// <summary>
         /// Not visible by applications.
         /// </summary>
-        public InternalState* State;
+        public IntPtr InternalState;
 
         /// <summary>
         /// Use to allocate the internal state.
@@ -69,9 +67,10 @@ namespace Mandible.Zlib
         public IntPtr Opaque;
 
         /// <summary>
-        /// Best guess about the data type, or the decoding state for inflate.
+        /// Deflate: Best guess about the data type (<see cref="Deflate.DeflateDataType"/>.
+        /// Inflate: The decoding state when <see cref="Inflate.InflateFlushMethod.Block"/> or <see cref="Inflate.InflateFlushMethod.Trees"/> is used.
         /// </summary>
-        public DeflateDataType DataType;
+        public int DataType;
 
         /// <summary>
         /// Adler-32 or CRC-32 value of the uncompressed data.
