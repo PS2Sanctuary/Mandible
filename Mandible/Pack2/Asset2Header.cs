@@ -6,9 +6,9 @@ namespace Mandible.Pack2
     public readonly struct Asset2Header
     {
         /// <summary>
-        /// Gets the size in bytes of the asset header.
+        /// Gets the size of an <see cref="Asset2Header"/> as stored within a pack.
         /// </summary>
-        public const int SIZE = 32;
+        public const int Size = 32;
 
         /// <summary>
         /// Gets the CRC-64 hash of the uppercase file name.
@@ -52,26 +52,34 @@ namespace Mandible.Pack2
             DataHash = dataHash;
         }
 
-        public ReadOnlySpan<byte> Serialise()
+        /// <summary>
+        /// Serializes this <see cref="Asset2Header"/> to a byte buffer.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        public void Serialize(Span<byte> buffer)
         {
-            Span<byte> dataSpan = new(new byte[32]);
+            if (buffer.Length < Size)
+                throw new ArgumentException($"Buffer must be at least {Size} bytes", nameof(buffer));
 
-            BinaryPrimitives.WriteUInt64LittleEndian(dataSpan[0..8], NameHash);
-            BinaryPrimitives.WriteUInt64LittleEndian(dataSpan[8..16], DataOffset);
-            BinaryPrimitives.WriteUInt64LittleEndian(dataSpan[16..24], DataSize);
-            BinaryPrimitives.WriteUInt32LittleEndian(dataSpan[24..28], (uint)ZipStatus);
-            BinaryPrimitives.WriteUInt32LittleEndian(dataSpan[28..32], DataHash);
-
-            return dataSpan;
+            BinaryPrimitives.WriteUInt64LittleEndian(buffer[0..8], NameHash);
+            BinaryPrimitives.WriteUInt64LittleEndian(buffer[8..16], DataOffset);
+            BinaryPrimitives.WriteUInt64LittleEndian(buffer[16..24], DataSize);
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer[24..28], (uint)ZipStatus);
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer[28..32], DataHash);
         }
 
-        public static Asset2Header Deserialise(ReadOnlySpan<byte> data)
+        /// <summary>
+        /// Deserializes a buffer to a <see cref="Asset2Header"/> instance.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        /// <returns>An <see cref="Asset2Header"/>.</returns>
+        public static Asset2Header Deserialize(ReadOnlySpan<byte> buffer)
         {
-            ulong nameHash = BinaryPrimitives.ReadUInt64LittleEndian(data[0..8]);
-            ulong dataOffset = BinaryPrimitives.ReadUInt64LittleEndian(data[8..16]);
-            ulong dataSize = BinaryPrimitives.ReadUInt64LittleEndian(data[16..24]);
-            AssetZipDefinition isZipped = (AssetZipDefinition)BinaryPrimitives.ReadUInt32LittleEndian(data[24..28]);
-            uint dataHash = BinaryPrimitives.ReadUInt32LittleEndian(data[28..32]);
+            ulong nameHash = BinaryPrimitives.ReadUInt64LittleEndian(buffer[0..8]);
+            ulong dataOffset = BinaryPrimitives.ReadUInt64LittleEndian(buffer[8..16]);
+            ulong dataSize = BinaryPrimitives.ReadUInt64LittleEndian(buffer[16..24]);
+            AssetZipDefinition isZipped = (AssetZipDefinition)BinaryPrimitives.ReadUInt32LittleEndian(buffer[24..28]);
+            uint dataHash = BinaryPrimitives.ReadUInt32LittleEndian(buffer[28..32]);
 
             return new Asset2Header(nameHash, dataOffset, dataSize, isZipped, dataHash);
         }

@@ -19,14 +19,16 @@ namespace Mandible.Tests.Pack2Tests
         [Fact]
         public void TestDeserialise()
         {
-            Asset2Header header = Asset2Header.Deserialise(EXPECTED_BYTES);
+            Asset2Header header = Asset2Header.Deserialize(EXPECTED_BYTES);
             Assert.Equal(header, EXPECTED_HEADER);
         }
 
         [Fact]
         public void TestSerialise()
         {
-            ReadOnlySpan<byte> bytes = EXPECTED_HEADER.Serialise();
+            Span<byte> bytes = stackalloc byte[Asset2Header.Size];
+            EXPECTED_HEADER.Serialize(bytes);
+
             Assert.Equal(bytes.ToArray(), EXPECTED_BYTES);
         }
     }

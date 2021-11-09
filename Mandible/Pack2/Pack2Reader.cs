@@ -47,8 +47,8 @@ namespace Mandible.Pack2
             if (_cachedHeader is not null)
                 return _cachedHeader.Value;
 
-            using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.SIZE);
-            Memory<byte> headerBuffer = data.Memory[..Pack2Header.SIZE];
+            using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.Size);
+            Memory<byte> headerBuffer = data.Memory[..Pack2Header.Size];
 
             await _dataReader.ReadAsync(headerBuffer, 0, ct).ConfigureAwait(false);
             _cachedHeader = Pack2Header.Deserialise(headerBuffer.Span);
@@ -65,8 +65,8 @@ namespace Mandible.Pack2
             if (_cachedHeader is not null)
                 return _cachedHeader.Value;
 
-            using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.SIZE);
-            Span<byte> headerBuffer = data.Memory[..Pack2Header.SIZE].Span;
+            using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.Size);
+            Span<byte> headerBuffer = data.Memory[..Pack2Header.Size].Span;
 
             _dataReader.Read(headerBuffer, 0);
             _cachedHeader = Pack2Header.Deserialise(headerBuffer);
@@ -87,7 +87,7 @@ namespace Mandible.Pack2
             Pack2Header header = await ReadHeaderAsync(ct).ConfigureAwait(false);
             List<Asset2Header> assetHeaders = new();
 
-            int bufferSize = (int)header.AssetCount * Asset2Header.SIZE;
+            int bufferSize = (int)header.AssetCount * Asset2Header.Size;
             using IMemoryOwner<byte> data = _memoryPool.Rent(bufferSize);
             Memory<byte> assetHeadersBuffer = data.Memory[..bufferSize];
 
@@ -95,10 +95,10 @@ namespace Mandible.Pack2
 
             for (uint i = 0; i < header.AssetCount; i++)
             {
-                int baseOffset = (int)i * Asset2Header.SIZE;
-                Memory<byte> assetHeaderData = assetHeadersBuffer.Slice(baseOffset, Asset2Header.SIZE);
+                int baseOffset = (int)i * Asset2Header.Size;
+                Memory<byte> assetHeaderData = assetHeadersBuffer.Slice(baseOffset, Asset2Header.Size);
 
-                Asset2Header assetHeader = Asset2Header.Deserialise(assetHeaderData.Span);
+                Asset2Header assetHeader = Asset2Header.Deserialize(assetHeaderData.Span);
                 assetHeaders.Add(assetHeader);
             }
 
@@ -118,7 +118,7 @@ namespace Mandible.Pack2
             Pack2Header header = ReadHeader();
             List<Asset2Header> assetHeaders = new();
 
-            int bufferSize = (int)header.AssetCount * Asset2Header.SIZE;
+            int bufferSize = (int)header.AssetCount * Asset2Header.Size;
             using IMemoryOwner<byte> data = _memoryPool.Rent(bufferSize);
             Span<byte> assetHeadersBuffer = data.Memory[..bufferSize].Span;
 
@@ -126,10 +126,10 @@ namespace Mandible.Pack2
 
             for (uint i = 0; i < header.AssetCount; i++)
             {
-                int baseOffset = (int)i * Asset2Header.SIZE;
-                Span<byte> assetHeaderData = assetHeadersBuffer.Slice(baseOffset, Asset2Header.SIZE);
+                int baseOffset = (int)i * Asset2Header.Size;
+                Span<byte> assetHeaderData = assetHeadersBuffer.Slice(baseOffset, Asset2Header.Size);
 
-                Asset2Header assetHeader = Asset2Header.Deserialise(assetHeaderData);
+                Asset2Header assetHeader = Asset2Header.Deserialize(assetHeaderData);
                 assetHeaders.Add(assetHeader);
             }
 

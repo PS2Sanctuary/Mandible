@@ -9,9 +9,9 @@ namespace Mandible.Pack2
     public readonly struct Pack2Header
     {
         /// <summary>
-        /// Gets the size in bytes of the pack2 header.
+        /// Gets the size of a <see cref="Pack2Header"/> as stored within a pack.
         /// </summary>
-        public const int SIZE = 160;
+        public const int Size = 160;
 
         /// <summary>
         /// Gets the magic string of the pack2 file type.
@@ -68,25 +68,29 @@ namespace Mandible.Pack2
             Checksum = checkSum;
         }
 
-        public ReadOnlySpan<byte> Serialise()
+        public unsafe void Serialise(Span<byte> buffer)
         {
-            byte[] data = new byte[32 + Checksum.Length];
-            Span<byte> dataSpan = data.AsSpan();
+            if (buffer.Length < Size)
+                throw new ArgumentException($"Buffer must be at least {Size} bytes", nameof(buffer));
 
             // Write the magic bytes
-            data[0] = 0x50;
-            data[1] = 0x41;
-            data[2] = 0x4b;
-            data[3] = Version;
+            buffer[0] = 0x50;
+            buffer[1] = 0x41;
+            buffer[2] = 0x4b;
+            buffer[3] = Version;
 
-            BinaryPrimitives.WriteUInt32LittleEndian(dataSpan[4..8], AssetCount);
-            BinaryPrimitives.WriteUInt64LittleEndian(dataSpan[8..16], Length);
-            BinaryPrimitives.WriteUInt64LittleEndian(dataSpan[16..24], AssetMapOffset);
-            BinaryPrimitives.WriteUInt64LittleEndian(dataSpan[24..32], Unknown);
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer[4..8], AssetCount);
+            BinaryPrimitives.WriteUInt64LittleEndian(buffer[8..16], Length);
+            BinaryPrimitives.WriteUInt64LittleEndian(buffer[16..24], AssetMapOffset);
+            BinaryPrimitives.WriteUInt64LittleEndian(buffer[24..32], Unknown);
 
-            Buffer.BlockCopy(Checksum, 0, data, 32, Checksum.Length);
-
-            return dataSpan;
+            fixed (byte* checksumPtr = Checksum)
+            {
+                fixed (byte* bufferPtr = buffer[32..])
+                {
+                    Buffer.MemoryCopy(checksumPtr, bufferPtr, Checksum.LongLength, Checksum.LongLength);
+                }
+            }
         }
 
         public static Pack2Header Deserialise(ReadOnlySpan<byte> data)
