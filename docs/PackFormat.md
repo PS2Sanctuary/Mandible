@@ -7,7 +7,7 @@
 
 ### Description
 
-Pack files were the method of storing asset data for games that run on the ForgeLight engine. This format has since been replaced by [Pack2](pack2.md).
+Pack files were the method of storing asset data for games that run on the ForgeLight engine. This format has since been replaced by [Pack2](Pack2Format.md).
 
 ### Format
 

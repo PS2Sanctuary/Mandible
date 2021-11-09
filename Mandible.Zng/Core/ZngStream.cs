@@ -80,6 +80,6 @@ namespace Mandible.Zng.Core
         /// <summary>
         /// Reserved for future use.
         /// </summary>
-        public nuint Reserved;
+        public CULong Reserved;
     }
 }

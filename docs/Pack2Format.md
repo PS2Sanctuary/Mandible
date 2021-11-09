@@ -7,7 +7,7 @@
 
 ### Description
 
-Pack2 files store asset data for games that run on the ForgeLight engine. This format supersedes the [Pack](pack.md) format, and includes better support for detecting modified game files. Furthermore, some data is compressed using `zlib`. It was introduced in PlanetSide 2's DX11 update in April 2019.
+Pack2 files store asset data for games that run on the ForgeLight engine. This format supersedes the [Pack](PackFormat.md) format, and includes better support for detecting modified game files. Furthermore, some data is compressed using `zlib`. It was introduced in PlanetSide 2's DX11 update in April 2019.
 
 ### Format
 
