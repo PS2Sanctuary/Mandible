@@ -100,7 +100,7 @@ namespace Mandible.Zng.Deflate
         /// <param name="output">The output buffer.</param>
         /// <returns>The number of deflated bytes that were produced.</returns>
         /// <exception cref="ZngCompressionException"></exception>
-        public uint Deflate(ReadOnlySpan<byte> input, Span<byte> output)
+        public nuint Deflate(ReadOnlySpan<byte> input, Span<byte> output)
         {
             Checks();
 
@@ -120,7 +120,7 @@ namespace Mandible.Zng.Deflate
                 }
             }
 
-            return (*_streamPtr).TotalOut.ToUInt32();
+            return (*_streamPtr).TotalOut;
         }
 
         /// <summary>

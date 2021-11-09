@@ -16,7 +16,7 @@ namespace Mandible.Tests.Zng
             Span<byte> inflated = stackalloc byte[actual.Length];
 
             using ZngDeflater deflater = new();
-            uint amount = deflater.Deflate(actual, deflated);
+            nuint amount = deflater.Deflate(actual, deflated);
             Assert.NotEqual(0u, amount);
 
             using ZngInflater inflater = new();

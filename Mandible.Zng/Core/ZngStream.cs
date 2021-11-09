@@ -22,7 +22,7 @@ namespace Mandible.Zng.Core
         /// <summary>
         /// The total number of bytes read so far.
         /// </summary>
-        public UIntPtr TotalIn;
+        public nuint TotalIn;
 
         /// <summary>
         /// The next output byte.
@@ -37,7 +37,7 @@ namespace Mandible.Zng.Core
         /// <summary>
         /// Total number of bytes output so far.
         /// </summary>
-        public UIntPtr TotalOut;
+        public nuint TotalOut;
 
         /// <summary>
         /// The last error message, or null if not applicable.
@@ -80,6 +80,6 @@ namespace Mandible.Zng.Core
         /// <summary>
         /// Reserved for future use.
         /// </summary>
-        public ulong Reserved;
+        public nuint Reserved;
     }
 }
