@@ -11,7 +11,7 @@ namespace Mandible.Tests.UtilTests
             const string name = "{NAMELIST}";
             const ulong nameHash = 0x4137cc65bd97fd30;
 
-            Assert.Equal(nameHash, PackCrc.Calculate64(name));
+            Assert.Equal(nameHash, PackCrc64.Calculate(name));
         }
     }
 }

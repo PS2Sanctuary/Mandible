@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Mandible.Util
 {
     /// <summary>
-    /// Contains functions to calculate CRC hashes in a manner suitable for pack files.
+    /// Contains functions to calculate CRC-64 hashes in a manner suitable for pack files.
     /// </summary>
-    public static class PackCrc
+    public static class PackCrc64
     {
         /// <summary>
         /// Calculates a CRC-64 hash of the given characters.
         /// </summary>
         /// <param name="characters">The characters to hash.</param>
         /// <returns>The CRC-64 hash.</returns>
-        public static ulong Calculate64(ReadOnlySpan<char> characters)
+        public static ulong Calculate(ReadOnlySpan<char> characters)
         {
             ulong hash = ulong.MaxValue;
 
@@ -32,15 +31,12 @@ namespace Mandible.Util
         /// </summary>
         /// <param name="nameList">The strings to hash.</param>
         /// <returns>A dictionary mapping the hash to its original string.</returns>
-        public static Dictionary<ulong, string> HashStrings64(IEnumerable<string> nameList)
+        public static Dictionary<ulong, string> HashStrings(IEnumerable<string> nameList)
         {
             Dictionary<ulong, string> hashedNamePairs = new();
 
             foreach (string element in nameList)
-            {
-                if (!hashedNamePairs.TryAdd(Calculate64(element), element))
-                    Debug.WriteLine("Could not add a hash of the given name to the list, as it was already present: " + element);
-            }
+                hashedNamePairs.TryAdd(Calculate(element), element);
 
             return hashedNamePairs;
         }

@@ -102,7 +102,7 @@ namespace Mandible.Pack2
             CancellationToken ct = default
         )
         {
-            Dictionary<ulong, string> hashedNamePairs = nameList is null ? new() : PackCrc.HashStrings64(nameList);
+            Dictionary<ulong, string> hashedNamePairs = nameList is null ? new() : PackCrc64.HashStrings(nameList);
             await ExportAllAsync(reader, outputPath, hashedNamePairs, ct).ConfigureAwait(false);
         }
 
@@ -119,7 +119,7 @@ namespace Mandible.Pack2
             IEnumerable<string>? nameList = null
         )
         {
-            Dictionary<ulong, string> hashedNamePairs = nameList is null ? new() : PackCrc.HashStrings64(nameList);
+            Dictionary<ulong, string> hashedNamePairs = nameList is null ? new() : PackCrc64.HashStrings(nameList);
             ExportAll(reader, outputPath, hashedNamePairs);
         }
 
@@ -207,7 +207,7 @@ namespace Mandible.Pack2
             CancellationToken ct = default
         )
         {
-            Dictionary<ulong, string> hashedNamePairs = PackCrc.HashStrings64(nameList);
+            Dictionary<ulong, string> hashedNamePairs = PackCrc64.HashStrings(nameList);
             await ExportNamedAsync(reader, outputPath, hashedNamePairs, ct).ConfigureAwait(false);
         }
 
@@ -224,7 +224,7 @@ namespace Mandible.Pack2
             IEnumerable<string> nameList
         )
         {
-            Dictionary<ulong, string> hashedNamePairs = PackCrc.HashStrings64(nameList);
+            Dictionary<ulong, string> hashedNamePairs = PackCrc64.HashStrings(nameList);
             ExportNamed(reader, outputPath, hashedNamePairs);
         }
     }

@@ -39,7 +39,7 @@ namespace Mandible.Cli
             stopwatch.Start();
 
             string[] namelist = await File.ReadAllLinesAsync(args[2], ct).ConfigureAwait(false);
-            Dictionary<ulong, string> hashedNamePairs = PackCrc.HashStrings64(namelist);
+            Dictionary<ulong, string> hashedNamePairs = PackCrc64.HashStrings(namelist);
 
             stopwatch.Stop();
             Console.WriteLine("Generated name hashes in {0}", stopwatch.Elapsed);
@@ -116,7 +116,7 @@ namespace Mandible.Cli
                 for (int j = -64; j < 64; j += 16)
                 {
                     string name = $"Amerish_Tile_{ GetTileCoordinateString(i) }_{ GetTileCoordinateString(j) }_LOD2.dds";
-                    ulong hash = PackCrc.Calculate64(name);
+                    ulong hash = PackCrc64.Calculate(name);
                     tileNames.Add(hash, name);
                 }
             }
