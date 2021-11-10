@@ -1,51 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Mandible.Util
+namespace Mandible.Util;
+
+/// <summary>
+/// Contains functions to calculate CRC-64 hashes in a manner suitable for pack files.
+/// </summary>
+public static class PackCrc64
 {
     /// <summary>
-    /// Contains functions to calculate CRC-64 hashes in a manner suitable for pack files.
+    /// Calculates a CRC-64 hash of the given characters.
     /// </summary>
-    public static class PackCrc64
+    /// <param name="characters">The characters to hash.</param>
+    /// <returns>The CRC-64 hash.</returns>
+    public static ulong Calculate(ReadOnlySpan<char> characters)
     {
-        /// <summary>
-        /// Calculates a CRC-64 hash of the given characters.
-        /// </summary>
-        /// <param name="characters">The characters to hash.</param>
-        /// <returns>The CRC-64 hash.</returns>
-        public static ulong Calculate(ReadOnlySpan<char> characters)
+        ulong hash = ulong.MaxValue;
+
+        foreach (char c in characters)
         {
-            ulong hash = ulong.MaxValue;
-
-            foreach (char c in characters)
-            {
-                byte tableIndex = (byte)((byte)hash ^ char.ToUpperInvariant(c));
-                hash = CRC64_TABLE[tableIndex] ^ hash >> 8;
-            }
-
-            return hash ^ ulong.MaxValue;
+            byte tableIndex = (byte)((byte)hash ^ char.ToUpperInvariant(c));
+            hash = CRC64_TABLE[tableIndex] ^ hash >> 8;
         }
 
-        /// <summary>
-        /// Hashes a list of strings using the CRC-64 algorithm. Duplicate entries will not be added to the resulting dictionary.
-        /// </summary>
-        /// <param name="nameList">The strings to hash.</param>
-        /// <returns>A dictionary mapping the hash to its original string.</returns>
-        public static Dictionary<ulong, string> HashStrings(IEnumerable<string> nameList)
-        {
-            Dictionary<ulong, string> hashedNamePairs = new();
+        return hash ^ ulong.MaxValue;
+    }
 
-            foreach (string element in nameList)
-                hashedNamePairs.TryAdd(Calculate(element), element);
+    /// <summary>
+    /// Hashes a list of strings using the CRC-64 algorithm. Duplicate entries will not be added to the resulting dictionary.
+    /// </summary>
+    /// <param name="nameList">The strings to hash.</param>
+    /// <returns>A dictionary mapping the hash to its original string.</returns>
+    public static Dictionary<ulong, string> HashStrings(IEnumerable<string> nameList)
+    {
+        Dictionary<ulong, string> hashedNamePairs = new();
 
-            return hashedNamePairs;
-        }
+        foreach (string element in nameList)
+            hashedNamePairs.TryAdd(Calculate(element), element);
 
-        /// <summary>
-        /// "Jones" coefficient table for our CRC-64 algorithm.
-        /// </summary>
-        private static readonly ulong[] CRC64_TABLE = new ulong[]
-        {
+        return hashedNamePairs;
+    }
+
+    /// <summary>
+    /// "Jones" coefficient table for our CRC-64 algorithm.
+    /// </summary>
+    private static readonly ulong[] CRC64_TABLE = new ulong[]
+    {
             0x0000000000000000, 0x7ad870c830358979,
             0xf5b0e190606b12f2, 0x8f689158505e9b8b,
             0xc038e5739841b68f, 0xbae095bba8743ff6,
@@ -174,6 +174,5 @@ namespace Mandible.Util
             0x935745fc4798b8de, 0xe98f353477ad31a7,
             0xa6df411fbfb21ca3, 0xdc0731d78f8795da,
             0x536fa08fdfd90e51, 0x29b7d047efec8728
-        };
-    }
+    };
 }

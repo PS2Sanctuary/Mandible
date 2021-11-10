@@ -5,58 +5,57 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Mandible.Services
+namespace Mandible.Services;
+
+/// <summary>
+/// Represents an interface for reading data using the <see cref="RandomAccess"/> API.
+/// </summary>
+public class RandomAccessDataReaderService : IDataReaderService, IDisposable
 {
+    private readonly SafeFileHandle _fileHandle;
+
     /// <summary>
-    /// Represents an interface for reading data using the <see cref="RandomAccess"/> API.
+    /// Gets a value indicating whether or not this instance has been disposed.
     /// </summary>
-    public class RandomAccessDataReaderService : IDataReaderService, IDisposable
+    public bool IsDisposed { get; private set; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RandomAccessDataReaderService"/> class.
+    /// </summary>
+    /// <param name="filePath">The path to the file to read from.</param>
+    public RandomAccessDataReaderService(string filePath)
     {
-        private readonly SafeFileHandle _fileHandle;
+        _fileHandle = File.OpenHandle
+        (
+            filePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            FileOptions.RandomAccess | FileOptions.Asynchronous
+        );
+    }
 
-        /// <summary>
-        /// Gets a value indicating whether or not this instance has been disposed.
-        /// </summary>
-        public bool IsDisposed { get; private set; }
+    /// <inheritdoc />
+    public int Read(Span<byte> buffer, long offset)
+    {
+        return RandomAccess.Read(_fileHandle, buffer, offset);
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RandomAccessDataReaderService"/> class.
-        /// </summary>
-        /// <param name="filePath">The path to the file to read from.</param>
-        public RandomAccessDataReaderService(string filePath)
+    /// <inheritdoc />
+    public async ValueTask<int> ReadAsync(Memory<byte> buffer, long offset, CancellationToken ct = default)
+    {
+        return await RandomAccess.ReadAsync(_fileHandle, buffer, offset, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (!IsDisposed)
         {
-            _fileHandle = File.OpenHandle
-            (
-                filePath,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read,
-                FileOptions.RandomAccess | FileOptions.Asynchronous
-            );
-        }
+            _fileHandle.Dispose();
 
-        /// <inheritdoc />
-        public int Read(Span<byte> buffer, long offset)
-        {
-            return RandomAccess.Read(_fileHandle, buffer, offset);
-        }
-
-        /// <inheritdoc />
-        public async ValueTask<int> ReadAsync(Memory<byte> buffer, long offset, CancellationToken ct = default)
-        {
-            return await RandomAccess.ReadAsync(_fileHandle, buffer, offset, ct).ConfigureAwait(false);
-        }
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            if (!IsDisposed)
-            {
-                _fileHandle.Dispose();
-
-                IsDisposed = true;
-                GC.SuppressFinalize(this);
-            }
+            IsDisposed = true;
+            GC.SuppressFinalize(this);
         }
     }
 }

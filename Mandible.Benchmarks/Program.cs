@@ -1,12 +1,11 @@
 ﻿using BenchmarkDotNet.Running;
 
-namespace Mandible.Benchmarks
+namespace Mandible.Benchmarks;
+
+public static class Program
 {
-    public static class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
-        {
-            BenchmarkRunner.Run<InflateBenchmarks>(args: args);
-        }
+        BenchmarkRunner.Run<InflateBenchmarks>(args: args);
     }
 }
