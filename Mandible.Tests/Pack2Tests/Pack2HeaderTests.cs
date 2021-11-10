@@ -34,13 +34,13 @@ public class Pack2HeaderTests
     {
         Pack2Header header = Pack2Header.Deserialize(EXPECTED_BYTES);
 
-        Assert.Equal(header.Magic, EXPECTED_HEADER.Magic);
-        Assert.Equal(header.Version, EXPECTED_HEADER.Version);
-        Assert.Equal(header.AssetCount, EXPECTED_HEADER.AssetCount);
-        Assert.Equal(header.Length, EXPECTED_HEADER.Length);
-        Assert.Equal(header.AssetMapOffset, EXPECTED_HEADER.AssetMapOffset);
-        Assert.Equal(header.Unknown, EXPECTED_HEADER.Unknown);
-        Assert.Equal(header.Checksum, EXPECTED_HEADER.Checksum);
+        Assert.Equal(EXPECTED_HEADER.Magic, header.Magic);
+        Assert.Equal(EXPECTED_HEADER.Version, header.Version);
+        Assert.Equal(EXPECTED_HEADER.AssetCount, header.AssetCount);
+        Assert.Equal(EXPECTED_HEADER.Length, header.Length);
+        Assert.Equal(EXPECTED_HEADER.AssetMapOffset, header.AssetMapOffset);
+        Assert.Equal(EXPECTED_HEADER.Unknown, header.Unknown);
+        Assert.Equal(EXPECTED_HEADER.Checksum, header.Checksum);
     }
 
     [Fact]

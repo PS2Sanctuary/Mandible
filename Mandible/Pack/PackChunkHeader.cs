@@ -39,7 +39,10 @@ public class PackChunkHeader
     /// </summary>
     /// <returns>The size in bytes of this <see cref="PackChunkHeader"/>.</returns>
     public int GetSize()
-        => 16 + AssetHeaders.Sum(h => h.GetSize());
+        => GetSize(AssetHeaders);
+
+    public static int GetSize(IEnumerable<AssetHeader> assetHeaders)
+        => 8 + assetHeaders.Sum(h => h.GetSize());
 
     /// <summary>
     /// Serializes this <see cref="PackChunkHeader"/> to a byte buffer.
@@ -76,6 +79,7 @@ public class PackChunkHeader
         for (int i = 0; i < assetCount; i++)
         {
             AssetHeader header = AssetHeader.Deserialize(buffer[index..]);
+            assetHeaders.Add(header);
             index += header.GetSize();
         }
 

@@ -17,7 +17,7 @@ public class AssetHeader
     /// <summary>
     /// Gets the byte offset into the pack at which the asset data is stored.
     /// </summary>
-    public uint AssetOffset { get; }
+    public uint DataOffset { get; }
 
     /// <summary>
     /// Gets the length of the packed data.
@@ -33,13 +33,13 @@ public class AssetHeader
     /// Initializes a new instance of the <see cref="AssetHeader"/> class.
     /// </summary>
     /// <param name="name">The name of the asset.</param>
-    /// <param name="assetOffset">The byte offset into the pack at which the asset data is stored.</param>
+    /// <param name="dataOffset">The byte offset into the pack at which the asset data is stored.</param>
     /// <param name="dataLength">The length of the packed data.</param>
     /// <param name="checksum">The CRC-32 checksum of the packed data.</param>
-    public AssetHeader(string name, uint assetOffset, uint dataLength, uint checksum)
+    public AssetHeader(string name, uint dataOffset, uint dataLength, uint checksum)
     {
         Name = name;
-        AssetOffset = assetOffset;
+        DataOffset = dataOffset;
         DataLength = dataLength;
         Checksum = checksum;
     }
@@ -49,7 +49,7 @@ public class AssetHeader
     /// </summary>
     /// <returns>The size in bytes of this <see cref="AssetHeader"/>.</returns>
     public int GetSize()
-        => 16 + Name.Length;
+        => GetSize(Name);
 
     /// <summary>
     /// Gets the number of bytes that an <see cref="AssetHeader"/> will use when stored within a pack.
@@ -71,9 +71,9 @@ public class AssetHeader
         uint nameLength = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
         string name = string.Empty;
 
-        fixed (byte* bufferPtr = buffer[index..])
+        fixed (byte* bufferPtr = buffer)
         {
-            name = Marshal.PtrToStringAnsi((IntPtr)bufferPtr, (int)nameLength);
+            name = Marshal.PtrToStringAnsi((IntPtr)bufferPtr + index, (int)nameLength);
         }
 
         index += (int)nameLength;
@@ -101,7 +101,7 @@ public class AssetHeader
         foreach (byte value in Name)
             buffer[index++] = value;
 
-        BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], AssetOffset);
+        BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], DataOffset);
         BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], DataLength);
         BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], Checksum);
     }

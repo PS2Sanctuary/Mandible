@@ -19,8 +19,8 @@ Continue reading data until the chunk header equals `0x00`. At this point there 
 
 Name       | Type   |   Example   | Description
 ---------- | ------ | ----------- | ---
-Next Chunk | uint_32 | 00 83 7e d1 | The offset of the next chunk in the pack
-Asset Count | uint_32 | 00 00 00 75 | The number of assets in the chunk
+Next Chunk | `uint_32` | `00 83 7e d1` | The offset of the next chunk in the pack
+Asset Count | `uint_32` | `00 00 00 75` | The number of assets in the chunk
 
 #### Asset Header
 

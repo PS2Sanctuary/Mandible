@@ -20,7 +20,7 @@ public class Asset2HeaderTests
     public void TestDeserialise()
     {
         Asset2Header header = Asset2Header.Deserialize(EXPECTED_BYTES);
-        Assert.Equal(header, EXPECTED_HEADER);
+        Assert.Equal(EXPECTED_HEADER, header);
     }
 
     [Fact]
@@ -29,6 +29,7 @@ public class Asset2HeaderTests
         Span<byte> bytes = stackalloc byte[Asset2Header.Size];
         EXPECTED_HEADER.Serialize(bytes);
 
-        Assert.Equal(bytes.ToArray(), EXPECTED_BYTES);
+        for (int i = 0; i < bytes.Length; i++)
+            Assert.Equal(EXPECTED_BYTES[i], bytes[i]);
     }
 }
