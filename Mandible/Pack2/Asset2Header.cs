@@ -56,6 +56,7 @@ namespace Mandible.Pack2
         /// Serializes this <see cref="Asset2Header"/> to a byte buffer.
         /// </summary>
         /// <param name="buffer">The buffer.</param>
+        /// <exception cref="ArgumentException">Thrown if the buffer is too small.</exception>
         public void Serialize(Span<byte> buffer)
         {
             if (buffer.Length < Size)
@@ -69,7 +70,7 @@ namespace Mandible.Pack2
         }
 
         /// <summary>
-        /// Deserializes a buffer to a <see cref="Asset2Header"/> instance.
+        /// Deserializes a buffer to an <see cref="Asset2Header"/> instance.
         /// </summary>
         /// <param name="buffer">The buffer.</param>
         /// <returns>An <see cref="Asset2Header"/>.</returns>

@@ -68,7 +68,12 @@ namespace Mandible.Pack2
             Checksum = checkSum;
         }
 
-        public unsafe void Serialise(Span<byte> buffer)
+        /// <summary>
+        /// Serializes this <see cref="Pack2Header"/> to a byte buffer.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        /// <exception cref="ArgumentException">Thrown if the buffer is too small.</exception>
+        public unsafe void Serialize(Span<byte> buffer)
         {
             if (buffer.Length < Size)
                 throw new ArgumentException($"Buffer must be at least {Size} bytes", nameof(buffer));
@@ -93,15 +98,20 @@ namespace Mandible.Pack2
             }
         }
 
-        public static Pack2Header Deserialise(ReadOnlySpan<byte> data)
+        /// <summary>
+        /// Deserializes a buffer to a <see cref="Pack2Header"/> instance.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        /// <returns>An <see cref="Pack2Header"/>.</returns>
+        public static Pack2Header Deserialize(ReadOnlySpan<byte> buffer)
         {
-            byte version = data[3];
-            uint assetCount = BinaryPrimitives.ReadUInt32LittleEndian(data[4..8]);
-            ulong length = BinaryPrimitives.ReadUInt64LittleEndian(data[8..16]);
-            ulong assetMapOffset = BinaryPrimitives.ReadUInt64LittleEndian(data[16..24]);
-            ulong unknown = BinaryPrimitives.ReadUInt64LittleEndian(data[24..32]);
+            byte version = buffer[3];
+            uint assetCount = BinaryPrimitives.ReadUInt32LittleEndian(buffer[4..8]);
+            ulong length = BinaryPrimitives.ReadUInt64LittleEndian(buffer[8..16]);
+            ulong assetMapOffset = BinaryPrimitives.ReadUInt64LittleEndian(buffer[16..24]);
+            ulong unknown = BinaryPrimitives.ReadUInt64LittleEndian(buffer[24..32]);
 
-            return new Pack2Header(assetCount, length, assetMapOffset, data[32..].ToArray(), version, unknown);
+            return new Pack2Header(assetCount, length, assetMapOffset, buffer[32..].ToArray(), version, unknown);
         }
     }
 }

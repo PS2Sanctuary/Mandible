@@ -51,7 +51,7 @@ namespace Mandible.Pack2
             Memory<byte> headerBuffer = data.Memory[..Pack2Header.Size];
 
             await _dataReader.ReadAsync(headerBuffer, 0, ct).ConfigureAwait(false);
-            _cachedHeader = Pack2Header.Deserialise(headerBuffer.Span);
+            _cachedHeader = Pack2Header.Deserialize(headerBuffer.Span);
 
             return _cachedHeader.Value;
         }
@@ -69,7 +69,7 @@ namespace Mandible.Pack2
             Span<byte> headerBuffer = data.Memory[..Pack2Header.Size].Span;
 
             _dataReader.Read(headerBuffer, 0);
-            _cachedHeader = Pack2Header.Deserialise(headerBuffer);
+            _cachedHeader = Pack2Header.Deserialize(headerBuffer);
 
             return _cachedHeader.Value;
         }
