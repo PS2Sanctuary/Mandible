@@ -28,7 +28,7 @@ public readonly struct Asset2Header
     /// <summary>
     /// Gets a value indicating whether the packed asset has been compressed.
     /// </summary>
-    public readonly AssetZipDefinition ZipStatus;
+    public readonly Asset2ZipDefinition ZipStatus;
 
     /// <summary>
     /// Gets the CRC-32 hash of the asset data.
@@ -43,7 +43,7 @@ public readonly struct Asset2Header
     /// <param name="dataSize">The size in bytes of the packed asset data.</param>
     /// <param name="isZipped">A value indicating whether the packet asset has been compressed.</param>
     /// <param name="dataHash">The CRC-32 hash of the asset data.</param>
-    public Asset2Header(ulong nameHash, ulong dataOffset, ulong dataSize, AssetZipDefinition isZipped, uint dataHash)
+    public Asset2Header(ulong nameHash, ulong dataOffset, ulong dataSize, Asset2ZipDefinition isZipped, uint dataHash)
     {
         NameHash = nameHash;
         DataOffset = dataOffset;
@@ -79,7 +79,7 @@ public readonly struct Asset2Header
         ulong nameHash = BinaryPrimitives.ReadUInt64LittleEndian(buffer[0..8]);
         ulong dataOffset = BinaryPrimitives.ReadUInt64LittleEndian(buffer[8..16]);
         ulong dataSize = BinaryPrimitives.ReadUInt64LittleEndian(buffer[16..24]);
-        AssetZipDefinition isZipped = (AssetZipDefinition)BinaryPrimitives.ReadUInt32LittleEndian(buffer[24..28]);
+        Asset2ZipDefinition isZipped = (Asset2ZipDefinition)BinaryPrimitives.ReadUInt32LittleEndian(buffer[24..28]);
         uint dataHash = BinaryPrimitives.ReadUInt32LittleEndian(buffer[28..32]);
 
         return new Asset2Header(nameHash, dataOffset, dataSize, isZipped, dataHash);

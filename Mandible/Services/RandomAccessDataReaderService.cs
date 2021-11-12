@@ -37,15 +37,11 @@ public class RandomAccessDataReaderService : IDataReaderService, IDisposable
 
     /// <inheritdoc />
     public int Read(Span<byte> buffer, long offset)
-    {
-        return RandomAccess.Read(_fileHandle, buffer, offset);
-    }
+        => RandomAccess.Read(_fileHandle, buffer, offset);
 
     /// <inheritdoc />
     public async ValueTask<int> ReadAsync(Memory<byte> buffer, long offset, CancellationToken ct = default)
-    {
-        return await RandomAccess.ReadAsync(_fileHandle, buffer, offset, ct).ConfigureAwait(false);
-    }
+        => await RandomAccess.ReadAsync(_fileHandle, buffer, offset, ct).ConfigureAwait(false);
 
     /// <inheritdoc />
     public void Dispose()

@@ -3,7 +3,7 @@
 /// <summary>
 /// Defines the zip flags used in asset headers.
 /// </summary>
-public enum AssetZipDefinition : uint
+public enum Asset2ZipDefinition : uint
 {
     /// <summary>
     /// Indicates that the asset data is not zipped.

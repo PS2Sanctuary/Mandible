@@ -1,4 +1,5 @@
-﻿using Mandible.Abstractions.Services;
+﻿using Mandible.Abstractions.Pack2;
+using Mandible.Abstractions.Services;
 using Mandible.Zng.Inflate;
 using System;
 using System.Buffers;
@@ -10,7 +11,8 @@ using System.Threading.Tasks;
 
 namespace Mandible.Pack2;
 
-public class Pack2Reader : IDisposable
+/// <inheritdoc />
+public class Pack2Reader : IPack2Reader, IDisposable
 {
     /// <summary>
     /// The indicator placed in front of an asset data block to indicate that it has been compressed.
@@ -21,14 +23,15 @@ public class Pack2Reader : IDisposable
     protected readonly ZngInflater _inflater;
     protected readonly MemoryPool<byte> _memoryPool;
 
-    protected Pack2Header? _cachedHeader;
-    protected IReadOnlyList<Asset2Header>? _cachedAssetHeaders;
-
     /// <summary>
     /// Gets a value indicating whether or not this <see cref="Pack2Reader"/> instance has been disposed.
     /// </summary>
     public bool IsDisposed { get; protected set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Pack2Reader"/> class.
+    /// </summary>
+    /// <param name="dataReader">The data reader configured for the pack2 to read from.</param>
     public Pack2Reader(IDataReaderService dataReader)
     {
         _dataReader = dataReader;
@@ -37,85 +40,54 @@ public class Pack2Reader : IDisposable
         _inflater = new ZngInflater();
     }
 
-    /// <summary>
-    /// Reads the pack header. Subsequent calls return a cached value.
-    /// </summary>
-    /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
-    /// <returns>The pack header.</returns>
+    /// <inheritdoc />
     public virtual async Task<Pack2Header> ReadHeaderAsync(CancellationToken ct = default)
     {
-        if (_cachedHeader is not null)
-            return _cachedHeader.Value;
-
         using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.Size);
         Memory<byte> headerBuffer = data.Memory[..Pack2Header.Size];
 
         await _dataReader.ReadAsync(headerBuffer, 0, ct).ConfigureAwait(false);
-        _cachedHeader = Pack2Header.Deserialize(headerBuffer.Span);
 
-        return _cachedHeader.Value;
+        return Pack2Header.Deserialize(headerBuffer.Span);
     }
 
-    /// <summary>
-    /// Reads the pack header. Subsequent calls return a cached value.
-    /// </summary>
-    /// <returns>The pack header.</returns>
+    /// <inheritdoc />
     public virtual Pack2Header ReadHeader()
     {
-        if (_cachedHeader is not null)
-            return _cachedHeader.Value;
-
         using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.Size);
         Span<byte> headerBuffer = data.Memory[..Pack2Header.Size].Span;
 
         _dataReader.Read(headerBuffer, 0);
-        _cachedHeader = Pack2Header.Deserialize(headerBuffer);
 
-        return _cachedHeader.Value;
+        return Pack2Header.Deserialize(headerBuffer);
     }
 
-    /// <summary>
-    /// Gets the asset header list. Subsequent calls return a cached value.
-    /// </summary>
-    /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
-    /// <returns>The list of asset headers.</returns>
-    public virtual async Task<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(CancellationToken ct = default)
+    /// <inheritdoc />
+    public virtual async Task<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(Pack2Header header, CancellationToken ct = default)
     {
-        if (_cachedAssetHeaders is not null)
-            return _cachedAssetHeaders;
-
-        Pack2Header header = await ReadHeaderAsync(ct).ConfigureAwait(false);
         List<Asset2Header> assetHeaders = new();
 
         int bufferSize = (int)header.AssetCount * Asset2Header.Size;
-        using IMemoryOwner<byte> data = _memoryPool.Rent(bufferSize);
-        Memory<byte> assetHeadersBuffer = data.Memory[..bufferSize];
+        using IMemoryOwner<byte> bufferOwner = _memoryPool.Rent(bufferSize);
+        Memory<byte> buffer = bufferOwner.Memory[..bufferSize];
 
-        await _dataReader.ReadAsync(assetHeadersBuffer, (long)header.AssetMapOffset, ct).ConfigureAwait(false);
+        await _dataReader.ReadAsync(buffer, (long)header.AssetMapOffset, ct).ConfigureAwait(false);
 
         for (uint i = 0; i < header.AssetCount; i++)
         {
             int baseOffset = (int)i * Asset2Header.Size;
-            Memory<byte> assetHeaderData = assetHeadersBuffer.Slice(baseOffset, Asset2Header.Size);
+            Memory<byte> assetHeaderData = buffer.Slice(baseOffset, Asset2Header.Size);
 
             Asset2Header assetHeader = Asset2Header.Deserialize(assetHeaderData.Span);
             assetHeaders.Add(assetHeader);
         }
 
-        _cachedAssetHeaders = assetHeaders;
-        return _cachedAssetHeaders;
+        return assetHeaders;
     }
 
-    /// <summary>
-    /// Gets the asset header list. Subsequent calls return a cached value.
-    /// </summary>
-    /// <returns>The list of asset headers.</returns>
-    public virtual IReadOnlyList<Asset2Header> ReadAssetHeaders()
+    /// <inheritdoc />
+    public virtual IReadOnlyList<Asset2Header> ReadAssetHeaders(Pack2Header header)
     {
-        if (_cachedAssetHeaders is not null)
-            return _cachedAssetHeaders;
-
-        Pack2Header header = ReadHeader();
         List<Asset2Header> assetHeaders = new();
 
         int bufferSize = (int)header.AssetCount * Asset2Header.Size;
@@ -133,22 +105,18 @@ public class Pack2Reader : IDisposable
             assetHeaders.Add(assetHeader);
         }
 
-        _cachedAssetHeaders = assetHeaders;
-        return _cachedAssetHeaders;
+        return assetHeaders;
     }
 
-    /// <summary>
-    /// Gets a stream to retrieve the unzipped asset data. Note that the asset data is stored and returned in big endian format.
-    /// </summary>
-    /// <param name="assetHeader">The asset to retrieve.</param>
-    /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
-    /// <returns>A stream of the asset data.</returns>
-    public virtual async Task<ReadOnlyMemory<byte>> ReadAssetDataAsync(Asset2Header assetHeader, CancellationToken ct = default)
+    /// <inheritdoc />
+    public virtual async Task<IMemoryOwner<byte>> ReadAssetDataAsync(Asset2Header assetHeader, CancellationToken ct = default)
     {
-        Memory<byte> output = new byte[assetHeader.DataSize];
+        IMemoryOwner<byte> outputOwner = _memoryPool.Rent((int)assetHeader.DataSize);
+        Memory<byte> output = outputOwner.Memory[..(int)assetHeader.DataSize];
+
         await _dataReader.ReadAsync(output, (long)assetHeader.DataOffset, ct).ConfigureAwait(false);
 
-        if (assetHeader.ZipStatus == AssetZipDefinition.Zipped || assetHeader.ZipStatus == AssetZipDefinition.ZippedAlternate)
+        if (assetHeader.ZipStatus == Asset2ZipDefinition.Zipped || assetHeader.ZipStatus == Asset2ZipDefinition.ZippedAlternate)
         {
             // Read the compression information
             uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(output[..4].Span);
@@ -162,21 +130,22 @@ public class Pack2Reader : IDisposable
                 );
             }
 
-            output = await Task.Run
+            outputOwner = await Task.Run
             (
                 () =>
                 {
-                    Memory<byte> decompData = new byte[decompressedLength];
+                    IMemoryOwner<byte> decompData = _memoryPool.Rent((int)decompressedLength);
 
-                    _inflater.Inflate(output[8..].Span, decompData.Span);
+                    _inflater.Inflate(output[8..].Span, decompData.Memory.Span);
                     _inflater.Reset();
+                    outputOwner.Dispose();
 
                     return decompData;
                 }
             ).ConfigureAwait(false);
         }
 
-        return output;
+        return outputOwner;
     }
 
     /// <summary>
@@ -184,12 +153,14 @@ public class Pack2Reader : IDisposable
     /// </summary>
     /// <param name="assetHeader">The asset to retrieve.</param>
     /// <returns>A stream of the asset data.</returns>
-    public virtual ReadOnlySpan<byte> ReadAssetData(Asset2Header assetHeader)
+    public virtual IMemoryOwner<byte> ReadAssetData(Asset2Header assetHeader)
     {
-        Span<byte> output = new byte[assetHeader.DataSize];
+        IMemoryOwner<byte> outputOwner = _memoryPool.Rent((int)assetHeader.DataSize);
+        Span<byte> output = outputOwner.Memory.Span[..(int)assetHeader.DataSize];
+
         _dataReader.Read(output, (long)assetHeader.DataOffset);
 
-        if (assetHeader.ZipStatus == AssetZipDefinition.Zipped || assetHeader.ZipStatus == AssetZipDefinition.ZippedAlternate)
+        if (assetHeader.ZipStatus == Asset2ZipDefinition.Zipped || assetHeader.ZipStatus == Asset2ZipDefinition.ZippedAlternate)
         {
             // Read the compression information
             uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(output[..4]);
@@ -203,36 +174,25 @@ public class Pack2Reader : IDisposable
                 );
             }
 
-            Span<byte> decompData = new byte[decompressedLength];
+            IMemoryOwner<byte> decompData = _memoryPool.Rent((int)decompressedLength);
 
-            _inflater.Inflate(output[8..], decompData);
+            _inflater.Inflate(output[8..], decompData.Memory.Span);
             _inflater.Reset();
+            outputOwner.Dispose();
 
-            output = decompData;
+            outputOwner = decompData;
         }
 
-        return output;
+        return outputOwner;
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        Dispose(disposing: true);
+        _inflater.Dispose();
+
+        IsDisposed = true;
+
         GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!IsDisposed)
-        {
-            if (disposing)
-            {
-                _inflater.Dispose();
-            }
-
-            _cachedAssetHeaders = null;
-
-            IsDisposed = true;
-        }
     }
 }
