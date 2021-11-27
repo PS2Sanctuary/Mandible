@@ -25,4 +25,10 @@ public interface IDataReaderService
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>The number of bytes read.</returns>
     ValueTask<int> ReadAsync(Memory<byte> buffer, long offset, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gets the length in bytes of the data source.
+    /// </summary>
+    /// <returns>The length</returns>
+    long GetLength();
 }

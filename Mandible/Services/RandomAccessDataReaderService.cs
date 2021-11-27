@@ -44,6 +44,10 @@ public class RandomAccessDataReaderService : IDataReaderService, IDisposable
         => await RandomAccess.ReadAsync(_fileHandle, buffer, offset, ct).ConfigureAwait(false);
 
     /// <inheritdoc />
+    public long GetLength()
+        => RandomAccess.GetLength(_fileHandle);
+
+    /// <inheritdoc />
     public void Dispose()
     {
         if (!IsDisposed)

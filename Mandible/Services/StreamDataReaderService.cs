@@ -40,6 +40,10 @@ public class StreamDataReaderService : IDataReaderService
     }
 
     /// <inheritdoc />
+    public long GetLength()
+        => _input.Length;
+
+    /// <inheritdoc />
     public async ValueTask<int> ReadAsync(Memory<byte> buffer, long offset, CancellationToken ct = default)
     {
         _input.Seek(offset + _baseOffset, SeekOrigin.Begin);
