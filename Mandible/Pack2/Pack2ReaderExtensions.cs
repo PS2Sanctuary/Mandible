@@ -1,6 +1,7 @@
 ﻿using Mandible.Util;
 using Microsoft.Win32.SafeHandles;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -32,7 +33,8 @@ public static class Pack2ReaderExtensions
         if (!Directory.Exists(outputPath))
             throw new DirectoryNotFoundException(outputPath);
 
-        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
+        Pack2Header header = await reader.ReadHeaderAsync(ct).ConfigureAwait(false);
+        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(header, ct).ConfigureAwait(false);
 
         foreach (Asset2Header assetHeader in assetHeaders)
         {
@@ -46,8 +48,8 @@ public static class Pack2ReaderExtensions
                 FileOptions.Asynchronous
             );
 
-            ReadOnlyMemory<byte> assetData = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
-            await RandomAccess.WriteAsync(outputHandle, assetData, 0, ct).ConfigureAwait(false);
+            using IMemoryOwner<byte> assetData = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
+            await RandomAccess.WriteAsync(outputHandle, assetData.Memory[..(int)assetHeader.DataSize], 0, ct).ConfigureAwait(false);
         }
     }
 
@@ -69,7 +71,7 @@ public static class Pack2ReaderExtensions
         if (!Directory.Exists(outputPath))
             throw new DirectoryNotFoundException(outputPath);
 
-        foreach (Asset2Header assetHeader in reader.ReadAssetHeaders())
+        foreach (Asset2Header assetHeader in reader.ReadAssetHeaders(reader.ReadHeader()))
         {
             string fileName = hashedNamePairs.ContainsKey(assetHeader.NameHash) ? hashedNamePairs[assetHeader.NameHash] : assetHeader.NameHash.ToString();
 
@@ -81,8 +83,8 @@ public static class Pack2ReaderExtensions
                 FileOptions.Asynchronous
             );
 
-            ReadOnlySpan<byte> assetData = reader.ReadAssetData(assetHeader);
-            RandomAccess.Write(outputHandle, assetData, 0);
+            using IMemoryOwner<byte> assetData = reader.ReadAssetData(assetHeader);
+            RandomAccess.Write(outputHandle, assetData.Memory.Span[..(int)assetHeader.DataSize], 0);
         }
     }
 
@@ -141,7 +143,8 @@ public static class Pack2ReaderExtensions
         if (!Directory.Exists(outputPath))
             throw new DirectoryNotFoundException(outputPath);
 
-        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
+        Pack2Header header = await reader.ReadHeaderAsync(ct).ConfigureAwait(false);
+        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(header, ct).ConfigureAwait(false);
 
         foreach (Asset2Header assetHeader in assetHeaders.Where(h => hashedNamePairs.ContainsKey(h.NameHash)))
         {
@@ -153,8 +156,8 @@ public static class Pack2ReaderExtensions
                 FileOptions.Asynchronous
             );
 
-            ReadOnlyMemory<byte> assetData = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
-            await RandomAccess.WriteAsync(outputHandle, assetData, 0, ct).ConfigureAwait(false);
+            IMemoryOwner<byte> assetData = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
+            await RandomAccess.WriteAsync(outputHandle, assetData.Memory[..(int)assetHeader.DataSize], 0, ct).ConfigureAwait(false);
         }
     }
 
@@ -174,7 +177,7 @@ public static class Pack2ReaderExtensions
         if (!Directory.Exists(outputPath))
             throw new DirectoryNotFoundException(outputPath);
 
-        IReadOnlyList<Asset2Header> assetHeaders = reader.ReadAssetHeaders();
+        IReadOnlyList<Asset2Header> assetHeaders = reader.ReadAssetHeaders(reader.ReadHeader());
 
         foreach (Asset2Header assetHeader in assetHeaders.Where(h => hashedNamePairs.ContainsKey(h.NameHash)))
         {
@@ -186,8 +189,8 @@ public static class Pack2ReaderExtensions
                 FileOptions.Asynchronous
             );
 
-            ReadOnlySpan<byte> assetData = reader.ReadAssetData(assetHeader);
-            RandomAccess.Write(outputHandle, assetData, 0);
+            IMemoryOwner<byte> assetData = reader.ReadAssetData(assetHeader);
+            RandomAccess.Write(outputHandle, assetData.Memory.Span[..(int)assetHeader.DataSize], 0);
         }
     }
 
