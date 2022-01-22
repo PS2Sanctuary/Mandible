@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace Mandible.Abstractions.Services;
 
 /// <summary>
-/// Represents a generic interface for reading data from a medium.
+/// Represents a generic interface for reading data from an IO source.
 /// </summary>
 public interface IDataReaderService
 {

@@ -9,17 +9,21 @@ namespace Mandible.Services;
 /// <summary>
 /// Represents an interface for reading data from a stream.
 /// </summary>
-public class StreamDataReaderService : IDataReaderService
+public class StreamDataReaderService : IDataReaderService, IDisposable
 {
     private readonly long _baseOffset;
     private readonly Stream _input;
+    private readonly bool _leaveOpen;
+
+    public bool IsDisposed { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StreamDataReaderService"/> class.
     /// </summary>
     /// <param name="input">The stream to read from. The current position of the stream is considered the starting point of this reader.</param>
+    /// <param name="leaveOpen">A value indicating whether or not to leave the <paramref name="input"/> stream open upon disposing this instance.</param>
     /// <exception cref="ArgumentException">If the input stream is in an invalid state.</exception>
-    public StreamDataReaderService(Stream input)
+    public StreamDataReaderService(Stream input, bool leaveOpen)
     {
         if (!input.CanRead)
             throw new ArgumentException("The input stream must be readable", nameof(input));
@@ -29,6 +33,7 @@ public class StreamDataReaderService : IDataReaderService
 
         _baseOffset = input.Position;
         _input = input;
+        _leaveOpen = leaveOpen;
     }
 
     /// <inheritdoc />
@@ -49,5 +54,27 @@ public class StreamDataReaderService : IDataReaderService
         _input.Seek(offset + _baseOffset, SeekOrigin.Begin);
 
         return await _input.ReadAsync(buffer, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Disposes of managed and unmanaged resources.
+    /// </summary>
+    /// <param name="disposeManaged">A value indicating whether or not to dispose of managed resources.</param>
+    protected virtual void Dispose(bool disposeManaged)
+    {
+        if (IsDisposed)
+            return;
+
+        if (disposeManaged && !_leaveOpen)
+            _input.Dispose();
+
+        IsDisposed = true;
     }
 }

@@ -73,7 +73,7 @@ public readonly struct Pack2Header
     /// </summary>
     /// <param name="buffer">The buffer.</param>
     /// <exception cref="ArgumentException">Thrown if the buffer is too small.</exception>
-    public unsafe void Serialize(Span<byte> buffer)
+    public void Serialize(Span<byte> buffer)
     {
         if (buffer.Length < Size)
             throw new ArgumentException($"Buffer must be at least {Size} bytes", nameof(buffer));
@@ -88,14 +88,7 @@ public readonly struct Pack2Header
         BinaryPrimitives.WriteUInt64LittleEndian(buffer[8..16], Length);
         BinaryPrimitives.WriteUInt64LittleEndian(buffer[16..24], AssetMapOffset);
         BinaryPrimitives.WriteUInt64LittleEndian(buffer[24..32], Unknown);
-
-        fixed (byte* checksumPtr = Checksum)
-        {
-            fixed (byte* bufferPtr = buffer[32..])
-            {
-                Buffer.MemoryCopy(checksumPtr, bufferPtr, Checksum.LongLength, Checksum.LongLength);
-            }
-        }
+        Checksum.CopyTo(buffer[32..]);
     }
 
     /// <summary>

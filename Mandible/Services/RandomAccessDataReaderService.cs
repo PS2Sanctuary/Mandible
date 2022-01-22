@@ -50,12 +50,22 @@ public class RandomAccessDataReaderService : IDataReaderService, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        if (!IsDisposed)
-        {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Disposes of managed and unmanaged resources.
+    /// </summary>
+    /// <param name="disposeManaged">A value indicating whether or not to dispose of managed resources.</param>
+    protected virtual void Dispose(bool disposeManaged)
+    {
+        if (IsDisposed)
+            return;
+
+        if (disposeManaged)
             _fileHandle.Dispose();
 
-            IsDisposed = true;
-            GC.SuppressFinalize(this);
-        }
+        IsDisposed = true;
     }
 }

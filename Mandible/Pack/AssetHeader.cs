@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
-using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Mandible.Pack;
 
@@ -69,14 +69,7 @@ public class AssetHeader
         int index = 0;
 
         uint nameLength = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
-        string name = string.Empty;
-
-        fixed (byte* bufferPtr = buffer)
-        {
-            name = Marshal.PtrToStringAnsi((IntPtr)bufferPtr + index, (int)nameLength);
-        }
-
-        index += (int)nameLength;
+        string name = Encoding.ASCII.GetString(buffer[index..(index += (int)nameLength)]);
         uint assetOffset = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
         uint dataLength = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
         uint checksum = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
