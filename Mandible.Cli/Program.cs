@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using ZlibNGSharpMinimal;
 
 namespace Mandible.Cli;
 
@@ -18,7 +19,7 @@ public static class Program
         CancellationToken ct = cts.Token;
         Console.CancelKeyPress += (_, __) => cts.Cancel();
 
-        Console.WriteLine("zlib-ng version: {0}", Zng.Core.Zlib.Version());
+        Console.WriteLine("zlib-ng version: {0}", Zng.Version);
 
         if (args.Length != 3)
         {

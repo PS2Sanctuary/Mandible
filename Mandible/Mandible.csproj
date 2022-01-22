@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mandible.Zng\Mandible.Zng.csproj" />
+    <PackageReference Include="carlst99.ZlibNGSharp" Version="1.0.1" />
   </ItemGroup>
 
 </Project>

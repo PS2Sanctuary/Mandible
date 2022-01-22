@@ -1,6 +1,5 @@
 ﻿using Mandible.Abstractions.Pack2;
 using Mandible.Abstractions.Services;
-using Mandible.Zng.Inflate;
 using System;
 using System.Buffers;
 using System.Buffers.Binary;
@@ -8,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using ZlibNGSharpMinimal.Inflate;
 
 namespace Mandible.Pack2;
 

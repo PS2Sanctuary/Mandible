@@ -1,9 +1,9 @@
 ﻿using BenchmarkDotNet.Attributes;
 using ICSharpCode.SharpZipLib.Zip.Compression;
-using Mandible.Zng.Inflate;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using ZlibNGSharpMinimal.Inflate;
 
 namespace Mandible.Benchmarks;
 
