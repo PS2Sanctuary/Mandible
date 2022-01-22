@@ -29,13 +29,13 @@ public static class PackCrc64
     /// <summary>
     /// Hashes a list of strings using the CRC-64 algorithm. Duplicate entries will not be added to the resulting dictionary.
     /// </summary>
-    /// <param name="nameList">The strings to hash.</param>
+    /// <param name="stringList">The strings to hash.</param>
     /// <returns>A dictionary mapping the hash to its original string.</returns>
-    public static Dictionary<ulong, string> HashStrings(IEnumerable<string> nameList)
+    public static Dictionary<ulong, string> HashStrings(IEnumerable<string> stringList)
     {
         Dictionary<ulong, string> hashedNamePairs = new();
 
-        foreach (string element in nameList)
+        foreach (string element in stringList)
             hashedNamePairs.TryAdd(Calculate(element), element);
 
         return hashedNamePairs;

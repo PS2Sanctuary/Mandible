@@ -41,7 +41,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual async Task<Pack2Header> ReadHeaderAsync(CancellationToken ct = default)
+    public virtual async ValueTask<Pack2Header> ReadHeaderAsync(CancellationToken ct = default)
     {
         using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.Size);
         Memory<byte> headerBuffer = data.Memory[..Pack2Header.Size];
@@ -63,7 +63,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual async Task<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(Pack2Header header, CancellationToken ct = default)
+    public virtual async ValueTask<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(Pack2Header header, CancellationToken ct = default)
     {
         List<Asset2Header> assetHeaders = new();
 
@@ -109,10 +109,12 @@ public class Pack2Reader : IPack2Reader, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual async Task<IMemoryOwner<byte>> ReadAssetDataAsync(Asset2Header assetHeader, CancellationToken ct = default)
+    public virtual async Task<(IMemoryOwner<byte> Data, int Length)> ReadAssetDataAsync(Asset2Header assetHeader, CancellationToken ct = default)
     {
-        IMemoryOwner<byte> outputOwner = _memoryPool.Rent((int)assetHeader.DataSize);
-        Memory<byte> output = outputOwner.Memory[..(int)assetHeader.DataSize];
+        int length = (int)assetHeader.DataSize;
+
+        IMemoryOwner<byte> outputOwner = _memoryPool.Rent(length);
+        Memory<byte> output = outputOwner.Memory[..length];
 
         await _dataReader.ReadAsync(output, (long)assetHeader.DataOffset, ct).ConfigureAwait(false);
 
@@ -120,7 +122,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
         {
             // Read the compression information
             uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(output[..4].Span);
-            uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(output[4..8].Span);
+            length = (int)BinaryPrimitives.ReadUInt32BigEndian(output[4..8].Span);
 
             if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
             {
@@ -134,7 +136,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
             (
                 () =>
                 {
-                    IMemoryOwner<byte> decompData = _memoryPool.Rent((int)decompressedLength);
+                    IMemoryOwner<byte> decompData = _memoryPool.Rent(length);
 
                     _inflater.Inflate(output[8..].Span, decompData.Memory.Span);
                     _inflater.Reset();
@@ -145,7 +147,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
             ).ConfigureAwait(false);
         }
 
-        return outputOwner;
+        return (outputOwner, length);
     }
 
     /// <summary>
@@ -153,10 +155,12 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// </summary>
     /// <param name="assetHeader">The asset to retrieve.</param>
     /// <returns>A stream of the asset data.</returns>
-    public virtual IMemoryOwner<byte> ReadAssetData(Asset2Header assetHeader)
+    public virtual (IMemoryOwner<byte> Data, int Length) ReadAssetData(Asset2Header assetHeader)
     {
-        IMemoryOwner<byte> outputOwner = _memoryPool.Rent((int)assetHeader.DataSize);
-        Span<byte> output = outputOwner.Memory.Span[..(int)assetHeader.DataSize];
+        int length = (int)assetHeader.DataSize;
+
+        IMemoryOwner<byte> outputOwner = _memoryPool.Rent(length);
+        Span<byte> output = outputOwner.Memory.Span[..length];
 
         _dataReader.Read(output, (long)assetHeader.DataOffset);
 
@@ -164,7 +168,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
         {
             // Read the compression information
             uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(output[..4]);
-            uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(output[4..8]);
+            length = (int)BinaryPrimitives.ReadUInt32BigEndian(output[4..8]);
 
             if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
             {
@@ -174,7 +178,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
                 );
             }
 
-            IMemoryOwner<byte> decompData = _memoryPool.Rent((int)decompressedLength);
+            IMemoryOwner<byte> decompData = _memoryPool.Rent(length);
 
             _inflater.Inflate(output[8..], decompData.Memory.Span);
             _inflater.Reset();
@@ -183,7 +187,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
             outputOwner = decompData;
         }
 
-        return outputOwner;
+        return (outputOwner, length);
     }
 
     /// <inheritdoc />

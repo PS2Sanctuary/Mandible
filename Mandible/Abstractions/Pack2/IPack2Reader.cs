@@ -19,7 +19,7 @@ public interface IPack2Reader
 
     /// <inheritdoc cref="ReadHeader" />
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    Task<Pack2Header> ReadHeaderAsync(CancellationToken ct = default);
+    ValueTask<Pack2Header> ReadHeaderAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Reads the asset headers.
@@ -30,16 +30,16 @@ public interface IPack2Reader
 
     /// <inheritdoc cref="ReadAssetHeaders(Pack2Header)" />
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    Task<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(Pack2Header header, CancellationToken ct = default);
+    ValueTask<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(Pack2Header header, CancellationToken ct = default);
 
     /// <summary>
     /// Reads the asset data for a given header. The data is unzipped if required.
     /// </summary>
     /// <param name="assetHeader">The asset to retrieve.</param>
-    /// <returns>Asset data.</returns>
-    IMemoryOwner<byte> ReadAssetData(Asset2Header assetHeader);
+    /// <returns>The asset data.</returns>
+    (IMemoryOwner<byte> Data, int Length) ReadAssetData(Asset2Header assetHeader);
 
     /// <inheritdoc cref="ReadAssetData(Asset2Header)" />
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    Task<IMemoryOwner<byte>> ReadAssetDataAsync(Asset2Header assetHeader, CancellationToken ct = default);
+    Task<(IMemoryOwner<byte> Data, int Length)> ReadAssetDataAsync(Asset2Header assetHeader, CancellationToken ct = default);
 }

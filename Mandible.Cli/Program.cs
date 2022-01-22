@@ -38,8 +38,22 @@ public static class Program
         Stopwatch stopwatch = new();
         stopwatch.Start();
 
-        string[] namelist = await File.ReadAllLinesAsync(args[2], ct).ConfigureAwait(false);
-        Dictionary<ulong, string> hashedNamePairs = PackCrc64.HashStrings(namelist);
+        Namelist nl = new();
+        foreach (string filePath in Directory.EnumerateFiles(args[0]))
+        {
+            using RandomAccessDataReaderService reader = new(filePath);
+            using Pack2Reader p2r = new(reader);
+            await nl.Append(p2r, ct).ConfigureAwait(false);
+        }
+
+        await using FileStream masterFS = new(@"C:\Users\carls\source\repos\_PS2Modding\_External\forgelight-toolbox_inUse\FLUtils\master-namelist.txt", FileMode.Open);
+        await nl.Append(masterFS, ct: ct).ConfigureAwait(false);
+
+        await using FileStream outputFS = new(@"C:\Users\carls\source\repos\_PS2Modding\_External\forgelight-toolbox_inUse\FLUtils\temp.txt", FileMode.Create);
+        await nl.WriteAsync(outputFS, ct).ConfigureAwait(false);
+
+        // string[] namelist = await File.ReadAllLinesAsync(args[2], ct).ConfigureAwait(false);
+        IReadOnlyDictionary<ulong, string> hashedNamePairs = nl.NameList;//PackCrc64.HashStrings(namelist);
 
         stopwatch.Stop();
         Console.WriteLine("Generated name hashes in {0}", stopwatch.Elapsed);
@@ -60,7 +74,7 @@ public static class Program
     (
         string packFilePath,
         string outputPath,
-        Dictionary<ulong, string> hashedNamePairs
+        IReadOnlyDictionary<ulong, string> hashedNamePairs
     )
     {
         Stopwatch stopwatch = new();

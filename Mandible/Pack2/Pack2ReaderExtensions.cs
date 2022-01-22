@@ -26,7 +26,7 @@ public static class Pack2ReaderExtensions
     (
         this Pack2Reader reader,
         string outputPath,
-        Dictionary<ulong, string> hashedNamePairs,
+        IReadOnlyDictionary<ulong, string> hashedNamePairs,
         CancellationToken ct = default
     )
     {
@@ -48,8 +48,9 @@ public static class Pack2ReaderExtensions
                 FileOptions.Asynchronous
             );
 
-            using IMemoryOwner<byte> assetData = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
-            await RandomAccess.WriteAsync(outputHandle, assetData.Memory[..(int)assetHeader.DataSize], 0, ct).ConfigureAwait(false);
+            (IMemoryOwner<byte> data, int length) = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
+            await RandomAccess.WriteAsync(outputHandle, data.Memory[..length], 0, ct).ConfigureAwait(false);
+            data.Dispose();
         }
     }
 
@@ -65,7 +66,7 @@ public static class Pack2ReaderExtensions
     (
         this Pack2Reader reader,
         string outputPath,
-        Dictionary<ulong, string> hashedNamePairs
+        IReadOnlyDictionary<ulong, string> hashedNamePairs
     )
     {
         if (!Directory.Exists(outputPath))
@@ -83,8 +84,9 @@ public static class Pack2ReaderExtensions
                 FileOptions.Asynchronous
             );
 
-            using IMemoryOwner<byte> assetData = reader.ReadAssetData(assetHeader);
-            RandomAccess.Write(outputHandle, assetData.Memory.Span[..(int)assetHeader.DataSize], 0);
+            (IMemoryOwner<byte> data, int length) = reader.ReadAssetData(assetHeader);
+            RandomAccess.Write(outputHandle, data.Memory.Span[..length], 0);
+            data.Dispose();
         }
     }
 
@@ -136,7 +138,8 @@ public static class Pack2ReaderExtensions
     public static async Task ExportNamedAsync
     (
         this Pack2Reader reader,
-        string outputPath, Dictionary<ulong, string> hashedNamePairs,
+        string outputPath,
+        IReadOnlyDictionary<ulong, string> hashedNamePairs,
         CancellationToken ct = default
     )
     {
@@ -156,8 +159,9 @@ public static class Pack2ReaderExtensions
                 FileOptions.Asynchronous
             );
 
-            IMemoryOwner<byte> assetData = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
-            await RandomAccess.WriteAsync(outputHandle, assetData.Memory[..(int)assetHeader.DataSize], 0, ct).ConfigureAwait(false);
+            (IMemoryOwner<byte> data, int length) = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
+            await RandomAccess.WriteAsync(outputHandle, data.Memory[..length], 0, ct).ConfigureAwait(false);
+            data.Dispose();
         }
     }
 
@@ -171,7 +175,7 @@ public static class Pack2ReaderExtensions
     (
         this Pack2Reader reader,
         string outputPath,
-        Dictionary<ulong, string> hashedNamePairs
+        IReadOnlyDictionary<ulong, string> hashedNamePairs
     )
     {
         if (!Directory.Exists(outputPath))
@@ -189,8 +193,9 @@ public static class Pack2ReaderExtensions
                 FileOptions.Asynchronous
             );
 
-            IMemoryOwner<byte> assetData = reader.ReadAssetData(assetHeader);
-            RandomAccess.Write(outputHandle, assetData.Memory.Span[..(int)assetHeader.DataSize], 0);
+            (IMemoryOwner<byte> data, int length) = reader.ReadAssetData(assetHeader);
+            RandomAccess.Write(outputHandle, data.Memory.Span[..length], 0);
+            data.Dispose();
         }
     }
 
