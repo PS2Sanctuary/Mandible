@@ -75,6 +75,11 @@ public class Namelist
         return null;
     }
 
+    /// <summary>
+    /// Appends a name-hash pair to the namelist.
+    /// </summary>
+    /// <param name="hash">The CRC-64 hash of the name.</param>
+    /// <param name="name">The name.</param>
     public void Append(ulong hash, string name)
     {
         if (_hashedNamePairs.ContainsKey(hash))
@@ -83,28 +88,51 @@ public class Namelist
         _hashedNamePairs.Add(hash, name);
     }
 
+    /// <summary>
+    /// Appends a name to the namelist.
+    /// </summary>
+    /// <param name="name">The name.</param>
     public void Append(string name)
     {
         ulong hash = PackCrc64.Calculate(name);
         Append(hash, name);
     }
 
+    /// <summary>
+    /// Appends a list of names to the namelist.
+    /// </summary>
+    /// <remarks>Extremely long lists could take some time to hash and append.</remarks>
+    /// <param name="names"></param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <exception cref="TaskCanceledException">Thrown if the operation is canceled.</exception>
     public async Task Append(IEnumerable<string> names, CancellationToken ct = default)
-        => await Task.Run
-            (
-                () =>
-                {
-                    foreach (string name in names)
-                    {
-                        if (ct.IsCancellationRequested)
-                            throw new TaskCanceledException();
+       => await Task.Run
+           (
+               () =>
+               {
+                   foreach (string name in names)
+                   {
+                       if (ct.IsCancellationRequested)
+                           throw new TaskCanceledException();
 
-                        Append(name);
-                    }
-                },
-                ct
-            ).ConfigureAwait(false);
+                       Append(name);
+                   }
+               },
+               ct
+           ).ConfigureAwait(false);
 
+    /// <summary>
+    /// Appends a stream of names to the namelist.
+    /// Names are expected to be separated by a newline character.
+    /// </summary>
+    /// <param name="stream">The stream to read the names from.</param>
+    /// <param name="endPosition">
+    /// The position in the stream at which to stop reading names.
+    /// Set to <c>-1</c> to read to the end of the stream.
+    /// </param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    /// <exception cref="TaskCanceledException"></exception>
     public async Task Append(Stream stream, int endPosition = -1, CancellationToken ct = default)
     {
         using StreamReader sr = new(stream, null, true, -1, true);
@@ -152,6 +180,14 @@ public class Namelist
         ArrayPool<byte>.Shared.Return(dataArray);
     }
 
+    /// <summary>
+    /// Writes the namelist to a stream.
+    /// Only names are written out, separated by a newline.
+    /// </summary>
+    /// <param name="outputStream">The stream to write the names to.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
+    /// <exception cref="TaskCanceledException">Thrown if the operation is canceled.</exception>
     public async Task WriteAsync(Stream outputStream, CancellationToken ct = default)
     {
         using StreamWriter sw = new(outputStream, null, -1, true);
