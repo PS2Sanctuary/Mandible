@@ -1,4 +1,5 @@
 ﻿using Mandible.Pack2;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,32 +15,39 @@ public interface IPack2Reader
     /// <summary>
     /// Reads the pack header.
     /// </summary>
-    /// <returns>A pack header.</returns>
-    Pack2Header ReadHeader();
-
-    /// <inheritdoc cref="ReadHeader" />
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <returns>A pack header.</returns>
     ValueTask<Pack2Header> ReadHeaderAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Reads the asset headers.
     /// </summary>
-    /// <param name="header">The header of the pack2 file that this reader is operating on.</param>
-    /// <returns>A list of asset headers.</returns>
-    IReadOnlyList<Asset2Header> ReadAssetHeaders(Pack2Header header);
-
-    /// <inheritdoc cref="ReadAssetHeaders(Pack2Header)" />
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    ValueTask<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(Pack2Header header, CancellationToken ct = default);
+    /// <returns>A list of asset headers.</returns>
+    ValueTask<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(CancellationToken ct = default);
 
     /// <summary>
-    /// Reads the asset data for a given header. The data is unzipped if required.
+    /// Gets the length of an asset in bytes. If the asset is compressed, the uncompressed length is retrieved.
     /// </summary>
-    /// <param name="assetHeader">The asset to retrieve.</param>
-    /// <returns>The asset data.</returns>
-    (IMemoryOwner<byte> Data, int Length) ReadAssetData(Asset2Header assetHeader);
-
-    /// <inheritdoc cref="ReadAssetData(Asset2Header)" />
+    /// <param name="header">The asset to retrieve the length of.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    Task<(IMemoryOwner<byte> Data, int Length)> ReadAssetDataAsync(Asset2Header assetHeader, CancellationToken ct = default);
+    /// <returns>The size in bytes of the asset.</returns>
+    ValueTask<int> GetAssetLengthAsync(Asset2Header header, CancellationToken ct = default);
+
+    /// <summary>
+    /// Reads an asset from the pack. The asset is decompressed if required.
+    /// </summary>
+    /// <param name="header">The asset to retrieve.</param>
+    /// <param name="outputBuffer">
+    /// The buffer to read the data into. Use <see cref="GetAssetLengthAsync(Asset2Header, CancellationToken)"/>
+    /// to determine the minimum required buffer length.
+    /// </param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <returns>The length of the data that was read.</returns>
+    Task<int> ReadAssetDataAsync
+    (
+        Asset2Header header,
+        Memory<byte> outputBuffer,
+        CancellationToken ct = default
+    );
 }

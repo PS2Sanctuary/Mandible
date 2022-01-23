@@ -15,9 +15,9 @@ namespace Mandible.Pack2;
 public class Pack2Reader : IPack2Reader, IDisposable
 {
     /// <summary>
-    /// The indicator placed in front of an asset data block to indicate that it has been compressed.
+    /// Gets the indicator placed in front of an asset data block to indicate that it has been compressed.
     /// </summary>
-    protected const uint ASSET_COMPRESSION_INDICATOR = 0xA1B2C3D4;
+    protected const uint AssetCompressionIndicator = 0xA1B2C3D4;
 
     protected readonly IDataReaderService _dataReader;
     protected readonly ZngInflater _inflater;
@@ -52,19 +52,9 @@ public class Pack2Reader : IPack2Reader, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual Pack2Header ReadHeader()
+    public virtual async ValueTask<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(CancellationToken ct = default)
     {
-        using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.Size);
-        Span<byte> headerBuffer = data.Memory[..Pack2Header.Size].Span;
-
-        _dataReader.Read(headerBuffer, 0);
-
-        return Pack2Header.Deserialize(headerBuffer);
-    }
-
-    /// <inheritdoc />
-    public virtual async ValueTask<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(Pack2Header header, CancellationToken ct = default)
-    {
+        Pack2Header header = await ReadHeaderAsync(ct).ConfigureAwait(false);
         List<Asset2Header> assetHeaders = new();
 
         int bufferSize = (int)header.AssetCount * Asset2Header.Size;
@@ -86,26 +76,99 @@ public class Pack2Reader : IPack2Reader, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual IReadOnlyList<Asset2Header> ReadAssetHeaders(Pack2Header header)
+    public virtual async ValueTask<int> GetAssetLengthAsync(Asset2Header header, CancellationToken ct = default)
     {
-        List<Asset2Header> assetHeaders = new();
+        if (header.ZipStatus is Asset2ZipDefinition.Unzipped or Asset2ZipDefinition.UnzippedAlternate)
+            return (int)header.DataSize;
 
-        int bufferSize = (int)header.AssetCount * Asset2Header.Size;
-        using IMemoryOwner<byte> data = _memoryPool.Rent(bufferSize);
-        Span<byte> assetHeadersBuffer = data.Memory[..bufferSize].Span;
+        using IMemoryOwner<byte> bufferOwner = _memoryPool.Rent(8);
+        Memory<byte> buffer = bufferOwner.Memory[..8];
 
-        _dataReader.Read(assetHeadersBuffer, (long)header.AssetMapOffset);
+        await _dataReader.ReadAsync(buffer, (long)header.DataOffset, ct).ConfigureAwait(false);
+        return (int)BinaryPrimitives.ReadUInt32BigEndian(buffer[4..8].Span);
+    }
 
-        for (uint i = 0; i < header.AssetCount; i++)
+    /// <inheritdoc />
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if the output buffer was not long enough.</exception>
+    public virtual async Task<int> ReadAssetDataAsync
+    (
+        Asset2Header header,
+        Memory<byte> outputBuffer,
+        CancellationToken ct = default
+    )
+    {
+        if (outputBuffer.Length < (int)header.DataSize)
         {
-            int baseOffset = (int)i * Asset2Header.Size;
-            Span<byte> assetHeaderData = assetHeadersBuffer.Slice(baseOffset, Asset2Header.Size);
-
-            Asset2Header assetHeader = Asset2Header.Deserialize(assetHeaderData);
-            assetHeaders.Add(assetHeader);
+            throw new ArgumentOutOfRangeException
+            (
+                nameof(outputBuffer),
+                outputBuffer.Length,
+                $"The output buffer must be at least {header.DataSize} bytes in length."
+            );
         }
 
-        return assetHeaders;
+        await _dataReader.ReadAsync
+        (
+            outputBuffer[..(int)header.DataSize],
+            (long)header.DataOffset,
+            ct
+        ).ConfigureAwait(false);
+
+        if (header.ZipStatus is Asset2ZipDefinition.Zipped or Asset2ZipDefinition.ZippedAlternate)
+        {
+            using IMemoryOwner<byte> tempBuffer = _memoryPool.Rent((int)header.DataSize);
+            outputBuffer[..(int)header.DataSize].CopyTo(tempBuffer.Memory);
+
+            return (int)await UnzipAssetData(tempBuffer.Memory[..(int)header.DataSize], outputBuffer, ct).ConfigureAwait(false);
+        }
+
+        return (int)header.DataSize;
+    }
+
+    /// <summary>
+    /// Unzips an asset.
+    /// </summary>
+    /// <param name="data">The compressed asset data.</param>
+    /// <param name="outputBuffer">The output buffer.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <returns>The length of the decompressed data.</returns>
+    /// <exception cref="InvalidDataException">Thrown if the compressed data was not in the expected format.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if the output buffer was not long enough.</exception>
+    protected virtual async Task<uint> UnzipAssetData
+    (
+        ReadOnlyMemory<byte> data,
+        Memory<byte> outputBuffer,
+        CancellationToken ct
+    )
+    {
+        // Read the compression information
+        uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(data[..4].Span);
+        uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(data[4..8].Span);
+
+        if (compressionIndicator != AssetCompressionIndicator)
+            throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
+
+        if (outputBuffer.Length < decompressedLength)
+        {
+            throw new ArgumentOutOfRangeException
+            (
+                nameof(outputBuffer),
+                outputBuffer.Length,
+                $"The output buffer must be at least {decompressedLength} bytes in length."
+            );
+        }
+
+        await Task.Run
+        (
+            () =>
+            {
+                _inflater.Inflate(data[8..].Span, outputBuffer.Span);
+                _inflater.Reset();
+            },
+            CancellationToken.None // TODO: Does this solve cancelling issues?
+        ).ConfigureAwait(false);
+
+        return decompressedLength;
     }
 
     /// <inheritdoc />
@@ -124,7 +187,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
             uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(output[..4].Span);
             length = (int)BinaryPrimitives.ReadUInt32BigEndian(output[4..8].Span);
 
-            if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
+            if (compressionIndicator != AssetCompressionIndicator)
             {
                 throw new InvalidDataException
                 (
@@ -145,46 +208,6 @@ public class Pack2Reader : IPack2Reader, IDisposable
                     return decompData;
                 }
             ).ConfigureAwait(false);
-        }
-
-        return (outputOwner, length);
-    }
-
-    /// <summary>
-    /// Gets a stream to retrieve the unzipped asset data. Note that the asset data is stored and returned in big endian format.
-    /// </summary>
-    /// <param name="assetHeader">The asset to retrieve.</param>
-    /// <returns>A stream of the asset data.</returns>
-    public virtual (IMemoryOwner<byte> Data, int Length) ReadAssetData(Asset2Header assetHeader)
-    {
-        int length = (int)assetHeader.DataSize;
-
-        IMemoryOwner<byte> outputOwner = _memoryPool.Rent(length);
-        Span<byte> output = outputOwner.Memory.Span[..length];
-
-        _dataReader.Read(output, (long)assetHeader.DataOffset);
-
-        if (assetHeader.ZipStatus == Asset2ZipDefinition.Zipped || assetHeader.ZipStatus == Asset2ZipDefinition.ZippedAlternate)
-        {
-            // Read the compression information
-            uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(output[..4]);
-            length = (int)BinaryPrimitives.ReadUInt32BigEndian(output[4..8]);
-
-            if (compressionIndicator != ASSET_COMPRESSION_INDICATOR)
-            {
-                throw new InvalidDataException
-                (
-                    "The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data."
-                );
-            }
-
-            IMemoryOwner<byte> decompData = _memoryPool.Rent(length);
-
-            _inflater.Inflate(output[8..], decompData.Memory.Span);
-            _inflater.Reset();
-            outputOwner.Dispose();
-
-            outputOwner = decompData;
         }
 
         return (outputOwner, length);

@@ -33,49 +33,40 @@ public static class Program
         if (!Directory.Exists(args[1]))
             throw new DirectoryNotFoundException("Output directory does not exist: " + args[1]);
 
-        if (!File.Exists(args[2]))
-            throw new FileNotFoundException("Namelist file does not exist: " + args[2]);
-
         Stopwatch stopwatch = new();
         stopwatch.Start();
 
-        Namelist nl = new();
-        foreach (string filePath in Directory.EnumerateFiles(args[0]))
-        {
-            using RandomAccessDataReaderService reader = new(filePath);
-            using Pack2Reader p2r = new(reader);
-            await nl.Append(p2r, ct).ConfigureAwait(false);
-        }
-
-        await using FileStream masterFS = new(@"C:\Users\carls\source\repos\_PS2Modding\_External\forgelight-toolbox_inUse\FLUtils\master-namelist.txt", FileMode.Open);
-        await nl.Append(masterFS, ct: ct).ConfigureAwait(false);
-
-        await using FileStream outputFS = new(@"C:\Users\carls\source\repos\_PS2Modding\_External\forgelight-toolbox_inUse\FLUtils\temp.txt", FileMode.Create);
-        await nl.WriteAsync(outputFS, ct).ConfigureAwait(false);
-
-        // string[] namelist = await File.ReadAllLinesAsync(args[2], ct).ConfigureAwait(false);
-        IReadOnlyDictionary<ulong, string> hashedNamePairs = nl.NameList;//PackCrc64.HashStrings(namelist);
+        Namelist namelist = await Namelist.FromFileAsync(args[2], ct).ConfigureAwait(false);
 
         stopwatch.Stop();
-        Console.WriteLine("Generated name hashes in {0}", stopwatch.Elapsed);
+        Console.WriteLine("Generated namelist in {0}", stopwatch.Elapsed);
 
-        IEnumerable<string> packFiles = Directory.EnumerateFiles(args[0]);
+        IEnumerable<string> packFiles = Directory.EnumerateFiles(args[0], "*.pack2", SearchOption.TopDirectoryOnly);
 
         stopwatch.Reset();
         stopwatch.Start();
 
         foreach (string file in packFiles)
-            ExportPackAssets(file, args[1], hashedNamePairs);
+        {
+            await ExportPackAssetsAsync
+            (
+                file,
+                args[1],
+                namelist,
+                ct
+            ).ConfigureAwait(false);
+        }
 
         stopwatch.Stop();
         Console.WriteLine("Wrote all assets in {0}", stopwatch.Elapsed);
     }
 
-    private static void ExportPackAssets
+    private static async Task ExportPackAssetsAsync
     (
         string packFilePath,
         string outputPath,
-        IReadOnlyDictionary<ulong, string> hashedNamePairs
+        Namelist namelist,
+        CancellationToken ct
     )
     {
         Stopwatch stopwatch = new();
@@ -89,7 +80,7 @@ public static class Program
         if (!Directory.Exists(outputPath))
             Directory.CreateDirectory(outputPath);
 
-        reader.ExportAll(outputPath, hashedNamePairs);
+        await reader.ExportAllAsync(outputPath, namelist, ct).ConfigureAwait(false);
 
         stopwatch.Stop();
         Console.WriteLine("Completed exporting in {0}", stopwatch.Elapsed);
@@ -116,29 +107,28 @@ public static class Program
         Console.WriteLine("\t- Packet Length: {0}", header.Length);
     }
 
-    private static async Task WriteAmerishTileAssets(Pack2Reader reader, string outputPath, CancellationToken ct = default)
+    private static async Task WriteAmerishLod2TileAssets(Pack2Reader reader, string outputPath, CancellationToken ct = default)
     {
-        Dictionary<ulong, string> tileNames = GenerateAmerishTileNamesForLod2();
-        await reader.ExportNamedAsync(outputPath, tileNames, ct).ConfigureAwait(false);
+        Namelist namelist = GenerateTileNames("Amerish", "LOD2");
+        await reader.ExportNamedAsync(outputPath, namelist, ct).ConfigureAwait(false);
     }
 
-    private static Dictionary<ulong, string> GenerateAmerishTileNamesForLod2()
+    private static Namelist GenerateTileNames(string continent, string lod)
     {
-        Dictionary<ulong, string> tileNames = new();
+        static string GetTileCoordinateString(int number)
+            => number < 0 ? number.ToString("d2") : number.ToString("d3");
+
+        Namelist namelist = new();
 
         for (int i = -64; i < 64; i += 16)
         {
             for (int j = -64; j < 64; j += 16)
             {
-                string name = $"Amerish_Tile_{ GetTileCoordinateString(i) }_{ GetTileCoordinateString(j) }_LOD2.dds";
-                ulong hash = PackCrc64.Calculate(name);
-                tileNames.Add(hash, name);
+                string name = $"{continent}_Tile_{GetTileCoordinateString(i)}_{GetTileCoordinateString(j)}_{lod.ToUpper()}.dds";
+                namelist.Append(name);
             }
         }
 
-        return tileNames;
+        return namelist;
     }
-
-    private static string GetTileCoordinateString(int number)
-        => number < 0 ? number.ToString("d2") : number.ToString("d3");
 }

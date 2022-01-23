@@ -9,7 +9,7 @@ namespace Mandible.Services;
 /// <summary>
 /// Represents an interface for reading data from a stream.
 /// </summary>
-public class StreamDataReaderService : IDataReaderService, IDisposable
+public class StreamDataReaderService : IDataReaderService, IDisposable, IAsyncDisposable
 {
     private readonly long _baseOffset;
     private readonly Stream _input;
@@ -63,6 +63,14 @@ public class StreamDataReaderService : IDataReaderService, IDisposable
         GC.SuppressFinalize(this);
     }
 
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore();
+        Dispose(false);
+        GC.SuppressFinalize(this);
+    }
+
     /// <summary>
     /// Disposes of managed and unmanaged resources.
     /// </summary>
@@ -74,6 +82,16 @@ public class StreamDataReaderService : IDataReaderService, IDisposable
 
         if (disposeManaged && !_leaveOpen)
             _input.Dispose();
+
+        IsDisposed = true;
+    }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        if (IsDisposed)
+            return;
+
+        await _input.DisposeAsync().ConfigureAwait(false);
 
         IsDisposed = true;
     }

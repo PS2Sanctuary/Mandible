@@ -8,26 +8,29 @@ using System.Threading.Tasks;
 
 namespace Mandible.Pack2;
 
+/// <summary>
+/// Represents a mapping of CRC-64 file name hashes to the original file names.
+/// </summary>
 public class Namelist
 {
     /// <summary>
-    /// Gets the CRC-64 hash of the namelist file name ({{NAMELIST}}).
+    /// Gets the CRC-64 hash of the namelist file name ( {NAMELIST} ).
     /// </summary>
     private const ulong NamelistFileNameHash = 4699449473529019696;
 
-    private readonly Dictionary<ulong, string> hashedNamePairs;
+    private readonly Dictionary<ulong, string> _hashedNamePairs;
 
     /// <summary>
     /// Gets the namelist.
     /// </summary>
-    public IReadOnlyDictionary<ulong, string> NameList => hashedNamePairs;
+    public IReadOnlyDictionary<ulong, string> Map => _hashedNamePairs;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Namelist"/> class.
     /// </summary>
     public Namelist()
     {
-        hashedNamePairs = new Dictionary<ulong, string>();
+        _hashedNamePairs = new Dictionary<ulong, string>();
     }
 
     /// <summary>
@@ -36,15 +39,48 @@ public class Namelist
     /// <param name="existing">An existing namelist to copy into this <see cref="Namelist"/> instance.</param>
     public Namelist(IReadOnlyDictionary<ulong, string> existing)
     {
-        hashedNamePairs = new Dictionary<ulong, string>(existing);
+        _hashedNamePairs = new Dictionary<ulong, string>(existing);
+    }
+
+    /// <summary>
+    /// Constructs a <see cref="Namelist"/> from a file.
+    /// The file must contain purely names, separated by a newline.
+    /// </summary>
+    /// <param name="filePath">The path to the namelist file.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <returns>The constructed namelist.</returns>
+    /// <exception cref="FileNotFoundException">Thrown if the namelist file could not be found.</exception>
+    public static async Task<Namelist> FromFileAsync(string filePath, CancellationToken ct = default)
+    {
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("Unable to locate the namelist file.", filePath);
+
+        Namelist nl = new();
+        await using FileStream masterFS = new(filePath, FileMode.Open);
+        await nl.Append(masterFS, ct: ct).ConfigureAwait(false);
+
+        return nl;
+    }
+
+    /// <summary>
+    /// Gets a name.
+    /// </summary>
+    /// <param name="hash">The CRC-64 hash of the name.</param>
+    /// <returns>The name, or null if it doesn't exist in this <see cref="Namelist"/>.</returns>
+    public string? Get(ulong hash)
+    {
+        if (_hashedNamePairs.ContainsKey(hash))
+            return _hashedNamePairs[hash];
+
+        return null;
     }
 
     public void Append(ulong hash, string name)
     {
-        if (hashedNamePairs.ContainsKey(hash))
+        if (_hashedNamePairs.ContainsKey(hash))
             return;
 
-        hashedNamePairs.Add(hash, name);
+        _hashedNamePairs.Add(hash, name);
     }
 
     public void Append(string name)
@@ -92,8 +128,7 @@ public class Namelist
 
     public async Task Append(Pack2Reader reader, CancellationToken ct = default)
     {
-        Pack2Header header = await reader.ReadHeaderAsync(ct).ConfigureAwait(false);
-        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(header, ct).ConfigureAwait(false);
+        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
 
         Asset2Header? namelistHeader = null;
         foreach (Asset2Header asset in assetHeaders)
@@ -120,7 +155,7 @@ public class Namelist
     public async Task WriteAsync(Stream outputStream, CancellationToken ct = default)
     {
         using StreamWriter sw = new(outputStream, null, -1, true);
-        string[] names = hashedNamePairs.Values.OrderBy(s => s).ToArray();
+        string[] names = _hashedNamePairs.Values.OrderBy(s => s).ToArray();
 
         foreach (string name in names)
         {
