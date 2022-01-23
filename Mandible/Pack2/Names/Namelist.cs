@@ -6,18 +6,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Mandible.Pack2;
+namespace Mandible.Pack2.Names;
 
 /// <summary>
 /// Represents a mapping of CRC-64 file name hashes to the original file names.
 /// </summary>
 public class Namelist
 {
-    /// <summary>
-    /// Gets the CRC-64 hash of the namelist file name ( {NAMELIST} ).
-    /// </summary>
-    private const ulong NamelistFileNameHash = 4699449473529019696;
-
     private readonly Dictionary<ulong, string> _hashedNamePairs;
 
     /// <summary>
@@ -73,6 +68,19 @@ public class Namelist
             return _hashedNamePairs[hash];
 
         return null;
+    }
+
+    /// <summary>
+    /// Appends an existing namelist to this one.
+    /// </summary>
+    /// <param name="namelist">The namelist to append.</param>
+    public void Append(Namelist namelist)
+    {
+        foreach (KeyValuePair<ulong, string> element in namelist.Map)
+        {
+            if (!_hashedNamePairs.ContainsKey(element.Key))
+                _hashedNamePairs.Add(element.Key, element.Value);
+        }
     }
 
     /// <summary>
@@ -152,32 +160,6 @@ public class Namelist
 
         await Append(names, ct).ConfigureAwait(false);
         names.Clear();
-    }
-
-    public async Task Append(Pack2Reader reader, CancellationToken ct = default)
-    {
-        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
-
-        Asset2Header? namelistHeader = null;
-        foreach (Asset2Header asset in assetHeaders)
-        {
-            if (asset.NameHash == NamelistFileNameHash)
-            {
-                namelistHeader = asset;
-                break;
-            }
-        }
-
-        if (namelistHeader is null)
-            return;
-
-        (IMemoryOwner<byte> data, int length) = await reader.ReadAssetDataAsync(namelistHeader.Value, ct).ConfigureAwait(false);
-        byte[] dataArray = ArrayPool<byte>.Shared.Rent(length);
-        data.Memory[..length].CopyTo(dataArray);
-
-        await using MemoryStream ms = new(dataArray);
-        await Append(ms, length, ct).ConfigureAwait(false);
-        ArrayPool<byte>.Shared.Return(dataArray);
     }
 
     /// <summary>

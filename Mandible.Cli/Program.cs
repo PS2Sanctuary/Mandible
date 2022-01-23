@@ -1,6 +1,6 @@
 ﻿using Mandible.Pack2;
+using Mandible.Pack2.Names;
 using Mandible.Services;
-using Mandible.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -37,6 +37,13 @@ public static class Program
         stopwatch.Start();
 
         Namelist namelist = await Namelist.FromFileAsync(args[2], ct).ConfigureAwait(false);
+        //await ExtractNewNamelist
+        //(
+        //    namelist,
+        //    args[0],
+        //    Path.Combine(Path.GetDirectoryName(args[2])!, "extracted-namelist.txt"),
+        //    ct
+        //).ConfigureAwait(false);
 
         stopwatch.Stop();
         Console.WriteLine("Generated namelist in {0}", stopwatch.Elapsed);
@@ -86,25 +93,19 @@ public static class Program
         Console.WriteLine("Completed exporting in {0}", stopwatch.Elapsed);
     }
 
-    private static void RunFLUtils(string[] args)
+    private static async Task ExtractNewNamelist
+    (
+        Namelist existing,
+        string packDirectoryPath,
+        string outputPath,
+        CancellationToken ct
+    )
     {
-        Process? p = Process.Start(new ProcessStartInfo
-        {
-            FileName = "python",
-            Arguments = "C:\\Users\\carls\\source\\repos\\_PS2Modding\\_External\\forgelight-toolbox_inUse\\FLUtils\\fl_pack.py "
-                        + $"unpack -n {args[2]} -o {args[1]} {string.Join(" ", Directory.EnumerateFiles(args[0]))}",
-            CreateNoWindow = false
-        });
+        Namelist extractedNamelist = await NameExtractor.ExtractAsync(packDirectoryPath, true, ct: ct).ConfigureAwait(false);
+        extractedNamelist.Append(existing);
 
-        p?.WaitForExit();
-    }
-
-    private static async Task PrintPackHeader(Pack2Reader reader, CancellationToken ct = default)
-    {
-        Pack2Header header = await reader.ReadHeaderAsync(ct).ConfigureAwait(false);
-        Console.WriteLine("Header: ");
-        Console.WriteLine("\t- Asset Count: {0}", header.AssetCount);
-        Console.WriteLine("\t- Packet Length: {0}", header.Length);
+        await using FileStream nlOut = new(outputPath, FileMode.Create);
+        await extractedNamelist.WriteAsync(nlOut, ct).ConfigureAwait(false);
     }
 
     private static async Task WriteAmerishLod2TileAssets(Pack2Reader reader, string outputPath, CancellationToken ct = default)

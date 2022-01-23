@@ -1,4 +1,5 @@
 ﻿using Mandible.Abstractions.Pack2;
+using Mandible.Pack2.Names;
 using Microsoft.Win32.SafeHandles;
 using System.Buffers;
 using System.Collections.Generic;

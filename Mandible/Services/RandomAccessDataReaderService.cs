@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Mandible.Services;
 
 /// <summary>
-/// Represents an interface for reading data using the <see cref="RandomAccess"/> API.
+/// Implements an <see cref="IDataReaderService"/> for reading data using the <see cref="RandomAccess"/> API.
 /// </summary>
 public class RandomAccessDataReaderService : IDataReaderService, IDisposable
 {

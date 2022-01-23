@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Mandible.Services;
 
 /// <summary>
-/// Represents an interface for reading data from a stream.
+/// Implements an <see cref="IDataReaderService"/> for reading data from a stream.
 /// </summary>
 public class StreamDataReaderService : IDataReaderService, IDisposable, IAsyncDisposable
 {

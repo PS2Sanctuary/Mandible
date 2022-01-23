@@ -11,7 +11,7 @@ using ZlibNGSharpMinimal.Inflate;
 
 namespace Mandible.Pack2;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IPack2Reader" />
 public class Pack2Reader : IPack2Reader, IDisposable
 {
     /// <summary>
@@ -169,48 +169,6 @@ public class Pack2Reader : IPack2Reader, IDisposable
         ).ConfigureAwait(false);
 
         return decompressedLength;
-    }
-
-    /// <inheritdoc />
-    public virtual async Task<(IMemoryOwner<byte> Data, int Length)> ReadAssetDataAsync(Asset2Header assetHeader, CancellationToken ct = default)
-    {
-        int length = (int)assetHeader.DataSize;
-
-        IMemoryOwner<byte> outputOwner = _memoryPool.Rent(length);
-        Memory<byte> output = outputOwner.Memory[..length];
-
-        await _dataReader.ReadAsync(output, (long)assetHeader.DataOffset, ct).ConfigureAwait(false);
-
-        if (assetHeader.ZipStatus == Asset2ZipDefinition.Zipped || assetHeader.ZipStatus == Asset2ZipDefinition.ZippedAlternate)
-        {
-            // Read the compression information
-            uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(output[..4].Span);
-            length = (int)BinaryPrimitives.ReadUInt32BigEndian(output[4..8].Span);
-
-            if (compressionIndicator != AssetCompressionIndicator)
-            {
-                throw new InvalidDataException
-                (
-                    "The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data."
-                );
-            }
-
-            outputOwner = await Task.Run
-            (
-                () =>
-                {
-                    IMemoryOwner<byte> decompData = _memoryPool.Rent(length);
-
-                    _inflater.Inflate(output[8..].Span, decompData.Memory.Span);
-                    _inflater.Reset();
-                    outputOwner.Dispose();
-
-                    return decompData;
-                }
-            ).ConfigureAwait(false);
-        }
-
-        return (outputOwner, length);
     }
 
     /// <inheritdoc />
