@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Mandible.Pack2.Names;
 
@@ -110,6 +111,9 @@ public static class NameExtractor
 
             List<string> names = ExtractNamesFromTextData(buffer.Memory[..length]);
             await namelist.Append(names, ct).ConfigureAwait(false);
+
+            if (asset.NameHash == PackCrc64.Calculate("ObjectTerrainData.xml"))
+                await GuessWorldNames(buffer.Memory[..length], namelist, ct).ConfigureAwait(false);
         }
     }
 
@@ -153,6 +157,67 @@ public static class NameExtractor
         }
 
         return names;
+    }
+
+    private static async Task GuessWorldNames(ReadOnlyMemory<byte> objectTerrainDataXmlBuffer, Namelist namelist, CancellationToken ct)
+    {
+        List<string> names = new();
+
+        void AddName(string name)
+        {
+            // Names that we need to add
+            names.Add(name + "Areas.xml");
+            for (int i = 0; i < 4; i++)
+                names.Add($"{name}_TileInfo_LOD{i}.txt");
+        }
+
+        XmlReaderSettings xmlSettings = new()
+        {
+            Async = true,
+            ConformanceLevel = ConformanceLevel.Fragment // This is required as each definition is a root-level object.
+        };
+        using XmlReader xml = XmlReader.Create(new MemoryStream(objectTerrainDataXmlBuffer.ToArray()), xmlSettings);
+
+        while (await xml.ReadAsync().ConfigureAwait(false))
+        {
+            if (ct.IsCancellationRequested)
+                throw new TaskCanceledException();
+
+            if (xml.NodeType is not XmlNodeType.Element)
+                continue;
+
+            if (xml.Name != "ObjectTerrainData")
+                continue;
+
+            string? dataName = xml.GetAttribute("DataName");
+            if (string.IsNullOrEmpty(dataName))
+                continue;
+
+            // Worlds should have a single word in their name
+            if (dataName.Contains('_'))
+                continue;
+
+            // Worlds should have an associated sky file
+            string? skyFileName = xml.GetAttribute("SkyFileName");
+            if (string.IsNullOrEmpty(skyFileName))
+                continue;
+
+            // Sky file names with multiple underscores are indicative of a non-world
+            if (skyFileName.IndexOf('_') != skyFileName.LastIndexOf('_'))
+                continue;
+
+            // Worlds should not have a minimap tileset
+            string? minimapTileset = xml.GetAttribute("MinimapTileset");
+            if (!string.IsNullOrEmpty(minimapTileset))
+                continue;
+
+            AddName(dataName);
+        }
+
+        // Manually append this, the algorithm excludes it because it is referred to as 'VR_Training'.
+        AddName("VR");
+
+        await namelist.Append(names, ct).ConfigureAwait(false);
     }
 
     private static bool IsBinaryFile(ReadOnlySpan<byte> data)

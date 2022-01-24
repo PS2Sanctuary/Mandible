@@ -48,6 +48,8 @@ public static class Program
         stopwatch.Stop();
         Console.WriteLine("Generated namelist in {0}", stopwatch.Elapsed);
 
+        // return;
+
         IEnumerable<string> packFiles = Directory.EnumerateFiles(args[0], "*.pack2", SearchOption.TopDirectoryOnly);
 
         stopwatch.Reset();
@@ -101,7 +103,7 @@ public static class Program
         CancellationToken ct
     )
     {
-        Namelist extractedNamelist = await NameExtractor.ExtractAsync(packDirectoryPath, true, ct: ct).ConfigureAwait(false);
+        Namelist extractedNamelist = await NameExtractor.ExtractAsync(packDirectoryPath, false, ct: ct).ConfigureAwait(false);
         extractedNamelist.Append(existing);
 
         await using FileStream nlOut = new(outputPath, FileMode.Create);
