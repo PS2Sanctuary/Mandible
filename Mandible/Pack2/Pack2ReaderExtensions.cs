@@ -1,7 +1,7 @@
-﻿using Mandible.Abstractions.Pack2;
+﻿using CommunityToolkit.HighPerformance.Buffers;
+using Mandible.Abstractions.Pack2;
 using Mandible.Pack2.Names;
 using Microsoft.Win32.SafeHandles;
-using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -101,9 +101,9 @@ public static class Pack2ReaderExtensions
         );
 
         int assetLength = await reader.GetAssetLengthAsync(assetHeader, ct).ConfigureAwait(false);
-        using IMemoryOwner<byte> data = MemoryPool<byte>.Shared.Rent(assetLength);
+        using MemoryOwner<byte> data = MemoryOwner<byte>.Allocate(assetLength);
 
-        await reader.ReadAssetDataAsync(assetHeader, data.Memory[..assetLength], ct).ConfigureAwait(false);
-        await RandomAccess.WriteAsync(outputHandle, data.Memory[..assetLength], 0, ct).ConfigureAwait(false);
+        await reader.ReadAssetDataAsync(assetHeader, data.Memory, ct).ConfigureAwait(false);
+        await RandomAccess.WriteAsync(outputHandle, data.Memory, 0, ct).ConfigureAwait(false);
     }
 }

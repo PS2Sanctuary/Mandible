@@ -1,7 +1,7 @@
-﻿using Mandible.Abstractions.Pack2;
+﻿using CommunityToolkit.HighPerformance.Buffers;
+using Mandible.Abstractions.Pack2;
 using Mandible.Abstractions.Services;
 using System;
-using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
@@ -21,7 +21,6 @@ public class Pack2Reader : IPack2Reader, IDisposable
 
     protected readonly IDataReaderService _dataReader;
     protected readonly ZngInflater _inflater;
-    protected readonly MemoryPool<byte> _memoryPool;
 
     /// <summary>
     /// Gets a value indicating whether or not this <see cref="Pack2Reader"/> instance has been disposed.
@@ -36,19 +35,17 @@ public class Pack2Reader : IPack2Reader, IDisposable
     {
         _dataReader = dataReader;
 
-        _memoryPool = MemoryPool<byte>.Shared;
         _inflater = new ZngInflater();
     }
 
     /// <inheritdoc />
     public virtual async ValueTask<Pack2Header> ReadHeaderAsync(CancellationToken ct = default)
     {
-        using IMemoryOwner<byte> data = _memoryPool.Rent(Pack2Header.Size);
-        Memory<byte> headerBuffer = data.Memory[..Pack2Header.Size];
+        using MemoryOwner<byte> data = MemoryOwner<byte>.Allocate(Pack2Header.Size);
 
-        await _dataReader.ReadAsync(headerBuffer, 0, ct).ConfigureAwait(false);
+        await _dataReader.ReadAsync(data.Memory, 0, ct).ConfigureAwait(false);
 
-        return Pack2Header.Deserialize(headerBuffer.Span);
+        return Pack2Header.Deserialize(data.Span);
     }
 
     /// <inheritdoc />
@@ -58,15 +55,14 @@ public class Pack2Reader : IPack2Reader, IDisposable
         List<Asset2Header> assetHeaders = new();
 
         int bufferSize = (int)header.AssetCount * Asset2Header.Size;
-        using IMemoryOwner<byte> bufferOwner = _memoryPool.Rent(bufferSize);
-        Memory<byte> buffer = bufferOwner.Memory[..bufferSize];
+        using MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate(bufferSize);
 
-        await _dataReader.ReadAsync(buffer, (long)header.AssetMapOffset, ct).ConfigureAwait(false);
+        await _dataReader.ReadAsync(buffer.Memory, (long)header.AssetMapOffset, ct).ConfigureAwait(false);
 
         for (uint i = 0; i < header.AssetCount; i++)
         {
             int baseOffset = (int)i * Asset2Header.Size;
-            Memory<byte> assetHeaderData = buffer.Slice(baseOffset, Asset2Header.Size);
+            Memory<byte> assetHeaderData = buffer.Memory.Slice(baseOffset, Asset2Header.Size);
 
             Asset2Header assetHeader = Asset2Header.Deserialize(assetHeaderData.Span);
             assetHeaders.Add(assetHeader);
@@ -81,11 +77,10 @@ public class Pack2Reader : IPack2Reader, IDisposable
         if (header.ZipStatus is Asset2ZipDefinition.Unzipped or Asset2ZipDefinition.UnzippedAlternate)
             return (int)header.DataSize;
 
-        using IMemoryOwner<byte> bufferOwner = _memoryPool.Rent(8);
-        Memory<byte> buffer = bufferOwner.Memory[..8];
+        using MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate(8);
 
-        await _dataReader.ReadAsync(buffer, (long)header.DataOffset, ct).ConfigureAwait(false);
-        return (int)BinaryPrimitives.ReadUInt32BigEndian(buffer[4..8].Span);
+        await _dataReader.ReadAsync(buffer.Memory, (long)header.DataOffset, ct).ConfigureAwait(false);
+        return (int)BinaryPrimitives.ReadUInt32BigEndian(buffer.Span[4..8]);
     }
 
     /// <inheritdoc />
@@ -116,10 +111,14 @@ public class Pack2Reader : IPack2Reader, IDisposable
 
         if (header.ZipStatus is Asset2ZipDefinition.Zipped or Asset2ZipDefinition.ZippedAlternate)
         {
-            using IMemoryOwner<byte> tempBuffer = _memoryPool.Rent((int)header.DataSize);
+            using MemoryOwner<byte> tempBuffer = MemoryOwner<byte>.Allocate((int)header.DataSize);
             outputBuffer[..(int)header.DataSize].CopyTo(tempBuffer.Memory);
 
-            return (int)await UnzipAssetData(tempBuffer.Memory[..(int)header.DataSize], outputBuffer, ct).ConfigureAwait(false);
+            return await Task.Run
+            (
+                () => (int)UnzipAssetData(tempBuffer.Span, outputBuffer.Span),
+                ct
+            ).ConfigureAwait(false);
         }
 
         return (int)header.DataSize;
@@ -130,20 +129,18 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// </summary>
     /// <param name="data">The compressed asset data.</param>
     /// <param name="outputBuffer">The output buffer.</param>
-    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>The length of the decompressed data.</returns>
     /// <exception cref="InvalidDataException">Thrown if the compressed data was not in the expected format.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if the output buffer was not long enough.</exception>
-    protected virtual async Task<uint> UnzipAssetData
+    protected virtual uint UnzipAssetData
     (
-        ReadOnlyMemory<byte> data,
-        Memory<byte> outputBuffer,
-        CancellationToken ct
+        ReadOnlySpan<byte> data,
+        Span<byte> outputBuffer
     )
     {
         // Read the compression information
-        uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(data[..4].Span);
-        uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(data[4..8].Span);
+        uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(data[..4]);
+        uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(data[4..8]);
 
         if (compressionIndicator != AssetCompressionIndicator)
             throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
@@ -158,15 +155,8 @@ public class Pack2Reader : IPack2Reader, IDisposable
             );
         }
 
-        await Task.Run
-        (
-            () =>
-            {
-                _inflater.Inflate(data[8..].Span, outputBuffer.Span);
-                _inflater.Reset();
-            },
-            CancellationToken.None // TODO: Does this solve cancelling issues?
-        ).ConfigureAwait(false);
+        _inflater.Inflate(data[8..], outputBuffer);
+        _inflater.Reset();
 
         return decompressedLength;
     }
