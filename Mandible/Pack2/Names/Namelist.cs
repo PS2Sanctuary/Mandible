@@ -1,6 +1,7 @@
 ﻿using Mandible.Util;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -63,13 +64,8 @@ public class Namelist
     /// </summary>
     /// <param name="hash">The CRC-64 hash of the name.</param>
     /// <returns>The name, or null if it doesn't exist in this <see cref="Namelist"/>.</returns>
-    public string? Get(ulong hash)
-    {
-        if (_hashedNamePairs.ContainsKey(hash))
-            return _hashedNamePairs[hash];
-
-        return null;
-    }
+    public bool TryGet(ulong hash, [NotNullWhen(true)] out string? name)
+        => _hashedNamePairs.TryGetValue(hash, out name);
 
     /// <summary>
     /// Appends an existing namelist to this one.

@@ -34,13 +34,14 @@ public static class Pack2ReaderExtensions
 
         foreach (Asset2Header assetHeader in assetHeaders)
         {
-            string fileName = namelist?.Get(assetHeader.NameHash) ?? assetHeader.NameHash.ToString();
+            string? fileName = null;
+            namelist?.TryGet(assetHeader.NameHash, out fileName);
 
             await ExportAsync
             (
                 reader,
                 assetHeader,
-                Path.Combine(outputPath, fileName),
+                Path.Combine(outputPath, fileName ?? assetHeader.NameHash.ToString()),
                 ct
             ).ConfigureAwait(false);
         }
@@ -69,8 +70,7 @@ public static class Pack2ReaderExtensions
 
         foreach (Asset2Header assetHeader in assetHeaders)
         {
-            string? fileName = namelist.Get(assetHeader.NameHash);
-            if (fileName is null)
+            if (!namelist.TryGet(assetHeader.NameHash, out string? fileName))
                 continue;
 
             await ExportAsync
