@@ -100,10 +100,7 @@ public static class Pack2ReaderExtensions
             FileOptions.Asynchronous
         );
 
-        int assetLength = await reader.GetAssetLengthAsync(assetHeader, ct).ConfigureAwait(false);
-        using MemoryOwner<byte> data = MemoryOwner<byte>.Allocate(assetLength);
-
-        await reader.ReadAssetDataAsync(assetHeader, data.Memory, ct).ConfigureAwait(false);
+        using MemoryOwner<byte> data = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
         await RandomAccess.WriteAsync(outputHandle, data.Memory, 0, ct).ConfigureAwait(false);
     }
 }

@@ -1,8 +1,9 @@
 ﻿using Mandible.Util;
-using System.Buffers;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -131,7 +132,7 @@ public class Namelist
 
     /// <summary>
     /// Appends a stream of names to the namelist.
-    /// Names are expected to be separated by a newline character.
+    /// Names are expected to be separated by a newline sequence.
     /// </summary>
     /// <param name="stream">The stream to read the names from.</param>
     /// <param name="endPosition">
@@ -163,6 +164,35 @@ public class Namelist
     }
 
     /// <summary>
+    /// Appends a buffer of names to the namelist.
+    /// Names are expected to be separated by a newline sequence.
+    /// </summary>
+    /// <param name="buffer">The buffer.</param>
+    public void Append(ReadOnlySpan<byte> buffer)
+    {
+        int startIndex = 0;
+        int endIndex = 0;
+
+        for (int i = 0; i < buffer.Length; i++)
+        {
+            byte cur = buffer[i];
+            if (cur == (byte)'\r' || cur == (byte)'\n')
+                endIndex = i;
+            else
+                continue;
+
+            // Check that we haven't encountered a \r\n sequence
+            if (endIndex == startIndex)
+                continue;
+
+            string name = Encoding.ASCII.GetString(buffer[startIndex..endIndex]);
+            Append(name);
+
+            startIndex = endIndex + 1;
+        }
+    }
+
+    /// <summary>
     /// Writes the namelist to a stream.
     /// Only names are written out, separated by a newline.
     /// </summary>
@@ -173,9 +203,8 @@ public class Namelist
     public async Task WriteAsync(Stream outputStream, CancellationToken ct = default)
     {
         using StreamWriter sw = new(outputStream, null, -1, true);
-        string[] names = _hashedNamePairs.Values.OrderBy(s => s).ToArray();
 
-        foreach (string name in names)
+        foreach (string name in _hashedNamePairs.Values.OrderBy(s => s))
         {
             if (ct.IsCancellationRequested)
                 throw new TaskCanceledException();

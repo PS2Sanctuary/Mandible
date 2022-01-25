@@ -85,43 +85,37 @@ public class Pack2Reader : IPack2Reader, IDisposable
 
     /// <inheritdoc />
     /// <exception cref="ArgumentOutOfRangeException">Thrown if the output buffer was not long enough.</exception>
-    public virtual async Task<int> ReadAssetDataAsync
+    public virtual async Task<MemoryOwner<byte>> ReadAssetDataAsync
     (
         Asset2Header header,
-        Memory<byte> outputBuffer,
         CancellationToken ct = default
     )
     {
-        if (outputBuffer.Length < (int)header.DataSize)
-        {
-            throw new ArgumentOutOfRangeException
-            (
-                nameof(outputBuffer),
-                outputBuffer.Length,
-                $"The output buffer must be at least {header.DataSize} bytes in length."
-            );
-        }
+        MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate((int)header.DataSize);
 
         await _dataReader.ReadAsync
         (
-            outputBuffer[..(int)header.DataSize],
+            buffer.Memory,
             (long)header.DataOffset,
             ct
         ).ConfigureAwait(false);
 
         if (header.ZipStatus is Asset2ZipDefinition.Zipped or Asset2ZipDefinition.ZippedAlternate)
         {
-            using MemoryOwner<byte> tempBuffer = MemoryOwner<byte>.Allocate((int)header.DataSize);
-            outputBuffer[..(int)header.DataSize].CopyTo(tempBuffer.Memory);
+            uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(buffer.Span[4..8]);
+            MemoryOwner<byte> unzippedBuffer = MemoryOwner<byte>.Allocate((int)decompressedLength);
 
-            return await Task.Run
+            await Task.Run
             (
-                () => (int)UnzipAssetData(tempBuffer.Span, outputBuffer.Span),
+                () => (int)UnzipAssetData(buffer.Span, unzippedBuffer.Span),
                 ct
             ).ConfigureAwait(false);
+
+            buffer.Dispose();
+            return unzippedBuffer;
         }
 
-        return (int)header.DataSize;
+        return buffer;
     }
 
     /// <summary>

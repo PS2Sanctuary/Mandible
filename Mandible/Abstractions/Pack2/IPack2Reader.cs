@@ -1,6 +1,5 @@
-﻿using Mandible.Pack2;
-using System;
-using System.Buffers;
+﻿using CommunityToolkit.HighPerformance.Buffers;
+using Mandible.Pack2;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,16 +37,11 @@ public interface IPack2Reader
     /// Reads an asset from the pack. The asset is decompressed if required.
     /// </summary>
     /// <param name="header">The asset to retrieve.</param>
-    /// <param name="outputBuffer">
-    /// The buffer to read the data into. Use <see cref="GetAssetLengthAsync(Asset2Header, CancellationToken)"/>
-    /// to determine the minimum required buffer length.
-    /// </param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    /// <returns>The length of the data that was read.</returns>
-    Task<int> ReadAssetDataAsync
+    /// <returns>A buffer containing the asset data..</returns>
+    Task<MemoryOwner<byte>> ReadAssetDataAsync
     (
         Asset2Header header,
-        Memory<byte> outputBuffer,
         CancellationToken ct = default
     );
 }

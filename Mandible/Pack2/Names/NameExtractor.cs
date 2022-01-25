@@ -1,4 +1,5 @@
-﻿using Mandible.Abstractions.Pack2;
+﻿using CommunityToolkit.HighPerformance.Buffers;
+using Mandible.Abstractions.Pack2;
 using Mandible.Services;
 using Mandible.Util;
 using System;
@@ -84,16 +85,8 @@ public static class NameExtractor
         if (namelistHeader is null)
             return;
 
-        int length = await reader.GetAssetLengthAsync(namelistHeader.Value, ct).ConfigureAwait(false);
-        using IMemoryOwner<byte> buffer = MemoryPool<byte>.Shared.Rent(length);
-        await reader.ReadAssetDataAsync(namelistHeader.Value, buffer.Memory[..length], ct).ConfigureAwait(false);
-
-        byte[] dataArray = ArrayPool<byte>.Shared.Rent(length);
-        buffer.Memory[..length].CopyTo(dataArray);
-
-        await using MemoryStream ms = new(dataArray);
-        await namelist.Append(ms, length, ct).ConfigureAwait(false);
-        ArrayPool<byte>.Shared.Return(dataArray);
+        using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(namelistHeader.Value, ct).ConfigureAwait(false);
+        namelist.Append(buffer.Span);
     }
 
     private static async Task ExtractFromAssetsAsync(IPack2Reader reader, Namelist namelist, CancellationToken ct)
@@ -102,18 +95,16 @@ public static class NameExtractor
 
         foreach (Asset2Header asset in assetHeaders)
         {
-            int length = await reader.GetAssetLengthAsync(asset, ct).ConfigureAwait(false);
-            using IMemoryOwner<byte> buffer = MemoryPool<byte>.Shared.Rent(length);
-            await reader.ReadAssetDataAsync(asset, buffer.Memory[..length], ct).ConfigureAwait(false);
+            using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(asset, ct).ConfigureAwait(false);
 
-            if (IsBinaryFile(buffer.Memory.Span[..length]))
+            if (IsBinaryFile(buffer.Span))
                 continue;
 
-            List<string> names = ExtractNamesFromTextData(buffer.Memory[..length]);
+            List<string> names = ExtractNamesFromTextData(buffer.Memory);
             await namelist.Append(names, ct).ConfigureAwait(false);
 
             if (asset.NameHash == PackCrc64.Calculate("ObjectTerrainData.xml"))
-                await GuessWorldNames(buffer.Memory[..length], namelist, ct).ConfigureAwait(false);
+                await GuessWorldNamesAsync(buffer.Memory, namelist, ct).ConfigureAwait(false);
         }
     }
 
@@ -159,7 +150,7 @@ public static class NameExtractor
         return names;
     }
 
-    private static async Task GuessWorldNames(ReadOnlyMemory<byte> objectTerrainDataXmlBuffer, Namelist namelist, CancellationToken ct)
+    private static async Task GuessWorldNamesAsync(ReadOnlyMemory<byte> objectTerrainDataXmlBuffer, Namelist namelist, CancellationToken ct)
     {
         List<string> names = new();
 

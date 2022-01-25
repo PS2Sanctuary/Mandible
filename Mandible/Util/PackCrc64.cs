@@ -19,7 +19,7 @@ public static class PackCrc64
 
         foreach (char c in characters)
         {
-            byte tableIndex = (byte)((byte)hash ^ char.ToUpperInvariant(c));
+            byte tableIndex = (byte)(hash ^ char.ToUpperInvariant(c));
             hash = CRC64_TABLE[tableIndex] ^ hash >> 8;
         }
 
