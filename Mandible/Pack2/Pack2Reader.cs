@@ -25,7 +25,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <summary>
     /// Gets a value indicating whether or not this <see cref="Pack2Reader"/> instance has been disposed.
     /// </summary>
-    public bool IsDisposed { get; protected set; }
+    public bool IsDisposed { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Pack2Reader"/> class.

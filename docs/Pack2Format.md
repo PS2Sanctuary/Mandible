@@ -3,7 +3,7 @@
 *These notes are built off [Rhett's technical breakdown](https://github.com/RhettVX/forgelight-toolbox/blob/master/docs/rhett-pack2-notes.txt).*
 
 **Extension**: `.pack2`\
-**Endianness**: Mixed: Headers and maps are in *little* endian, while data is in *big* endian\
+**Endianness**: Mixed: Headers and maps are in *little* endian, while data is in *big* endian
 
 ### Description
 

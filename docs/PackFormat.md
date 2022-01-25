@@ -1,9 +1,9 @@
 # Pack - File Information/Structure
 
-*// *These notes are built off [Rhett's technical breakdown](https://github.com/RhettVX/forgelight-toolbox/blob/master/docs/rhett-pack1-notes.txt).*
+*These notes are built off [Rhett's technical breakdown](https://github.com/RhettVX/forgelight-toolbox/blob/master/docs/rhett-pack1-notes.txt).*
 
 **Extension**: `.pack`\
-**Endianness**: Big\
+**Endianness**: Big
 
 ### Description
 

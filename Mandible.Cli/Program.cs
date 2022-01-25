@@ -103,11 +103,11 @@ public static class Program
         CancellationToken ct
     )
     {
-        Namelist extractedNamelist = await NameExtractor.ExtractAsync(packDirectoryPath, false, ct: ct).ConfigureAwait(false);
-        extractedNamelist.Append(existing);
+        Namelist extractedNamelist = await NameExtractor.ExtractAsync(packDirectoryPath, true, ct: ct).ConfigureAwait(false);
+        existing.Append(extractedNamelist);
 
         await using FileStream nlOut = new(outputPath, FileMode.Create);
-        await extractedNamelist.WriteAsync(nlOut, ct).ConfigureAwait(false);
+        await existing.WriteAsync(nlOut, ct).ConfigureAwait(false);
     }
 
     private static async Task WriteAmerishLod2TileAssets(Pack2Reader reader, string outputPath, CancellationToken ct = default)

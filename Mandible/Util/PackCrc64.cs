@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Mandible.Util;
 
@@ -24,21 +23,6 @@ public static class PackCrc64
         }
 
         return hash ^ ulong.MaxValue;
-    }
-
-    /// <summary>
-    /// Hashes a list of strings using the CRC-64 algorithm. Duplicate entries will not be added to the resulting dictionary.
-    /// </summary>
-    /// <param name="stringList">The strings to hash.</param>
-    /// <returns>A dictionary mapping the hash to its original string.</returns>
-    public static Dictionary<ulong, string> HashStrings(IEnumerable<string> stringList)
-    {
-        Dictionary<ulong, string> hashedNamePairs = new();
-
-        foreach (string element in stringList)
-            hashedNamePairs.TryAdd(Calculate(element), element);
-
-        return hashedNamePairs;
     }
 
     /// <summary>
