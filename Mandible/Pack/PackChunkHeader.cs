@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Buffers.Binary;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Mandible.Pack;
 
@@ -10,6 +8,11 @@ namespace Mandible.Pack;
 /// </summary>
 public class PackChunkHeader
 {
+    /// <summary>
+    /// Gets the size of a pack chunk header when stored within a pack.
+    /// </summary>
+    public const int Size = 8;
+
     /// <summary>
     /// Gets the offset of the next chunk into the pack.
     /// </summary>
@@ -20,29 +23,15 @@ public class PackChunkHeader
     /// </summary>
     public uint AssetCount { get; }
 
-    public IReadOnlyList<AssetHeader> AssetHeaders { get; }
-
     /// <summary>
     /// Initializes a new instance of the <see cref="PackChunkHeader"/> class.
     /// </summary>
     /// <param name="nextChunkOffset">The offset into the pack of the next chunk.</param>
-    /// <param name="assetHeaders">The asset headers contained within this chunk.</param>
-    public PackChunkHeader(uint nextChunkOffset, IReadOnlyList<AssetHeader> assetHeaders)
+    public PackChunkHeader(uint nextChunkOffset, uint assetCount)
     {
         NextChunkOffset = nextChunkOffset;
-        AssetCount = (uint)assetHeaders.Count;
-        AssetHeaders = assetHeaders;
+        AssetCount = assetCount;
     }
-
-    /// <summary>
-    /// Gets the number of bytes that this <see cref="PackChunkHeader"/> will use when stored within a pack.
-    /// </summary>
-    /// <returns>The size in bytes of this <see cref="PackChunkHeader"/>.</returns>
-    public int GetSize()
-        => GetSize(AssetHeaders);
-
-    public static int GetSize(IEnumerable<AssetHeader> assetHeaders)
-        => 8 + assetHeaders.Sum(h => h.GetSize());
 
     /// <summary>
     /// Serializes this <see cref="PackChunkHeader"/> to a byte buffer.
@@ -51,16 +40,11 @@ public class PackChunkHeader
     /// <exception cref="ArgumentException">Thrown if the buffer is too small.</exception>
     public void Serialize(Span<byte> buffer)
     {
-        if (buffer.Length < GetSize())
-            throw new ArgumentException($"Buffer must be at least {GetSize()} bytes", nameof(buffer));
+        if (buffer.Length < Size)
+            throw new ArgumentException($"Buffer must be at least {Size} bytes", nameof(buffer));
 
-        int index = 0;
-
-        BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], NextChunkOffset);
-        BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], AssetCount);
-
-        foreach (AssetHeader header in AssetHeaders)
-            header.Serialize(buffer[index..(index += header.GetSize())]);
+        BinaryPrimitives.WriteUInt32BigEndian(buffer[0..4], NextChunkOffset);
+        BinaryPrimitives.WriteUInt32BigEndian(buffer[4..8], AssetCount);
     }
 
     /// <summary>
@@ -70,19 +54,9 @@ public class PackChunkHeader
     /// <returns>An <see cref="PackChunkHeader"/>.</returns>
     public static PackChunkHeader Deserialize(ReadOnlySpan<byte> buffer)
     {
-        int index = 0;
+        uint nextChunkOffset = BinaryPrimitives.ReadUInt32BigEndian(buffer[0..4]);
+        uint assetCount = BinaryPrimitives.ReadUInt32BigEndian(buffer[4..8]);
 
-        uint nextChunkOffset = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
-        uint assetCount = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
-
-        List<AssetHeader> assetHeaders = new();
-        for (int i = 0; i < assetCount; i++)
-        {
-            AssetHeader header = AssetHeader.Deserialize(buffer[index..]);
-            assetHeaders.Add(header);
-            index += header.GetSize();
-        }
-
-        return new PackChunkHeader(nextChunkOffset, assetHeaders);
+        return new PackChunkHeader(nextChunkOffset, assetCount);
     }
 }

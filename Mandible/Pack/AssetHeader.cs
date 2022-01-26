@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace Mandible.Pack;
@@ -9,6 +10,11 @@ namespace Mandible.Pack;
 /// </summary>
 public class AssetHeader
 {
+    /// <summary>
+    /// Gets the length of the asset <see cref="Name"/>.
+    /// </summary>
+    public uint NameLength { get; }
+
     /// <summary>
     /// Gets the name of the asset.
     /// </summary>
@@ -36,8 +42,9 @@ public class AssetHeader
     /// <param name="dataOffset">The byte offset into the pack at which the asset data is stored.</param>
     /// <param name="dataLength">The length of the packed data.</param>
     /// <param name="checksum">The CRC-32 checksum of the packed data.</param>
-    public AssetHeader(string name, uint dataOffset, uint dataLength, uint checksum)
+    public AssetHeader(uint nameLength, string name, uint dataOffset, uint dataLength, uint checksum)
     {
+        NameLength = nameLength;
         Name = name;
         DataOffset = dataOffset;
         DataLength = dataLength;
@@ -60,21 +67,31 @@ public class AssetHeader
         => 16 + name.Length;
 
     /// <summary>
-    /// Deserializes a buffer to a <see cref="AssetHeader"/> instance.
+    /// Attempts to deserialize a buffer to a <see cref="AssetHeader"/> instance.
     /// </summary>
     /// <param name="buffer">The buffer.</param>
-    /// <returns>An <see cref="AssetHeader"/>.</returns>
-    public static unsafe AssetHeader Deserialize(ReadOnlySpan<byte> buffer)
+    /// <param name="header">The header.</param>
+    /// <returns>A value indicating whether or no the deserialisation was successful. Failure occurs because the buffer was too small.</returns>
+    public static unsafe bool TryDeserialize(ReadOnlySpan<byte> buffer, [NotNullWhen(true)] out AssetHeader? header)
     {
+        header = null;
+
+        if (buffer.Length < 16)
+            return false;
+
         int index = 0;
 
         uint nameLength = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
+        if (buffer.Length < 16 + nameLength)
+            return false;
+
         string name = Encoding.ASCII.GetString(buffer[index..(index += (int)nameLength)]);
         uint assetOffset = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
         uint dataLength = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
         uint checksum = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
 
-        return new AssetHeader(name, assetOffset, dataLength, checksum);
+        header = new AssetHeader(nameLength, name, assetOffset, dataLength, checksum);
+        return true;
     }
 
     /// <summary>
@@ -89,7 +106,7 @@ public class AssetHeader
 
         int index = 0;
 
-        BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], (uint)Name.Length);
+        BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], NameLength);
 
         foreach (byte value in Name)
             buffer[index++] = value;

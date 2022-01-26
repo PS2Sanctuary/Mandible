@@ -30,7 +30,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="Pack2Reader"/> class.
     /// </summary>
-    /// <param name="dataReader">The data reader configured for the pack2 to read from.</param>
+    /// <param name="dataReader">A <see cref="IDataReaderService"/> configured to read from a pack2 file.</param>
     public Pack2Reader(IDataReaderService dataReader)
     {
         _dataReader = dataReader;
