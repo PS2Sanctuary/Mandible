@@ -1,4 +1,7 @@
-﻿using Mandible.Pack2;
+﻿using CommandDotNet;
+using CommandDotNet.Spectre;
+using Mandible.Cli.Commands;
+using Mandible.Pack2;
 using Mandible.Pack2.Names;
 using Mandible.Services;
 using System;
@@ -11,10 +14,21 @@ using ZlibNGSharpMinimal;
 
 namespace Mandible.Cli;
 
-public static class Program
+public class Program
 {
-    public static async Task Main(string[] args)
+    [Subcommand]
+    public IndexCommand? IndexCommand { get; set; }
+
+    [Subcommand]
+    public UnpackCommands? UnpackCommands { get; set; }
+
+    public static async Task<int> Main(string[] args)
     {
+        return await new AppRunner<Program>()
+            .UseDefaultMiddleware()
+            .UseSpectreAnsiConsole()
+            .RunAsync(args);
+
         CancellationTokenSource cts = new();
         CancellationToken ct = cts.Token;
         Console.CancelKeyPress += (_, __) => cts.Cancel();
@@ -24,7 +38,7 @@ public static class Program
         if (args.Length != 3)
         {
             Console.WriteLine("Usage: <packFolderPath> <outputFolderPath> <namelistPath>");
-            return;
+            return 1;
         }
 
         if (!Directory.Exists(args[0]))
@@ -37,62 +51,18 @@ public static class Program
         stopwatch.Start();
 
         Namelist namelist = await Namelist.FromFileAsync(args[2], ct).ConfigureAwait(false);
-        //await ExtractNewNamelist
-        //(
-        //    namelist,
-        //    args[0],
-        //    Path.Combine(Path.GetDirectoryName(args[2])!, "extracted-namelist.txt"),
-        //    ct
-        //).ConfigureAwait(false);
+        await ExtractNewNamelist
+        (
+            namelist,
+            args[0],
+            Path.Combine(Path.GetDirectoryName(args[2])!, "extracted-namelist.txt"),
+            ct
+        ).ConfigureAwait(false);
 
         stopwatch.Stop();
         Console.WriteLine("Generated namelist in {0}", stopwatch.Elapsed);
 
-        // return;
-
-        IEnumerable<string> packFiles = Directory.EnumerateFiles(args[0], "*.pack2", SearchOption.TopDirectoryOnly);
-
-        stopwatch.Reset();
-        stopwatch.Start();
-
-        foreach (string file in packFiles)
-        {
-            await ExportPackAssetsAsync
-            (
-                file,
-                args[1],
-                namelist,
-                ct
-            ).ConfigureAwait(false);
-        }
-
-        stopwatch.Stop();
-        Console.WriteLine("Wrote all assets in {0}", stopwatch.Elapsed);
-    }
-
-    private static async Task ExportPackAssetsAsync
-    (
-        string packFilePath,
-        string outputPath,
-        Namelist namelist,
-        CancellationToken ct
-    )
-    {
-        Stopwatch stopwatch = new();
-        stopwatch.Start();
-        Console.WriteLine("Exporting {0}", packFilePath);
-
-        using RandomAccessDataReaderService dataReader = new(packFilePath);
-        using Pack2Reader reader = new(dataReader);
-        outputPath = Path.Combine(outputPath, Path.GetFileNameWithoutExtension(packFilePath));
-
-        if (!Directory.Exists(outputPath))
-            Directory.CreateDirectory(outputPath);
-
-        await reader.ExportAllAsync(outputPath, namelist, ct).ConfigureAwait(false);
-
-        stopwatch.Stop();
-        Console.WriteLine("Completed exporting in {0}", stopwatch.Elapsed);
+        return 0;
     }
 
     private static async Task ExtractNewNamelist
@@ -108,12 +78,6 @@ public static class Program
 
         await using FileStream nlOut = new(outputPath, FileMode.Create);
         await existing.WriteAsync(nlOut, ct).ConfigureAwait(false);
-    }
-
-    private static async Task WriteAmerishLod2TileAssets(Pack2Reader reader, string outputPath, CancellationToken ct = default)
-    {
-        Namelist namelist = GenerateTileNames("Amerish", "LOD2");
-        await reader.ExportNamedAsync(outputPath, namelist, ct).ConfigureAwait(false);
     }
 
     private static Namelist GenerateTileNames(string continent, string lod)

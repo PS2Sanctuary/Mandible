@@ -6,7 +6,7 @@ namespace Mandible.Tests.PackTests;
 
 public class AssetHeaderTests
 {
-    private static readonly AssetHeader EXPECTED_HEADER = new("1", 2, 3, 4);
+    private static readonly AssetHeader EXPECTED_HEADER = new(1, "1", 2, 3, 4);
     private static readonly byte[] EXPECTED_BYTES = new byte[]
     {
         0x00, 0x00, 0x00, 0x01, // Name length
@@ -19,9 +19,9 @@ public class AssetHeaderTests
     [Fact]
     public void TestDeserialise()
     {
-        AssetHeader header = AssetHeader.Deserialize(EXPECTED_BYTES);
+        Assert.True(AssetHeader.TryDeserialize(EXPECTED_BYTES, out AssetHeader? header));
 
-        Assert.Equal(EXPECTED_HEADER.Checksum, header.Checksum);
+        Assert.Equal(EXPECTED_HEADER.Checksum, header!.Checksum);
         Assert.Equal(EXPECTED_HEADER.DataLength, header.DataLength);
         Assert.Equal(EXPECTED_HEADER.DataOffset, header.DataOffset);
         Assert.Equal(EXPECTED_HEADER.Name, header.Name);

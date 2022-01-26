@@ -6,7 +6,7 @@ namespace Mandible.Pack2;
 /// <summary>
 /// Header information of a pack2 file.
 /// </summary>
-public readonly struct Pack2Header
+public class Pack2Header
 {
     /// <summary>
     /// Gets the size of a <see cref="Pack2Header"/> as stored within a pack.
@@ -16,35 +16,35 @@ public readonly struct Pack2Header
     /// <summary>
     /// Gets the magic string of the pack2 file type.
     /// </summary>
-    public readonly string Magic;
+    public string Magic { get; }
 
     /// <summary>
     /// Gets the version of the pack. Often combined with the <see cref="Magic"/> value in other pack implementations.
     /// </summary>
-    public readonly byte Version;
+    public byte Version { get; }
 
     /// <summary>
     /// Gets the number of assets stored in the pack.
     /// </summary>
-    public readonly uint AssetCount;
+    public uint AssetCount { get; }
 
     /// <summary>
     /// Gets the length in bytes of the pack.
     /// </summary>
-    public readonly ulong Length;
+    public ulong Length { get; }
 
     /// <summary>
     /// Gets the offset into the pack of the asset map, in bytes.
     /// </summary>
-    public readonly ulong AssetMapOffset;
+    public ulong AssetMapOffset { get; }
 
     /// <summary>
     /// An unknown value that is always set to 256.
     /// </summary>
-    public readonly ulong Unknown;
+    public ulong Unknown { get; }
 
     /// <summary>
-    /// An assumed checksum. How it is calculated is unknown.
+    /// A value assumed to be a checksum. How it is calculated is unknown.
     /// </summary>
     public readonly byte[] Checksum;
 

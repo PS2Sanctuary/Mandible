@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommandDotNet" Version="6.0.4" />
+    <PackageReference Include="CommandDotNet.Spectre" Version="2.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Mandible\Mandible.csproj" />
   </ItemGroup>
 

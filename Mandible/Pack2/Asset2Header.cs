@@ -3,7 +3,7 @@ using System.Buffers.Binary;
 
 namespace Mandible.Pack2;
 
-public readonly struct Asset2Header
+public class Asset2Header
 {
     /// <summary>
     /// Gets the size of an <see cref="Asset2Header"/> as stored within a pack.
@@ -13,27 +13,27 @@ public readonly struct Asset2Header
     /// <summary>
     /// Gets the CRC-64 hash of the uppercase file name.
     /// </summary>
-    public readonly ulong NameHash;
+    public ulong NameHash { get; }
 
     /// <summary>
     /// Gets the offset into the pack of the asset data, in bytes.
     /// </summary>
-    public readonly ulong DataOffset;
+    public ulong DataOffset { get; }
 
     /// <summary>
     /// Gets the size in bytes of the packed asset data.
     /// </summary>
-    public readonly ulong DataSize;
+    public ulong DataSize { get; }
 
     /// <summary>
     /// Gets a value indicating whether the packed asset has been compressed.
     /// </summary>
-    public readonly Asset2ZipDefinition ZipStatus;
+    public Asset2ZipDefinition ZipStatus { get; }
 
     /// <summary>
     /// Gets the CRC-32 hash of the asset data.
     /// </summary>
-    public readonly uint DataHash;
+    public uint DataHash { get; }
 
     /// <summary>
     /// Initialises a new instance of the <see cref="Asset2Header"/> struct.

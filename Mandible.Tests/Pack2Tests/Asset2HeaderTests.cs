@@ -20,7 +20,11 @@ public class Asset2HeaderTests
     public void TestDeserialise()
     {
         Asset2Header header = Asset2Header.Deserialize(EXPECTED_BYTES);
-        Assert.Equal(EXPECTED_HEADER, header);
+        Assert.Equal(EXPECTED_HEADER.NameHash, header.NameHash);
+        Assert.Equal(EXPECTED_HEADER.DataOffset, header.DataOffset);
+        Assert.Equal(EXPECTED_HEADER.DataSize, header.DataSize);
+        Assert.Equal(EXPECTED_HEADER.ZipStatus, header.ZipStatus);
+        Assert.Equal(EXPECTED_HEADER.DataHash, header.DataHash);
     }
 
     [Fact]

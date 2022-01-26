@@ -85,7 +85,7 @@ public static class NameExtractor
         if (namelistHeader is null)
             return;
 
-        using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(namelistHeader.Value, ct).ConfigureAwait(false);
+        using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(namelistHeader, ct).ConfigureAwait(false);
         namelist.Append(buffer.Span);
     }
 
