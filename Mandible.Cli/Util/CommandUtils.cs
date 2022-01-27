@@ -51,10 +51,10 @@ public static class CommandUtils
         {
             switch (Path.GetExtension(path))
             {
-                case "pack":
+                case ".pack":
                     packPaths.Add(path);
                     break;
-                case "pack2":
+                case ".pack2":
                     pack2Paths.Add(path);
                     break;
                 default:

@@ -15,7 +15,7 @@ using System.Xml;
 namespace Mandible.Pack2.Names;
 
 /// <summary>
-/// Provides functionalities to extract a namelist from pack2 files.
+/// Provides functionalities to extract and guess at names from pack2 files.
 /// </summary>
 public static class NameExtractor
 {
@@ -160,6 +160,8 @@ public static class NameExtractor
             names.Add(name + "Areas.xml");
             for (int i = 0; i < 4; i++)
                 names.Add($"{name}_TileInfo_LOD{i}.txt");
+
+
         }
 
         XmlReaderSettings xmlSettings = new()
