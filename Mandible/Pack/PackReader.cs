@@ -8,9 +8,8 @@ using System.Threading.Tasks;
 
 namespace Mandible.Pack;
 
-// TODO: Set public once finalised
 /// <inheritdoc cref="IPackReader" />
-internal class PackReader : IPackReader
+public class PackReader : IPackReader
 {
     protected readonly IDataReaderService _dataReader;
 

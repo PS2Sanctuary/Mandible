@@ -1,6 +1,7 @@
 ﻿using CommandDotNet;
 using Mandible.Cli.Objects;
 using Mandible.Cli.Util;
+using Mandible.Pack;
 using Mandible.Pack2;
 using Mandible.Pack2.Names;
 using Mandible.Services;
@@ -26,7 +27,6 @@ public class IndexCommands
         _ct = ct;
     }
 
-    // TODO: Add pack support
     [DefaultCommand]
     public async Task ExecuteAsync
     (
@@ -43,15 +43,7 @@ public class IndexCommands
         bool noPrettyPrint = false
     )
     {
-        bool packsDiscovered = CommandUtils.TryFindPacksFromPath
-        (
-            _console,
-            inputPath,
-            out List<string> packFiles,
-            out List<string> pack2Files
-        );
-
-        if (!packsDiscovered)
+        if (!CommandUtils.TryFindPacksFromPath(_console, inputPath, out List<string> packFiles, out List<string> pack2Files))
             return;
 
         if (!CommandUtils.CheckOutputDirectory(_console, outputDirectory))
@@ -65,36 +57,56 @@ public class IndexCommands
 
         Namelist? namelist = null;
         if (namelistPath is not null)
-            namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct).ConfigureAwait(false);
+            namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct);
 
-        List<Objects.PackIndex> pack2Indexes = await BuildIndex2Async(pack2Files, namelist).ConfigureAwait(false);
-        IndexMetadata pack2Metadata = IndexMetadata.FromIndexList(pack2Indexes);
+        List<PackIndex> packIndexes = await BuildIndexAsync(packFiles);
+        List<PackIndex> pack2Indexes = await BuildIndex2Async(pack2Files, namelist);
 
-        JsonSerializerOptions jsonOptions = new();
-        jsonOptions.WriteIndented = !noPrettyPrint;
-
-        _console.WriteLine("Saving indexes...");
-
-        await using FileStream metadata2Stream = File.Open
-        (
-            Path.Combine(outputDirectory, "_Metadata.pack2.json"),
-            FileMode.Create
-        );
-        await JsonSerializer.SerializeAsync(metadata2Stream, pack2Metadata, jsonOptions, _ct).ConfigureAwait(false);
-
-        foreach (PackIndex index2 in pack2Indexes)
-        {
-            string fileName = Path.GetFileName(index2.Path);
-            await using FileStream index2Stream = File.Open
-            (
-                Path.Combine(outputDirectory, fileName + ".json"),
-                FileMode.Create
-            );
-            await JsonSerializer.SerializeAsync(index2Stream, index2, jsonOptions, _ct).ConfigureAwait(false);
-        }
+        await SaveIndexes(packIndexes, "pack", !noPrettyPrint, outputDirectory);
+        await SaveIndexes(pack2Indexes, "pack2", !noPrettyPrint, outputDirectory);
 
         _console.Markup("[green]Indexing Complete![/]");
     }
+
+    private async Task<List<PackIndex>> BuildIndexAsync(IReadOnlyList<string> packFiles)
+        => await _console.Progress()
+            .StartAsync
+            (
+                async ctx =>
+                {
+                    ProgressTask indexTask = ctx.AddTask("Building pack indexes...");
+
+                    List<PackIndex> packIndexes = new();
+                    double increment = indexTask.MaxValue / packFiles.Count;
+
+                    foreach (string file in packFiles)
+                    {
+                        using RandomAccessDataReaderService dataReader = new(file);
+                        PackReader reader = new(dataReader);
+
+                        IReadOnlyList<AssetHeader> assetHeaders = await reader.ReadAssetHeadersAsync(_ct);
+
+                        IEnumerable<PackIndex.IndexAsset> assets = assetHeaders
+                            .Select(s => PackIndex.IndexAsset.FromAssetHeader(s))
+                            .OrderBy(a => a.Name);
+
+                        packIndexes.Add
+                        (
+                            new PackIndex
+                            (
+                                Path.GetFullPath(file),
+                                (uint)assetHeaders.Count,
+                                (ulong)dataReader.GetLength(),
+                                assets.ToList()
+                            )
+                        );
+
+                        indexTask.Increment(increment);
+                    }
+
+                    return packIndexes;
+                }
+            );
 
     private async Task<List<PackIndex>> BuildIndex2Async(IReadOnlyList<string> pack2Files, Namelist? namelist)
         => await _console.Progress()
@@ -138,4 +150,49 @@ public class IndexCommands
                     return packIndexes;
                 }
             );
+
+    private async Task SaveIndexes
+    (
+        IReadOnlyList<PackIndex> indexes,
+        string suffix,
+        bool prettyPrint,
+        string outputDirectory
+    )
+    {
+        JsonSerializerOptions jsonOptions = new();
+        jsonOptions.WriteIndented = prettyPrint;
+
+        await _console.Progress()
+            .StartAsync
+            (
+                async ctx =>
+                {
+                    ProgressTask saveTask = ctx.AddTask($"Saving {suffix} indexes");
+                    double increment = saveTask.MaxValue / (indexes.Count + 1);
+
+                    await using FileStream metadataStream = File.Open
+                    (
+                        Path.Combine(outputDirectory, $"_Metadata-{suffix}.json"),
+                        FileMode.Create
+                    );
+
+                    IndexMetadata metadata = IndexMetadata.FromIndexList(indexes);
+                    await JsonSerializer.SerializeAsync(metadataStream, metadata, jsonOptions, _ct).ConfigureAwait(false);
+                    saveTask.Increment(increment);
+
+                    foreach (PackIndex index2 in indexes)
+                    {
+                        string fileName = Path.GetFileName(index2.Path);
+                        await using FileStream index2Stream = File.Open
+                        (
+                            Path.Combine(outputDirectory, fileName + ".json"),
+                            FileMode.Create
+                        );
+
+                        await JsonSerializer.SerializeAsync(index2Stream, index2, jsonOptions, _ct).ConfigureAwait(false);
+                        saveTask.Increment(increment);
+                    }
+                }
+            );
+    }
 }

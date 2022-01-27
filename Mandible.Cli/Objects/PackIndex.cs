@@ -1,4 +1,5 @@
-﻿using Mandible.Pack2;
+﻿using Mandible.Pack;
+using Mandible.Pack2;
 using Mandible.Pack2.Names;
 using System.Collections.Generic;
 using static Mandible.Cli.Objects.PackIndex;
@@ -31,6 +32,9 @@ public record PackIndex
         uint DataHash
     )
     {
+        public static IndexAsset FromAssetHeader(AssetHeader header)
+            => new IndexAsset(header.Name, header.Checksum);
+
         public static IndexAsset FromAsset2Header(Asset2Header header, Namelist namelist)
         {
             namelist.TryGet(header.NameHash, out string? name);
