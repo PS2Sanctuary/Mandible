@@ -37,17 +37,18 @@ public class PackReader : IPackReader
 
         do
         {
-            int bufferOffset = 0;
-
             await _dataReader.ReadAsync(buffer.Memory, packOffset, ct).ConfigureAwait(false);
             PackChunkHeader header = PackChunkHeader.Deserialize(buffer.Span);
 
+            int bufferOffset = PackChunkHeader.Size;
             for (int i = 0; i < header.AssetCount; i++)
             {
                 if (!AssetHeader.TryDeserialize(buffer.Span[bufferOffset..], out AssetHeader? assetHeader))
                 {
                     packOffset += bufferOffset;
+                    bufferOffset = 0;
                     await _dataReader.ReadAsync(buffer.Memory, packOffset, ct).ConfigureAwait(false);
+
                     i--;
                     continue;
                 }

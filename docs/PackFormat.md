@@ -11,9 +11,7 @@ Pack files were the method of storing asset data for games that run on the Forge
 
 ### Format
 
-Pack files are comprised of chunks. Each chunk has an 8 byte header and then a block of asset headers describing the stored assets. The chunks are *not* terminated, so you will have to utilise the `Next Chunk` offset in the chunk header to know when you have reached the next chunk.
-
-Continue reading data until the chunk header equals `0x00`. At this point there is a buffer of `0x00` before the asset data begins.
+Pack files are comprised of chunks. Each chunk has an 8 byte header and then a block of asset headers describing the stored assets. The chunks are *not* terminated, so you will have to utilise the `Next Chunk` offset in the chunk header to know when you have reached the next chunk. However, the headers are terminated by a block of `0x00` values before the chunk asset data begins.
 
 #### Chunk Header
 
@@ -35,6 +33,6 @@ Checksum      | `uint_32` | `31 4c 45 61` | A CRC32 checksum of the asset data
 #### Overall read process
 
 1. Read a chunk header.
-2. Read its asset headers till the next chunk offset.
-3. Repeat steps 1-2 until the `0x00` block is reached.
-4. Read the asset data.
+2. Read the asset headers contained in the chunk, stopping when either you've read the specified number of headers or the `0x00` block is encountered.
+3. Repeat steps 1-2 by following the `Next Chunk Offset` in the last chunk header. Terminate this when the offset either returns to `0` or is larger than the length of the pack file.
+4. Read the asset data using the extracted headers.
