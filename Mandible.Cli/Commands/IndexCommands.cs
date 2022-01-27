@@ -14,16 +14,13 @@ using System.Threading.Tasks;
 
 namespace Mandible.Cli.Commands;
 
-[Command(
-    "index",
-    Description = "Builds a JSON-structured index of the given pack/pack2 file/s."
-)]
-public class IndexCommand
+[Command("index", Description = "Builds JSON-structured indexes of the given pack/pack2 file/s.")]
+public class IndexCommands
 {
     private readonly IAnsiConsole _console;
     private readonly CancellationToken _ct;
 
-    public IndexCommand(IAnsiConsole console, CancellationToken ct)
+    public IndexCommands(IAnsiConsole console, CancellationToken ct)
     {
         _console = console;
         _ct = ct;
@@ -42,7 +39,7 @@ public class IndexCommand
         [Option('n', Description = "A path to a namelist file.")]
         string? namelistPath,
 
-        [Option('p')]
+        [Option('p', Description = "Disable pretty-printing of the JSON output.")]
         bool noPrettyPrint = false
     )
     {
@@ -140,6 +137,5 @@ public class IndexCommand
 
                     return packIndexes;
                 }
-            )
-            .ConfigureAwait(false);
+            );
 }

@@ -11,10 +11,7 @@ using System.Threading.Tasks;
 
 namespace Mandible.Cli.Commands;
 
-[Command(
-    "unpack",
-    Description = "Unpacks pack/pack2 file/s"
-)]
+[Command("unpack", Description = "Unpacks pack/pack2 file/s")]
 public class UnpackCommands
 {
     private readonly IAnsiConsole _console;
@@ -90,6 +87,5 @@ public class UnpackCommands
 
                     _console.Markup("[green]Pack2 Export Complete![/]");
                 }
-            )
-            .ConfigureAwait(false);
+            );
 }
