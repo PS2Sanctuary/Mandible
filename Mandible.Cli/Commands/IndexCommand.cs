@@ -37,8 +37,8 @@ public class IndexCommand
         [Operand(Description = "A path to the pack/pack2 file to index, or a directory containing multiple.")]
         string inputPath,
 
-        [Operand(Description = "The path to output the index to.")]
-        string outputPath,
+        [Operand(Description = "The directory to output the index files to.")]
+        string outputDirectory,
 
         [Operand(Description = "A path to a namelist file.")]
         string namelistPath,
@@ -58,37 +58,57 @@ public class IndexCommand
         if (!packsDiscovered)
             return;
 
-        string pack2OutputPath = Path.ChangeExtension(outputPath, ".pack2.json");
-        if (File.Exists(pack2OutputPath) && !_console.Confirm("The output file already exists. Would you like to override it?"))
+        if (!CommandUtils.CheckOutputDirectory(_console, outputDirectory))
             return;
 
-        string packOutputPath = Path.ChangeExtension(outputPath, ".pack.json");
-        if (File.Exists(packOutputPath) && !_console.Confirm("The output file already exists. Would you like to override it?"))
-            return;
+        if (Directory.EnumerateFiles(outputDirectory).Any())
+        {
+            if (!_console.Confirm("The output directory already contains files. Existing indexes in the directory may be overwritten. Are you sure you want to continue?"))
+                return;
+        }
 
         Namelist namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct).ConfigureAwait(false);
-        Objects.Index index2 = await BuildIndex2Async(pack2Files, namelist).ConfigureAwait(false);
+
+        List<Objects.Index> pack2Indexes = await BuildIndex2Async(pack2Files, namelist).ConfigureAwait(false);
+        IndexMetadata pack2Metadata = IndexMetadata.FromIndexList(pack2Indexes);
 
         JsonSerializerOptions jsonOptions = new();
         jsonOptions.WriteIndented = !noPrettyPrint;
 
-        _console.WriteLine($"Saving pack2 index to {pack2OutputPath}...");
-        await using FileStream fs = File.Open(pack2OutputPath, FileMode.Create);
-        await JsonSerializer.SerializeAsync(fs, index2, jsonOptions, _ct).ConfigureAwait(false);
-        _console.Markup("[green]Pack2 Index Complete![/]");
+        _console.WriteLine("Saving indexes...");
+
+        await using FileStream metadata2Stream = File.Open
+        (
+            Path.Combine(outputDirectory, "_Metadata.pack2.json"),
+            FileMode.Create
+        );
+        await JsonSerializer.SerializeAsync(metadata2Stream, pack2Metadata, jsonOptions, _ct).ConfigureAwait(false);
+
+        foreach (Objects.Index index2 in pack2Indexes)
+        {
+            string fileName = Path.GetFileName(index2.Path);
+            await using FileStream index2Stream = File.Open
+            (
+                Path.Combine(outputDirectory, fileName, ".json"),
+                FileMode.Create
+            );
+            await JsonSerializer.SerializeAsync(index2Stream, pack2Metadata, jsonOptions, _ct).ConfigureAwait(false);
+        }
+
+        _console.Markup("[green]Indexing Complete![/]");
     }
 
     // TODO: Build diff command
 
-    private async Task<Objects.Index> BuildIndex2Async(IReadOnlyList<string> pack2Files, Namelist namelist)
+    private async Task<List<Objects.Index>> BuildIndex2Async(IReadOnlyList<string> pack2Files, Namelist namelist)
         => await _console.Progress()
             .StartAsync
             (
                 async ctx =>
                 {
-                    ProgressTask indexTask = ctx.AddTask("Building pack2 index...");
+                    ProgressTask indexTask = ctx.AddTask("Building pack2 indexes...");
 
-                    List<Objects.Index.Index2Pack> packIndexes = new();
+                    List<Objects.Index> packIndexes = new();
                     double increment = indexTask.MaxValue / pack2Files.Count;
 
                     foreach (string file in pack2Files)
@@ -99,24 +119,25 @@ public class IndexCommand
                         Pack2Header header = await reader.ReadHeaderAsync(_ct).ConfigureAwait(false);
                         IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(_ct).ConfigureAwait(false);
 
-                        IEnumerable<Index.IndexAsset> assets = assetHeaders
-                            .Select(s => Index.IndexAsset.FromAsset2Header(s, namelist))
+                        IEnumerable<Objects.Index.IndexAsset> assets = assetHeaders
+                            .Select(s => Objects.Index.IndexAsset.FromAsset2Header(s, namelist))
                             .OrderBy(a => a.Name);
 
                         packIndexes.Add
                         (
-                            new Objects.Index.Index2Pack
+                            new Objects.Index
                             (
                                 Path.GetFullPath(file),
-                                header,
-                                Enumerable.ToList<Objects.Index.IndexAsset>(assets)
+                                header.AssetCount,
+                                header.Length,
+                                assets.ToList()
                             )
                         );
 
                         indexTask.Increment(increment);
                     }
 
-                    return new Index2(DateTimeOffset.UtcNow, packIndexes);
+                    return packIndexes;
                 }
             )
             .ConfigureAwait(false);

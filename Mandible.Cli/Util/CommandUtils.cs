@@ -10,6 +10,25 @@ namespace Mandible.Cli.Util;
 public static class CommandUtils
 {
     /// <summary>
+    /// Ensures that an output directory can be written to.
+    /// </summary>
+    /// <param name="console">The console.</param>
+    /// <param name="directoryPath">The directory path.</param>
+    /// <returns>A value indicating whether the directory can be written to.</returns>
+    public static bool CheckOutputDirectory(IAnsiConsole console, string directoryPath)
+    {
+        if (!Directory.Exists(directoryPath))
+        {
+            if (!console.Confirm("The output directory does not exist. Would you like to create it?"))
+                return false;
+
+            Directory.CreateDirectory(directoryPath);
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Attempts to find any pack/pack2 files on the given path.
     /// </summary>
     /// <param name="console">The console to log error messages to.</param>

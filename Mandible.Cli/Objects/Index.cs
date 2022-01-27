@@ -1,6 +1,5 @@
 ﻿using Mandible.Pack2;
 using Mandible.Pack2.Names;
-using System;
 using System.Collections.Generic;
 using static Mandible.Cli.Objects.Index;
 
@@ -9,13 +8,13 @@ namespace Mandible.Cli.Objects;
 /// <summary>
 /// Initializes a new instance of the <see cref="Index"/> record.
 /// </summary>
-/// <param name="GenerationTime">The time that the index was generated.</param>
+/// <param name="Path">The path to the pack that this <see cref="Index"/> was generated from.</param>
 /// <param name="AssetCount">The number of assets in the pack.</param>
 /// <param name="Length">The length of the pack in bytes.</param>
 /// <param name="Assets">The pack assets.</param>
 public record Index
 (
-    DateTimeOffset GenerationTime,
+    string Path,
     uint AssetCount,
     ulong Length,
     IReadOnlyList<IndexAsset> Assets

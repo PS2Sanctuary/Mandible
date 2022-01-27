@@ -50,13 +50,8 @@ public class UnpackCommands
         if (!packsDiscovered)
             return;
 
-        if (!Directory.Exists(outputDirectory))
-        {
-            if (!_console.Confirm("The output directory does not exist. Would you like to create it?"))
-                return;
-
-            Directory.CreateDirectory(outputDirectory);
-        }
+        if (!CommandUtils.CheckOutputDirectory(_console, outputDirectory))
+            return;
 
         Namelist namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct).ConfigureAwait(false);
         await ExportPack2AssetsAsync(pack2Files, outputDirectory, namelist).ConfigureAwait(false);
