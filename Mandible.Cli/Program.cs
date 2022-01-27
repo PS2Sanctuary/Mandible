@@ -1,11 +1,8 @@
 ﻿using CommandDotNet;
 using CommandDotNet.Spectre;
 using Mandible.Cli.Commands;
-using Mandible.Pack2;
 using Mandible.Pack2.Names;
-using Mandible.Services;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;

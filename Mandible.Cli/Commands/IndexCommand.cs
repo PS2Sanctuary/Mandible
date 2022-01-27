@@ -39,8 +39,8 @@ public class IndexCommand
         [Operand(Description = "The directory to output the index files to.")]
         string outputDirectory,
 
-        [Operand(Description = "A path to a namelist file.")]
-        string namelistPath,
+        [Option('n', Description = "A path to a namelist file.")]
+        string? namelistPath,
 
         [Option('p')]
         bool noPrettyPrint = false
@@ -66,7 +66,9 @@ public class IndexCommand
                 return;
         }
 
-        Namelist namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct).ConfigureAwait(false);
+        Namelist? namelist = null;
+        if (namelistPath is not null)
+            namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct).ConfigureAwait(false);
 
         List<Objects.PackIndex> pack2Indexes = await BuildIndex2Async(pack2Files, namelist).ConfigureAwait(false);
         IndexMetadata pack2Metadata = IndexMetadata.FromIndexList(pack2Indexes);
@@ -97,13 +99,15 @@ public class IndexCommand
         _console.Markup("[green]Indexing Complete![/]");
     }
 
-    private async Task<List<PackIndex>> BuildIndex2Async(IReadOnlyList<string> pack2Files, Namelist namelist)
+    private async Task<List<PackIndex>> BuildIndex2Async(IReadOnlyList<string> pack2Files, Namelist? namelist)
         => await _console.Progress()
             .StartAsync
             (
                 async ctx =>
                 {
                     ProgressTask indexTask = ctx.AddTask("Building pack2 indexes...");
+                    if (namelist is null)
+                        namelist = new Namelist();
 
                     List<PackIndex> packIndexes = new();
                     double increment = indexTask.MaxValue / pack2Files.Count;

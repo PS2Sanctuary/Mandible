@@ -35,8 +35,8 @@ public class UnpackCommands
         [Operand(Description = "The directory to output the packed content to. Contents will be nested in directories matching the name of the pack they originated from.")]
         string outputDirectory,
 
-        [Operand(Description = "A path to a namelist file.")]
-        string namelistPath
+        [Option('n', Description = "A path to a namelist file.")]
+        string? namelistPath
     )
     {
         bool packsDiscovered = CommandUtils.TryFindPacksFromPath
@@ -53,7 +53,10 @@ public class UnpackCommands
         if (!CommandUtils.CheckOutputDirectory(_console, outputDirectory))
             return;
 
-        Namelist namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct).ConfigureAwait(false);
+        Namelist? namelist = null;
+        if (namelistPath is not null)
+            namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct).ConfigureAwait(false);
+
         await ExportPack2AssetsAsync(pack2Files, outputDirectory, namelist).ConfigureAwait(false);
     }
 
@@ -61,7 +64,7 @@ public class UnpackCommands
     (
         IReadOnlyList<string> pack2Files,
         string outputPath,
-        Namelist namelist
+        Namelist? namelist
     )
         => await _console.Progress()
             .StartAsync
