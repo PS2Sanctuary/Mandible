@@ -69,7 +69,7 @@ public class IndexCommand
 
         Namelist namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct).ConfigureAwait(false);
 
-        List<Objects.Index> pack2Indexes = await BuildIndex2Async(pack2Files, namelist).ConfigureAwait(false);
+        List<Objects.PackIndex> pack2Indexes = await BuildIndex2Async(pack2Files, namelist).ConfigureAwait(false);
         IndexMetadata pack2Metadata = IndexMetadata.FromIndexList(pack2Indexes);
 
         JsonSerializerOptions jsonOptions = new();
@@ -84,7 +84,7 @@ public class IndexCommand
         );
         await JsonSerializer.SerializeAsync(metadata2Stream, pack2Metadata, jsonOptions, _ct).ConfigureAwait(false);
 
-        foreach (Objects.Index index2 in pack2Indexes)
+        foreach (PackIndex index2 in pack2Indexes)
         {
             string fileName = Path.GetFileName(index2.Path);
             await using FileStream index2Stream = File.Open
@@ -100,7 +100,7 @@ public class IndexCommand
 
     // TODO: Build diff command
 
-    private async Task<List<Objects.Index>> BuildIndex2Async(IReadOnlyList<string> pack2Files, Namelist namelist)
+    private async Task<List<Objects.PackIndex>> BuildIndex2Async(IReadOnlyList<string> pack2Files, Namelist namelist)
         => await _console.Progress()
             .StartAsync
             (
@@ -108,7 +108,7 @@ public class IndexCommand
                 {
                     ProgressTask indexTask = ctx.AddTask("Building pack2 indexes...");
 
-                    List<Objects.Index> packIndexes = new();
+                    List<PackIndex> packIndexes = new();
                     double increment = indexTask.MaxValue / pack2Files.Count;
 
                     foreach (string file in pack2Files)
@@ -119,13 +119,13 @@ public class IndexCommand
                         Pack2Header header = await reader.ReadHeaderAsync(_ct).ConfigureAwait(false);
                         IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(_ct).ConfigureAwait(false);
 
-                        IEnumerable<Objects.Index.IndexAsset> assets = assetHeaders
-                            .Select(s => Objects.Index.IndexAsset.FromAsset2Header(s, namelist))
+                        IEnumerable<PackIndex.IndexAsset> assets = assetHeaders
+                            .Select(s => PackIndex.IndexAsset.FromAsset2Header(s, namelist))
                             .OrderBy(a => a.Name);
 
                         packIndexes.Add
                         (
-                            new Objects.Index
+                            new PackIndex
                             (
                                 Path.GetFullPath(file),
                                 header.AssetCount,

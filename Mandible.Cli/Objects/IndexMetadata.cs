@@ -23,7 +23,7 @@ public record IndexMetadata
         long Hash
     )
     {
-        public static PackMetadata FromIndex(Index index)
+        public static PackMetadata FromIndex(PackIndex index)
         {
             string path = Path.GetFileName(index.Path);
 
@@ -38,7 +38,7 @@ public record IndexMetadata
         }
     }
 
-    public static IndexMetadata FromIndexList(IReadOnlyList<Index> indexes)
+    public static IndexMetadata FromIndexList(IReadOnlyList<PackIndex> indexes)
         => new
         (
             DateTimeOffset.UtcNow,
