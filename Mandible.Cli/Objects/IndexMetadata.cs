@@ -42,6 +42,8 @@ public record IndexMetadata
         => new
         (
             DateTimeOffset.UtcNow,
-            indexes.Select(i => PackMetadata.FromIndex(i)).ToList()
+            indexes.Select(i => PackMetadata.FromIndex(i))
+                .OrderBy(i => i.Name)
+                .ToList()
         );
 }

@@ -89,10 +89,10 @@ public class IndexCommand
             string fileName = Path.GetFileName(index2.Path);
             await using FileStream index2Stream = File.Open
             (
-                Path.Combine(outputDirectory, fileName, ".json"),
+                Path.Combine(outputDirectory, fileName + ".json"),
                 FileMode.Create
             );
-            await JsonSerializer.SerializeAsync(index2Stream, pack2Metadata, jsonOptions, _ct).ConfigureAwait(false);
+            await JsonSerializer.SerializeAsync(index2Stream, index2, jsonOptions, _ct).ConfigureAwait(false);
         }
 
         _console.Markup("[green]Indexing Complete![/]");
