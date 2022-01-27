@@ -5,7 +5,6 @@ using Mandible.Pack2;
 using Mandible.Pack2.Names;
 using Mandible.Services;
 using Spectre.Console;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -98,9 +97,7 @@ public class IndexCommand
         _console.Markup("[green]Indexing Complete![/]");
     }
 
-    // TODO: Build diff command
-
-    private async Task<List<Objects.PackIndex>> BuildIndex2Async(IReadOnlyList<string> pack2Files, Namelist namelist)
+    private async Task<List<PackIndex>> BuildIndex2Async(IReadOnlyList<string> pack2Files, Namelist namelist)
         => await _console.Progress()
             .StartAsync
             (
