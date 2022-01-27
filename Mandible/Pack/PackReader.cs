@@ -64,5 +64,17 @@ public class PackReader : IPackReader
     }
 
     /// <inheritdoc />
-    public Task<MemoryOwner<byte>> ReadAssetDataAsync(AssetHeader header, CancellationToken ct = default) => throw new NotImplementedException();
+    public async Task<MemoryOwner<byte>> ReadAssetDataAsync(AssetHeader header, CancellationToken ct = default)
+    {
+        MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate((int)header.DataLength);
+
+        await _dataReader.ReadAsync
+        (
+            buffer.Memory,
+            header.DataOffset,
+            ct
+        ).ConfigureAwait(false);
+
+        return buffer;
+    }
 }

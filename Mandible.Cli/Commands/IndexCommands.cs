@@ -59,11 +59,17 @@ public class IndexCommands
         if (namelistPath is not null)
             namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct);
 
-        List<PackIndex> packIndexes = await BuildIndexAsync(packFiles);
-        List<PackIndex> pack2Indexes = await BuildIndex2Async(pack2Files, namelist);
+        if (packFiles.Count > 0)
+        {
+            List<PackIndex> packIndexes = await BuildIndexAsync(packFiles);
+            await SaveIndexes(packIndexes, "pack", !noPrettyPrint, outputDirectory);
+        }
 
-        await SaveIndexes(packIndexes, "pack", !noPrettyPrint, outputDirectory);
-        await SaveIndexes(pack2Indexes, "pack2", !noPrettyPrint, outputDirectory);
+        if (pack2Files.Count > 0)
+        {
+            List<PackIndex> pack2Indexes = await BuildIndex2Async(pack2Files, namelist);
+            await SaveIndexes(pack2Indexes, "pack2", !noPrettyPrint, outputDirectory);
+        }
 
         _console.Markup("[green]Indexing Complete![/]");
     }
