@@ -9,7 +9,7 @@
   <!-- NuGet-related properties -->
   <PropertyGroup>
     <Version>1.0.0</Version>
-    <Description>A library for working with the Forgelight game engine's asset packs.</Description>
+    <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
 
     <PackageId>carlst99.Mandible</PackageId>
     <Authors>Carl Stephens</Authors>
