@@ -43,7 +43,7 @@ public static class CommandUtils
 
         if (!File.Exists(path) && !Directory.Exists(path))
         {
-            console.MarkupLine("[red] The input path does not exist.[/]");
+            console.MarkupLine("[red]The input path does not exist.[/]");
             return false;
         }
 
@@ -58,7 +58,7 @@ public static class CommandUtils
                     pack2Paths.Add(path);
                     break;
                 default:
-                    console.MarkupLine("[red] The input file was not a pack/pack2.[/]");
+                    console.MarkupLine("[red]The input file was not a pack/pack2.[/]");
                     return false;
             }
         }
@@ -73,7 +73,7 @@ public static class CommandUtils
 
             if (packPaths.Count == 0 && pack2Paths.Count == 0)
             {
-                console.MarkupLine("[red] No pack/pack2 files were found in the input directory.[/]");
+                console.MarkupLine("[red]No pack/pack2 files were found in the input directory.[/]");
                 return false;
             }
         }

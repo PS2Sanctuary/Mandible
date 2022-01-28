@@ -4,7 +4,7 @@ using System.Buffers.Binary;
 namespace Mandible.Pack2;
 
 /// <summary>
-/// Header information of a pack2 file.
+/// Represents the header information of a pack2 file.
 /// </summary>
 public class Pack2Header
 {

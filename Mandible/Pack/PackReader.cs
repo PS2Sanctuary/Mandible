@@ -10,6 +10,9 @@ namespace Mandible.Pack;
 /// <inheritdoc cref="IPackReader" />
 public class PackReader : IPackReader
 {
+    /// <summary>
+    /// Gets the <see cref="IDataReaderService"/> that this <see cref="PackReader"/> was initialized with.
+    /// </summary>
     protected readonly IDataReaderService _dataReader;
 
     /// <summary>

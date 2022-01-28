@@ -15,6 +15,9 @@ public class StreamDataReaderService : IDataReaderService, IDisposable, IAsyncDi
     private readonly Stream _input;
     private readonly bool _leaveOpen;
 
+    /// <summary>
+    /// Gets a value indicating whether or not this <see cref="StreamDataReaderService"/> instance has been disposed.
+    /// </summary>
     public bool IsDisposed { get; private set; }
 
     /// <summary>
@@ -86,6 +89,10 @@ public class StreamDataReaderService : IDataReaderService, IDisposable, IAsyncDi
         IsDisposed = true;
     }
 
+    /// <summary>
+    /// Asynchronously disposes of managed resources.
+    /// </summary>
+    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
     protected virtual async ValueTask DisposeAsyncCore()
     {
         if (IsDisposed)

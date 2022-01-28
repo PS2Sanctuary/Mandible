@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace Mandible.Pack2;
 
+/// <summary>
+/// Contains extension methods for the <see cref="IPack2Reader"/> interface.
+/// </summary>
 public static class Pack2ReaderExtensions
 {
     /// <summary>

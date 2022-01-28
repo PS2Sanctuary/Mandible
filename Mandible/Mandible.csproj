@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -9,16 +9,14 @@
   <!-- NuGet-related properties -->
   <PropertyGroup>
     <Version>1.0.0</Version>
-    <Description>A library for working with the Forgelight game engine's asset packs.</Description>  
+    <Description>A library for working with the Forgelight game engine's asset packs.</Description>
 
+    <PackageId>carlst99.Mandible</PackageId>
     <Authors>Carl Stephens</Authors>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-
     <PackageLicenseExpression>ISC</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/carlst99/Mandible</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/carlst99/Mandible</RepositoryUrl>
-
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\nuget</PackageOutputPath>
   </PropertyGroup>
 
@@ -39,7 +37,7 @@
 
   <ItemGroup>
     <PackageReference Include="carlst99.ZlibNGSharp" Version="1.0.1" />
-    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.0.0-preview1" />
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="7.1.2" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 

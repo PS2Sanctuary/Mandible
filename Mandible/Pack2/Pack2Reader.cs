@@ -19,7 +19,14 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// </summary>
     protected const uint AssetCompressionIndicator = 0xA1B2C3D4;
 
+    /// <summary>
+    /// Gets the <see cref="IDataReaderService"/> that this <see cref="Pack2Reader"/> was initialized with.
+    /// </summary>
     protected readonly IDataReaderService _dataReader;
+
+    /// <summary>
+    /// Gets the <see cref="ZngInflater"/> that this <see cref="Pack2Reader"/> was initialized with.
+    /// </summary>
     protected readonly ZngInflater _inflater;
 
     /// <summary>

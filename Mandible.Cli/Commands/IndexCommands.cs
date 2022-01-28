@@ -51,7 +51,7 @@ public class IndexCommands
 
         if (Directory.EnumerateFiles(outputDirectory).Any())
         {
-            if (!_console.Confirm("The output directory already contains files. Existing indexes in the directory may be overwritten. Are you sure you want to continue?"))
+            if (!_console.Confirm("The output directory already contains files. [red]Existing indexes in the directory may be overwritten.[/] Are you sure you want to continue?"))
                 return;
         }
 

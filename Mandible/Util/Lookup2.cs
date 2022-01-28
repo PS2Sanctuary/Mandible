@@ -9,7 +9,7 @@ namespace Mandible.Util;
 public static class Lookup2
 {
     /// <summary>
-    /// Gets the locale ID of an item/vehicle.
+    /// ForgeLight specific - gets the locale ID of an item/vehicle.
     /// </summary>
     /// <param name="itemNameID">The name ID of the item/vehicle.</param>
     /// <returns>The calculated locale ID.</returns>

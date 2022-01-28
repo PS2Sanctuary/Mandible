@@ -6,7 +6,7 @@ using System.Text;
 namespace Mandible.Pack;
 
 /// <summary>
-/// Represents an asset header used in .pack files.
+/// Represents an asset header used in the pack file format.
 /// </summary>
 public class AssetHeader
 {
@@ -38,6 +38,7 @@ public class AssetHeader
     /// <summary>
     /// Initializes a new instance of the <see cref="AssetHeader"/> class.
     /// </summary>
+    /// <param name="nameLength">The length of the asset's name.</param>
     /// <param name="name">The name of the asset.</param>
     /// <param name="dataOffset">The byte offset into the pack at which the asset data is stored.</param>
     /// <param name="dataLength">The length of the packed data.</param>

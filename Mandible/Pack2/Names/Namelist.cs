@@ -63,7 +63,8 @@ public class Namelist
     /// Gets a name.
     /// </summary>
     /// <param name="hash">The CRC-64 hash of the name.</param>
-    /// <returns>The name, or null if it doesn't exist in this <see cref="Namelist"/>.</returns>
+    /// <param name="name">The name, or null if it doesn't exist in this <see cref="Namelist"/></param>
+    /// <returns>A value indicating whether or not the name could be retrieved.</returns>
     public bool TryGet(ulong hash, [NotNullWhen(true)] out string? name)
         => _hashedNamePairs.TryGetValue(hash, out name);
 
@@ -199,6 +200,7 @@ public class Namelist
     public async Task WriteAsync(Stream outputStream, CancellationToken ct = default)
     {
         using StreamWriter sw = new(outputStream, null, -1, true);
+        sw.NewLine = "\n";
 
         foreach (string name in _hashedNamePairs.Values.OrderBy(s => s))
         {

@@ -3,6 +3,9 @@ using System.Buffers.Binary;
 
 namespace Mandible.Pack2;
 
+/// <summary>
+/// Represents an asset header used in the pack2 file format.
+/// </summary>
 public class Asset2Header
 {
     /// <summary>

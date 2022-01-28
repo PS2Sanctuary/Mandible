@@ -4,7 +4,7 @@ using System.Buffers.Binary;
 namespace Mandible.Pack;
 
 /// <summary>
-/// Represents a chunk header used in .pack files.
+/// Represents a chunk header used in the pack file format.
 /// </summary>
 public class PackChunkHeader
 {
@@ -27,6 +27,7 @@ public class PackChunkHeader
     /// Initializes a new instance of the <see cref="PackChunkHeader"/> class.
     /// </summary>
     /// <param name="nextChunkOffset">The offset into the pack of the next chunk.</param>
+    /// <param name="assetCount">The number of assets in this chunk.</param>
     public PackChunkHeader(uint nextChunkOffset, uint assetCount)
     {
         NextChunkOffset = nextChunkOffset;
