@@ -36,7 +36,7 @@ The command-line tool can be found in the [latest release](https://github.com/ca
 
 Components that need to read data from an IO source, such as a pack reader, use the `IDataReaderService` interface. Mandible currently has two implementations of this interface:
 
-- The `RandomAccessDataReaderService` uses .NET 6's `RandomAccess` APIs to read data from a file. It is recommend that you use this implementation when possible due to its increased performance.
+- The `RandomAccessDataReaderService` uses .NET 6's `RandomAccess` APIs to read data from a file. It is recommend that you use this implementation when possible due to its increased performance, as pack reading is not often sequential.
 
 - The `StreamDataReaderService` reads data from any backing `Stream`. The backing stream must be seekable.
 
@@ -51,7 +51,7 @@ Both interfaces provide the means to read the pack headers and the asset data. T
 
 Here is a sample method for reading all the assets from a `pack2` file. The process is very similar for a `pack` file, albeit without the need for a namelist.
 
-This is example is modified and minified from what can be found in the [Pack2ReaderExtensions](Mandible/Pack2/Pack2ReaderExtensions.cs) class.
+This example is modified and minified from what can be found in the [Pack2ReaderExtensions](Mandible/Pack2/Pack2ReaderExtensions.cs) class.
 
 ```csharp
 public static async Task ExportAllAsync
@@ -74,11 +74,7 @@ public static async Task ExportAllAsync
 
         using SafeFileHandle outputHandle = File.OpenHandle
         (
-            Path.Combine(outputPath, fileName ?? assetHeader.NameHash.ToString()),
-            FileMode.Create,
-            FileAccess.Write,
-            FileShare.Read,
-            FileOptions.Asynchronous
+            Path.Combine(outputPath, fileName ?? assetHeader.NameHash.ToString())
         );
 
         using MemoryOwner<byte> data = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
@@ -100,3 +96,11 @@ nl.Append("my_fantastic_name.dds");
 await using FileStream nlOut = new("new-namelist.txt", FileMode.Create);
 await nl.WriteAsync(nlOut);
 ```
+
+#### Extracting a Namelist
+
+The `NameExtractor` class can be used to extract plaintext file names from a directory of `pack2` files.
+It will also make guesses by constructing known name patterns - but this does mean that some of the generated names will not exist as actual files.
+
+When extracting a namelist, it is useful to note that some game distributions will include a namelist file (`{NAMELIST}`, no file extension) in the packs themselves.
+For example, PlanetSide 2's test distribution. If you can extract your names from these sets of packs, you will likely get a much more complete namelist.
