@@ -44,4 +44,11 @@ public interface IPack2Reader
         Asset2Header header,
         CancellationToken ct = default
     );
+
+    /// <summary>
+    /// Gets a value indicating whether or not the underlying data source represents a valid pack2.
+    /// </summary>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <returns>A value indicating whether or not the underlying data source represents a valid pack2.</returns>
+    Task<bool> ValidateAsync(CancellationToken ct = default);
 }

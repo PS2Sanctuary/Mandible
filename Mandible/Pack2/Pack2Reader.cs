@@ -14,6 +14,8 @@ namespace Mandible.Pack2;
 /// <inheritdoc cref="IPack2Reader" />
 public class Pack2Reader : IPack2Reader, IDisposable
 {
+    protected static readonly byte[] MagicBytes = new byte[] { 0x50, 0x41, 0x4B };
+
     /// <summary>
     /// Gets the indicator placed in front of an asset data block to indicate that it has been compressed.
     /// </summary>
@@ -28,6 +30,11 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// Gets the <see cref="ZngInflater"/> that this <see cref="Pack2Reader"/> was initialized with.
     /// </summary>
     protected readonly ZngInflater _inflater;
+
+    /// <summary>
+    /// Gets a value indicating whether or not the underlying data source has been validated.
+    /// </summary>
+    protected bool IsValid { get; private set; }
 
     /// <summary>
     /// Gets a value indicating whether or not this <see cref="Pack2Reader"/> instance has been disposed.
@@ -48,6 +55,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <inheritdoc />
     public virtual async ValueTask<Pack2Header> ReadHeaderAsync(CancellationToken ct = default)
     {
+        await DoValidationChecks(ct).ConfigureAwait(false);
         using MemoryOwner<byte> data = MemoryOwner<byte>.Allocate(Pack2Header.Size);
 
         await _dataReader.ReadAsync(data.Memory, 0, ct).ConfigureAwait(false);
@@ -58,6 +66,8 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <inheritdoc />
     public virtual async ValueTask<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(CancellationToken ct = default)
     {
+        await DoValidationChecks(ct).ConfigureAwait(false);
+
         Pack2Header header = await ReadHeaderAsync(ct).ConfigureAwait(false);
         List<Asset2Header> assetHeaders = new();
 
@@ -81,6 +91,8 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <inheritdoc />
     public virtual async ValueTask<int> GetAssetLengthAsync(Asset2Header header, CancellationToken ct = default)
     {
+        await DoValidationChecks(ct).ConfigureAwait(false);
+
         if (header.ZipStatus is Asset2ZipDefinition.Unzipped or Asset2ZipDefinition.UnzippedAlternate)
             return (int)header.DataSize;
 
@@ -98,6 +110,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
         CancellationToken ct = default
     )
     {
+        await DoValidationChecks(ct).ConfigureAwait(false);
         MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate((int)header.DataSize);
 
         await _dataReader.ReadAsync
@@ -123,6 +136,44 @@ public class Pack2Reader : IPack2Reader, IDisposable
         }
 
         return buffer;
+    }
+
+    /// <inheritdoc />
+    public virtual async Task<bool> ValidateAsync(CancellationToken ct = default)
+    {
+        if (IsValid)
+            return true;
+
+        using MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate(MagicBytes.Length);
+        await _dataReader.ReadAsync(buffer.Memory, 0, ct).ConfigureAwait(false);
+
+        for (int i = 0; i < MagicBytes.Length; i++)
+        {
+            if (buffer.Span[i] != MagicBytes[i])
+                return false;
+        }
+
+        IsValid = true;
+        return true;
+    }
+
+    /// <summary>
+    /// Checks to ensure that this <see cref="Pack2Reader"/> instance has not been disposed,
+    /// and that the underlying data source represents a pack2.
+    /// </summary>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    /// <exception cref="ObjectDisposedException">Thrown if this <see cref="Pack2Reader"/> instance has been disposed.</exception>
+    /// <exception cref="InvalidDataException">Thrown if the underlying data source does not represent a pack2.</exception>
+    protected async Task DoValidationChecks(CancellationToken ct)
+    {
+        if (IsDisposed)
+            throw new ObjectDisposedException(nameof(Pack2Reader));
+
+        bool isValid = await ValidateAsync(ct).ConfigureAwait(false);
+
+        if (!isValid)
+            throw new InvalidDataException("The underlying data source does not appear to represent a pack2 file.");
     }
 
     /// <summary>
