@@ -24,7 +24,7 @@ public static class NameExtractor
     /// </summary>
     private const ulong NamelistFileNameHash = 4699449473529019696;
 
-    private static readonly byte[] IllegalNameCharacters = new char[] { '!', '"', '#', '$', '%', '&', '*', '+', ',', '/', ':', ';', '=', '>', '?', '@', '\\', '^', '`', '|', '~', '\t', '\r', '\n', ' ' }.Select(c => (byte)c).ToArray();
+    private static readonly byte[] IllegalNameCharacters = new[] { '!', '"', '#', '$', '%', '&', '*', '+', ',', '/', ':', ';', '=', '>', '?', '@', '\\', '^', '`', '|', '~', '\t', '\r', '\n', ' ' }.Select(c => (byte)c).ToArray();
     private static readonly string[] KnownFileExtensions = { "adr", "agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3", "cnk4", "cnk5", "crc", "crt", "cso", "cur", "dat", "db", "dds", "def", "dir", "dll", "dma", "dme", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb", "eco", "efb", "exe", "fsb", "fxd", "fxo", "gfx", "gnf", "i64", "ini", "jpg", "lst", "lua", "mrn", "pak", "pem", "playerstudio", "png", "prsb", "psd", "pssb", "tga", "thm", "tome", "ttf", "txt", "vnfo", "wav", "xlsx", "xml", "xrsb", "xssb", "zone" };
 
     /// <summary>

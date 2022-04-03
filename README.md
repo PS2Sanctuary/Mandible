@@ -17,7 +17,7 @@ A command-line tool is also distributed with Mandible, which offers:
 
 **This package is unofficial and is not affiliated with the developers of the ForgeLight engine or its derived games in any way.**
 
-## Install
+## Installation
 
 Mandible is available as [NuGet package](https://www.nuget.org/packages/carlst99.Mandible):
 
