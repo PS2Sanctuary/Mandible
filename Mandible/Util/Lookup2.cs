@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace Mandible.Util;
 
@@ -42,29 +43,26 @@ public static class Lookup2
         acceptable.  Do NOT use for cryptographic purposes.
         --------------------------------------------------------------------
         */
+
         const uint initval = 0;
         uint lenpos = (uint)data.Length;
         uint length = lenpos;
 
-        uint a, b, c;
-        int p;
-
         if (length == 0)
-        {
             return 0;
-        }
 
         // Set up the internal state
-        a = b = 0x9e3779b9; // the golden ratio; an arbitrary value
-        c = initval;        // the previous hash value
-        p = 0;
+        uint a = 0x9e3779b9;
+        uint b = 0x9e3779b9;
+        uint c = initval;
+        int p = 0;
 
         // ---------------------------------------- handle most of the key
         while (lenpos >= 12)
         {
-            a += (Ord(data[p + 0]) + (Ord(data[p + 1]) << 8) + (Ord(data[p + 2]) << 16) + (Ord(data[p + 3]) << 24));
-            b += (Ord(data[p + 4]) + (Ord(data[p + 5]) << 8) + (Ord(data[p + 6]) << 16) + (Ord(data[p + 7]) << 24));
-            c += (Ord(data[p + 8]) + (Ord(data[p + 9]) << 8) + (Ord(data[p + 10]) << 16) + (Ord(data[p + 11]) << 24));
+            a += Ord(data[p + 0]) + (Ord(data[p + 1]) << 8) + (Ord(data[p + 2]) << 16) + (Ord(data[p + 3]) << 24);
+            b += Ord(data[p + 4]) + (Ord(data[p + 5]) << 8) + (Ord(data[p + 6]) << 16) + (Ord(data[p + 7]) << 24);
+            c += Ord(data[p + 8]) + (Ord(data[p + 9]) << 8) + (Ord(data[p + 10]) << 16) + (Ord(data[p + 11]) << 24);
 
             (a, b, c) = Mix(a, b, c);
             p += 12;
@@ -118,6 +116,7 @@ public static class Lookup2
             to choose from.  I only looked at a billion or so.
         --------------------------------------------------------------------
         */
+
         a >>= 0;
         b >>= 0;
         c >>= 0;
@@ -137,6 +136,7 @@ public static class Lookup2
         return (a, b, c);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint Ord(char c)
         => c;
 }
