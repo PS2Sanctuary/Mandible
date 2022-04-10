@@ -14,7 +14,10 @@ namespace Mandible.Pack2;
 /// <inheritdoc cref="IPack2Reader" />
 public class Pack2Reader : IPack2Reader, IDisposable
 {
-    protected static readonly byte[] MagicBytes = new byte[] { 0x50, 0x41, 0x4B };
+    /// <summary>
+    /// Gets the magic bytes of a pack file.
+    /// </summary>
+    protected static readonly byte[] MagicBytes = { 0x50, 0x41, 0x4B };
 
     /// <summary>
     /// Gets the indicator placed in front of an asset data block to indicate that it has been compressed.

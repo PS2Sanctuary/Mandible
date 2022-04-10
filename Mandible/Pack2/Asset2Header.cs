@@ -65,7 +65,7 @@ public class Asset2Header
         if (buffer.Length < Size)
             throw new ArgumentException($"Buffer must be at least {Size} bytes", nameof(buffer));
 
-        BinaryPrimitives.WriteUInt64LittleEndian(buffer[0..8], NameHash);
+        BinaryPrimitives.WriteUInt64LittleEndian(buffer[..8], NameHash);
         BinaryPrimitives.WriteUInt64LittleEndian(buffer[8..16], DataOffset);
         BinaryPrimitives.WriteUInt64LittleEndian(buffer[16..24], DataSize);
         BinaryPrimitives.WriteUInt32LittleEndian(buffer[24..28], (uint)ZipStatus);
@@ -79,7 +79,7 @@ public class Asset2Header
     /// <returns>An <see cref="Asset2Header"/>.</returns>
     public static Asset2Header Deserialize(ReadOnlySpan<byte> buffer)
     {
-        ulong nameHash = BinaryPrimitives.ReadUInt64LittleEndian(buffer[0..8]);
+        ulong nameHash = BinaryPrimitives.ReadUInt64LittleEndian(buffer[..8]);
         ulong dataOffset = BinaryPrimitives.ReadUInt64LittleEndian(buffer[8..16]);
         ulong dataSize = BinaryPrimitives.ReadUInt64LittleEndian(buffer[16..24]);
         Asset2ZipDefinition isZipped = (Asset2ZipDefinition)BinaryPrimitives.ReadUInt32LittleEndian(buffer[24..28]);

@@ -44,7 +44,7 @@ public class PackChunkHeader
         if (buffer.Length < Size)
             throw new ArgumentException($"Buffer must be at least {Size} bytes", nameof(buffer));
 
-        BinaryPrimitives.WriteUInt32BigEndian(buffer[0..4], NextChunkOffset);
+        BinaryPrimitives.WriteUInt32BigEndian(buffer[..4], NextChunkOffset);
         BinaryPrimitives.WriteUInt32BigEndian(buffer[4..8], AssetCount);
     }
 
@@ -55,7 +55,7 @@ public class PackChunkHeader
     /// <returns>An <see cref="PackChunkHeader"/>.</returns>
     public static PackChunkHeader Deserialize(ReadOnlySpan<byte> buffer)
     {
-        uint nextChunkOffset = BinaryPrimitives.ReadUInt32BigEndian(buffer[0..4]);
+        uint nextChunkOffset = BinaryPrimitives.ReadUInt32BigEndian(buffer[..4]);
         uint assetCount = BinaryPrimitives.ReadUInt32BigEndian(buffer[4..8]);
 
         return new PackChunkHeader(nextChunkOffset, assetCount);

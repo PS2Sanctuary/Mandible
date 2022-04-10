@@ -43,7 +43,14 @@ public class AssetHeader
     /// <param name="dataOffset">The byte offset into the pack at which the asset data is stored.</param>
     /// <param name="dataLength">The length of the packed data.</param>
     /// <param name="checksum">The CRC-32 checksum of the packed data.</param>
-    public AssetHeader(uint nameLength, string name, uint dataOffset, uint dataLength, uint checksum)
+    public AssetHeader
+    (
+        uint nameLength,
+        string name,
+        uint dataOffset,
+        uint dataLength,
+        uint checksum
+    )
     {
         NameLength = nameLength;
         Name = name;
@@ -72,8 +79,8 @@ public class AssetHeader
     /// </summary>
     /// <param name="buffer">The buffer.</param>
     /// <param name="header">The header.</param>
-    /// <returns>A value indicating whether or no the deserialisation was successful. Failure occurs because the buffer was too small.</returns>
-    public static unsafe bool TryDeserialize(ReadOnlySpan<byte> buffer, [NotNullWhen(true)] out AssetHeader? header)
+    /// <returns>A value indicating whether or no the deserialization was successful. Failure occurs because the buffer was too small.</returns>
+    public static bool TryDeserialize(ReadOnlySpan<byte> buffer, [NotNullWhen(true)] out AssetHeader? header)
     {
         header = null;
 
@@ -89,7 +96,7 @@ public class AssetHeader
         string name = Encoding.ASCII.GetString(buffer[index..(index += (int)nameLength)]);
         uint assetOffset = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
         uint dataLength = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
-        uint checksum = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..(index += sizeof(uint))]);
+        uint checksum = BinaryPrimitives.ReadUInt32BigEndian(buffer[index..]);
 
         header = new AssetHeader(nameLength, name, assetOffset, dataLength, checksum);
         return true;
@@ -100,7 +107,7 @@ public class AssetHeader
     /// </summary>
     /// <param name="buffer">The buffer.</param>
     /// <exception cref="ArgumentException">Thrown if the buffer is too small.</exception>
-    public unsafe void Serialize(Span<byte> buffer)
+    public void Serialize(Span<byte> buffer)
     {
         if (buffer.Length < GetSize())
             throw new ArgumentException($"Buffer must be at least {16 + Name.Length} bytes", nameof(buffer));
@@ -109,11 +116,11 @@ public class AssetHeader
 
         BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], NameLength);
 
-        foreach (byte value in Name)
-            buffer[index++] = value;
+        foreach (char value in Name)
+            buffer[index++] = (byte)value;
 
         BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], DataOffset);
         BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], DataLength);
-        BinaryPrimitives.WriteUInt32BigEndian(buffer[index..(index += sizeof(uint))], Checksum);
+        BinaryPrimitives.WriteUInt32BigEndian(buffer[index..], Checksum);
     }
 }
