@@ -4,25 +4,50 @@ using System.Runtime.CompilerServices;
 namespace Mandible.Util;
 
 /// <summary>
-/// Contains functions to calculate hashes using Bob Jenkin's lookup2 algorithm.
-/// <see href="http://burtleburtle.net/bob/c/lookup2.c"/>
+/// Contains functions to calculate hashes using
+/// algorithms designed by Bob Jenkins.
 /// </summary>
-public static class Lookup2
+public static class Jenkins
 {
     /// <summary>
     /// ForgeLight specific - gets the locale ID of an item/vehicle.
     /// </summary>
-    /// <param name="itemNameID">The name ID of the item/vehicle.</param>
+    /// <param name="itemNameID">The NAME ID of the item/vehicle.</param>
     /// <returns>The calculated locale ID.</returns>
     public static uint GetItemLocaleID(uint itemNameID)
-        => Hash("Global.Text." + itemNameID.ToString());
+        => Lookup2("Global.Text." + itemNameID);
 
     /// <summary>
-    /// Performs a lookup2 hash on the input characters.
+    /// Performs a one-at-a-time hash on the input characters.
     /// </summary>
     /// <param name="data">The character array to hash.</param>
     /// <returns>The hash.</returns>
-    public static uint Hash(ReadOnlySpan<char> data)
+    public static uint OneAtATime(ReadOnlySpan<char> data)
+    {
+        // Note: PS2LS uses a signed int here. Might be a ForgeLight thing?
+        uint hash = 0;
+
+        foreach (char c in data)
+        {
+            hash += c;
+            hash += hash << 10;
+            hash ^= hash >> 6;
+        }
+
+        hash += hash << 3;
+        hash ^= hash >> 11;
+        hash += hash << 15;
+
+        return hash;
+    }
+
+    /// <summary>
+    /// Performs a lookup2 hash on the input characters.
+    /// <see href="http://burtleburtle.net/bob/c/lookup2.c"/>
+    /// </summary>
+    /// <param name="data">The character array to hash.</param>
+    /// <returns>The hash.</returns>
+    public static uint Lookup2(ReadOnlySpan<char> data)
     {
         /*
         --------------------------------------------------------------------
