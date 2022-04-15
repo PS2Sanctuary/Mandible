@@ -35,7 +35,7 @@ public class NamelistCommands
         bool deepSearch = false
     )
     {
-        if (!CommandUtils.TryFindPacksFromPath(_console, pack2Directory, out _, out List<string> pack2Paths))
+        if (!CommandUtils.TryFindPacksFromPath(_console, pack2Directory, out _, out _))
             return;
 
         output = Path.ChangeExtension(output, ".txt");
@@ -80,6 +80,7 @@ public class NamelistCommands
         }
 
         Namelist mergedNamelist = new();
+        List<string> namelistPathsList = namelistPaths.ToList();
 
         await _console.Progress()
             .StartAsync
@@ -87,9 +88,9 @@ public class NamelistCommands
                 async ctx =>
                 {
                     ProgressTask mergeTask = ctx.AddTask("Merging...");
-                    double increment = mergeTask.MaxValue / namelistPaths.Count();
+                    double increment = mergeTask.MaxValue / namelistPathsList.Count;
 
-                    foreach (string path in namelistPaths)
+                    foreach (string path in namelistPathsList)
                     {
                         if (!File.Exists(path))
                             continue;
@@ -114,5 +115,47 @@ public class NamelistCommands
             );
 
         _console.MarkupLine("[green]Merge Complete![/]");
+    }
+
+    [Command("ps2ls2-convert", Description = "Converts a namelist to a format compatible with PS2LS2")]
+    public async Task PS2LS2ConvertAsync
+    (
+        [Operand(Description = "The namelist to convert")]
+        string namelist,
+
+        [Operand(Description = "The output namelist file")]
+        string output
+    )
+    {
+        output = Path.ChangeExtension(output, ".txt");
+        if (File.Exists(output))
+        {
+            if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
+                return;
+        }
+
+        if (!File.Exists(namelist))
+        {
+            _console.Markup("[red]The input namelist does not exist.[/]");
+            return;
+        }
+
+        await _console.Status()
+            .StartAsync
+            (
+                "Converting...",
+                async _ =>
+                {
+                    Namelist nl = await Namelist.FromFileAsync(namelist, _ct);
+
+                    await using FileStream fsOut = new(output, FileMode.Create, FileAccess.Write);
+                    await using StreamWriter sw = new(fsOut);
+
+                    foreach ((ulong hash, string name) in nl.Map)
+                        await sw.WriteLineAsync($"{hash}:{name}");
+                }
+            );
+
+        _console.MarkupLine("[green]Conversion Complete![/]");
     }
 }
