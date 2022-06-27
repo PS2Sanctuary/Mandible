@@ -147,14 +147,20 @@ public class Pack2Reader : IPack2Reader, IDisposable
         if (IsValid)
             return true;
 
-        using MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate(MagicBytes.Length);
-        await _dataReader.ReadAsync(buffer.Memory, 0, ct).ConfigureAwait(false);
+        using MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate(MagicBytes.Length + 1);
+        int amountRead = await _dataReader.ReadAsync(buffer.Memory, 0, ct).ConfigureAwait(false);
+        if (amountRead != MagicBytes.Length + 1)
+            return false;
 
         for (int i = 0; i < MagicBytes.Length; i++)
         {
             if (buffer.Span[i] != MagicBytes[i])
                 return false;
         }
+
+        // Check version
+        if (buffer.Span[MagicBytes.Length] != 1)
+            return false;
 
         IsValid = true;
         return true;
