@@ -63,7 +63,7 @@ public static async Task ExportAllAsync
 )
 {
     using RandomAccessDataReaderService dataReader = new(packFilePath);
-    using Pack2Reader reader = new(dataReader);
+    Pack2Reader reader = new(dataReader);
 
     IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
 
@@ -85,7 +85,7 @@ public static async Task ExportAllAsync
 
 ### Namelists
 
-The `pack2` format does not store asset names, instead opting for a CRC-64 "Jones" hash. This means an external namelist is required in order to export assets with a sane name. The external list should contain a list of names, separated by `LF` characters.
+The `pack2` format does not store asset names, instead opting for a CRC-64 "Jones" hash of the original file name. This means that an external namelist is required in order to export assets with a sane name. The external list should contain a list of names, separated by `LF` characters.
 
 Mandible provides the `Namelist` class to help with this. It provides various overloads of an `Append` method to insert names at runtime, the `WriteAsync` method to export a correctly-formatted list to a stream and a static `FromFileAsync` which is self-explanatory.
 

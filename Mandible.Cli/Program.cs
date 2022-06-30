@@ -1,6 +1,7 @@
 ﻿using CommandDotNet;
 using CommandDotNet.Spectre;
 using Mandible.Cli.Commands;
+using System;
 using System.Threading.Tasks;
 
 namespace Mandible.Cli;
@@ -25,7 +26,7 @@ public class Program
                 .UseSpectreAnsiConsole()
                 .RunAsync(args);
         }
-        catch (TaskCanceledException)
+        catch (OperationCanceledException)
         {
             return 0;
         }
