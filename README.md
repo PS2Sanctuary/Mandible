@@ -62,8 +62,8 @@ public static async Task ExportAllAsync
     CancellationToken ct = default
 )
 {
-    using RandomAccessDataReaderService dataReader = new(packFilePath);
-    Pack2Reader reader = new(dataReader);
+    await using RandomAccessDataReaderService dataReader = new(packFilePath);
+    using Pack2Reader reader = new(dataReader);
 
     IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
 
