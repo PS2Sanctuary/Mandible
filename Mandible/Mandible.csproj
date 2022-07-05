@@ -8,9 +8,13 @@
 
   <!-- NuGet-related properties -->
   <PropertyGroup>
-    <Version>1.1.1</Version>
+    <Version>1.2.0</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
-    <PackageReleaseNotes>Added IPack2Reader#ValidateAsync.</PackageReleaseNotes>
+    <PackageReleaseNotes>
+      Renamed Lookup2 -> Jenkins, added one-at-a-time hash.
+      Added Crc32 hash util.
+      Other small fixes and optimisations.
+    </PackageReleaseNotes>
 
     <PackageId>carlst99.Mandible</PackageId>
     <Authors>Carl Stephens</Authors>

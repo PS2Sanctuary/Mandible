@@ -1,5 +1,7 @@
 # Mandible
 
+[![Nuget | carlst99.Mandible](https://img.shields.io/nuget/v/carlst99.Mandible?label=carlst99.Mandible)](https://www.nuget.org/packages/carlst99.Mandible)
+
 Mandible eases the process of working with the packed assets of a game that uses the [ForgeLight Engine](https://en.wikipedia.org/wiki/Daybreak_Game_Company#ForgeLight_engine). Current features include:
 
 - Read `.pack` files.
