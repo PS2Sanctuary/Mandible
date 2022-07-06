@@ -31,18 +31,19 @@ public record IndexMetadata
             unchecked
             {
                 hash = (hash * 23) + index.AssetCount.GetHashCode();
-                hash = (hash * 23) + index.Length.GetHashCode();
+                foreach (PackIndex.IndexAsset pia in index.Assets)
+                    hash = (hash * 23) + pia.DataHash;
             }
 
             return new PackMetadata(path, hash);
         }
     }
 
-    public static IndexMetadata FromIndexList(IReadOnlyList<PackIndex> indexes)
+    public static IndexMetadata FromIndexList(IEnumerable<PackIndex> indexes)
         => new
         (
             DateTimeOffset.UtcNow,
-            indexes.Select(i => PackMetadata.FromIndex(i))
+            indexes.Select(PackMetadata.FromIndex)
                 .OrderBy(i => i.Name)
                 .ToList()
         );
