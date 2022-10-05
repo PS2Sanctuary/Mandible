@@ -11,7 +11,7 @@
     <Version>1.2.0</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
     <PackageReleaseNotes>
-      Renamed Lookup2 -> Jenkins, added one-at-a-time hash.
+      Renamed Lookup2 -&gt; Jenkins, added one-at-a-time hash.
       Added Crc32 hash util.
       Other small fixes and optimisations.
     </PackageReleaseNotes>
@@ -41,8 +41,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="carlst99.ZlibNGSharp" Version="1.0.1" />
-    <PackageReference Include="CommunityToolkit.HighPerformance" Version="7.1.2" />
+    <PackageReference Include="carlst99.ZlibNGSharp" Version="1.1.0" />
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.0.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 
