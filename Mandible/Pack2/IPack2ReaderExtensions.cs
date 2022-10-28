@@ -12,7 +12,7 @@ namespace Mandible.Pack2;
 /// <summary>
 /// Contains extension methods for the <see cref="IPack2Reader"/> interface.
 /// </summary>
-public static class Pack2ReaderExtensions
+public static class IPack2ReaderExtensions
 {
     /// <summary>
     /// Exports each asset in a pack.
@@ -21,7 +21,7 @@ public static class Pack2ReaderExtensions
     /// <param name="outputPath">The path to export the assets to.</param>
     /// <param name="namelist">The namelist.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchonous operation.</returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public static async Task ExportAllAsync
     (
         this IPack2Reader reader,
@@ -57,7 +57,7 @@ public static class Pack2ReaderExtensions
     /// <param name="outputPath">The path to export the assets to.</param>
     /// <param name="namelist">The namelist.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> used to stop the operation.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchonous operation.</returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public static async Task ExportNamedAsync
     (
         this IPack2Reader reader,
