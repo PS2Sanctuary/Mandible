@@ -15,20 +15,20 @@ Pack files are comprised of chunks. Each chunk has an 8 byte header and then a b
 
 #### Chunk Header
 
-Name       | Type   |   Example   | Description
----------- | ------ | ----------- | ---
-Next Chunk | `uint_32` | `00 83 7e d1` | The offset of the next chunk in the pack
-Asset Count | `uint_32` | `00 00 00 75` | The number of assets in the chunk
+| Name           | Type      | Example       | Description                              |
+|----------------|-----------|---------------|------------------------------------------|
+| Next Chunk     | `uint_32` | `00 83 7e d1` | The offset of the next chunk in the pack |
+| Asset Count    | `uint_32` | `00 00 00 75` | The number of assets in the chunk        |
 
 #### Asset Header
 
-Name          | Type   |   Example   | Description
-------------- | ------ | ----------- | ---
-Name Length   | `uint_32` | `00 00 00 1a` | The length of the asset name
-Asset Name    | `char_8[]` | `AMB_HOSSIN_NIGHT_OS_16.fsb` | The name of the asset file. Not `NUL` terminated.
-Asset Offset  | `uint_32` | `00 05 aa 3c` | The offset within the pack of the asset data
-Data Length   | `uint_32` | `00 00 57 80` | The length of the asset data
-Checksum      | `uint_32` | `31 4c 45 61` | A CRC32 checksum of the asset data
+| Name         | Type       | Example                      | Description                                       |
+|--------------|------------|------------------------------|---------------------------------------------------|
+| Name Length  | `uint_32`  | `00 00 00 1a`                | The length of the asset name                      |
+| Asset Name   | `char_8[]` | `AMB_HOSSIN_NIGHT_OS_16.fsb` | The name of the asset file. Not `NUL` terminated. |
+| Asset Offset | `uint_32`  | `00 05 aa 3c`                | The offset within the pack of the asset data      |
+| Data Length  | `uint_32`  | `00 00 57 80`                | The length of the asset data                      |
+| Checksum     | `uint_32`  | `31 4c 45 61`                | A CRC32 checksum of the asset data                |
 
 #### Overall read process
 

@@ -21,34 +21,34 @@ Finally, an *asset map* is written, which contains numerous sequential [asset he
 
 `Little Endian`
 
-Name | Type | Example | Description
--- | -- | -- | --
-Signature | `char_8[3]` | `PAK` | The magic identifier for pack2 files.
-Version | `byte` | `01` | The version of the pack.
-Asset Count | `uint_32` | `29 00 00 00` | The number of assets contained within the pack.
-Pack Length | `uint_64` | `20 88 0e 00 00 00 00 00` | The byte length of the pack.
-Map Offset | `uint_64` | `00 83 0e 00 00 00 00 00` | The byte offset into the pack at which the asset map begins.
-Unknown | `uint_64` | `00 01 00 00 00 00 00 00` | Unknown - every pack at the time of writing uses the same value of `256` here.
-Checksum | `byte[128]` | `...` | Unknown how this is calculated. Use to verify the integrity of the pack.
+| Name         | Type        | Example                   | Description                                                                          |
+|--------------|-------------|---------------------------|--------------------------------------------------------------------------------------|
+| Signature    | `char_8[3]` | `PAK`                     | The magic identifier for pack2 files.                                                |
+| Version      | `byte`      | `01`                      | The version of the pack.                                                             |
+| Asset Count  | `uint_32`   | `29 00 00 00`             | The number of assets contained within the pack.                                      |
+| Pack Length  | `uint_64`   | `20 88 0e 00 00 00 00 00` | The byte length of the pack.                                                         |
+| Map Offset   | `uint_64`   | `00 83 0e 00 00 00 00 00` | The byte offset into the pack at which the asset map begins.                         |
+| Unknown      | `uint_64`   | `00 01 00 00 00 00 00 00` | Unknown - every pack at the time of writing uses the same value of `256` here.       |
+| Checksum     | `byte[128]` | `...`                     | Unknown how this is calculated. Presumably used to verify the integrity of the pack. |
 
 #### Asset Data
 
 `Big Endian`
 
-Name | Type | Example | Description
--- | -- | -- | --
-Compression Indicator | `byte[4]` | `a1 b2 c3 d4` | A magic indicator to show zlib compression. Only present if the data is compressed.
-Unpacked Size | `uint_32` | `00 00 01 dd` | The unpacked/decompressed size of the asset. Only present if the data is compressed.
-Data | `byte[]` | `...` | The asset data.
+| Name                  | Type      | Example       | Description                                                                          |
+|-----------------------|-----------|---------------|--------------------------------------------------------------------------------------|
+| Compression Indicator | `byte[4]` | `a1 b2 c3 d4` | A magic indicator to show zlib compression. Only present if the data is compressed.  |
+| Unpacked Size         | `uint_32` | `00 00 01 dd` | The unpacked/decompressed size of the asset. Only present if the data is compressed. |
+| Data                  | `byte[]`  | `...`         | The asset data.                                                                      |
 
 #### Asset Header
 
 `Little Endian`
 
-Name | Type | Example | Description
--- | -- | -- | --
-Name Hash | `uint_64` | `f3 62 01 0d 88 db 26 00` | A CRC-64 hash of the UPPERCASE asset name. This CRC variant uses "Jones" coefficients and a value of `0xffffffffffffffff` for both the initial value and final XOR out.
-Asset Offset | `uint_64` | `00 94 02 00 00 00 00 00` | The offset of the asset data within the pack.    
-Stored data size | `uint_64` | `97 01 00 00 00 00 00 00` | The size of the stored asset data.
-Compression Indicator | `uint_32` | `11 00 00 00` | Compressed: `0x11/0x01`; Uncompressed: `0x10/0x00`.
-CRC-32 Data Hash | `uint_32` | `FF 44 AF 89` | A CRC-32 hash of the stored? data.
+| Name                  | Type      | Example                   | Description                                                                                                                                                             |
+|-----------------------|-----------|---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Name Hash             | `uint_64` | `f3 62 01 0d 88 db 26 00` | A CRC-64 hash of the UPPERCASE asset name. This CRC variant uses "Jones" coefficients and a value of `0xffffffffffffffff` for both the initial value and final XOR out. |
+| Asset Offset          | `uint_64` | `00 94 02 00 00 00 00 00` | The offset of the asset data within the pack.                                                                                                                           |    
+| Stored data size      | `uint_64` | `97 01 00 00 00 00 00 00` | The size of the stored asset data.                                                                                                                                      |
+| Compression Indicator | `uint_32` | `11 00 00 00`             | Compressed: `0x11/0x01`; Uncompressed: `0x10/0x00`.                                                                                                                     |
+| CRC-32 Data Hash      | `uint_32` | `FF 44 AF 89`             | A CRC-32 hash of the stored? data.                                                                                                                                      |
