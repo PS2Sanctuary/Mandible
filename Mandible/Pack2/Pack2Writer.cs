@@ -4,6 +4,7 @@ using System;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ZlibNGSharpMinimal.Deflate;
@@ -37,7 +38,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
         _writer = writer;
         _assetMap = new List<Asset2Header>();
         _currentOffset = DATA_START_OFFSET;
-        _deflater = new ZngDeflater();
+        _deflater = new ZngDeflater(CompressionLevel.BestCompression);
     }
 
     /// <inheritdoc />
@@ -86,6 +87,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
 
         await _writer.WriteAsync(assetData, _currentOffset, ct).ConfigureAwait(false);
         _currentOffset += assetData.Length;
+        IncrementOffsetToNextBoundary();
 
         if (compress)
             ArrayPool<byte>.Shared.Return(compressed);
@@ -97,10 +99,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
         if (IsClosed)
             return;
 
-        // Increment to the nearest 256-byte boundary
-        _currentOffset += 0x100;
-        _currentOffset = (int)((uint)_currentOffset & 0xFFFFFF00);
-
+        IncrementOffsetToNextBoundary();
         ulong packLength = (ulong)_currentOffset + (ulong)(Asset2Header.Size * _assetMap.Count);
         Pack2Header header = new((uint)_assetMap.Count, packLength, (ulong)_currentOffset, new byte[128]);
 
@@ -124,5 +123,15 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
     {
         await CloseAsync().ConfigureAwait(false);
         _deflater.Dispose();
+    }
+
+    /// <summary>
+    /// Increments the <see cref="_currentOffset"/> to the nearest 256-byte boundary.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void IncrementOffsetToNextBoundary()
+    {
+        _currentOffset += 0x100;
+        _currentOffset = (int)((uint)_currentOffset & 0xFFFFFF00);
     }
 }
