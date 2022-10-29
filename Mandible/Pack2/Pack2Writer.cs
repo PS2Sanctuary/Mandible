@@ -73,7 +73,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
             );
             _deflater.Reset();
 
-            assetData = compressed.AsMemory(0, (int)deflatedLength);
+            assetData = compressed.AsMemory(0, offset + (int)deflatedLength);
         }
 
         _assetMap.Add(new Asset2Header
