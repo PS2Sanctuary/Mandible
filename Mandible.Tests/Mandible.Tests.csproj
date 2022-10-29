@@ -24,4 +24,10 @@
     <ProjectReference Include="..\Mandible\Mandible.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Data\Sanctuary_x64_0.pack2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
