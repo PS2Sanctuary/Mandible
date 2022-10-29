@@ -1,72 +1,43 @@
 ﻿using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 
 namespace Mandible.Pack2;
 
 /// <summary>
-/// Represents the header information of a pack2 file.
+/// 
 /// </summary>
-public class Pack2Header
+/// <param name="AssetCount">Gets the number of assets stored in the pack.</param>
+/// <param name="Length">Gets the length of the pack, in bytes.</param>
+/// <param name="AssetMapOffset">Gets the offset into the pack of the asset map, in bytes.</param>
+/// <param name="Unknown">An unknown value that is always set to 256.</param>
+/// <param name="Version">Gets the version represented by this <see cref="Pack2Header"/> object.</param>
+/// <param name="Checksum">A value assumed to be a checksum. How it is calculated is unknown.</param>
+public record Pack2Header
+(
+    uint AssetCount,
+    ulong Length,
+    ulong AssetMapOffset,
+    ReadOnlyMemory<byte> Checksum,
+    byte Version = 1,
+    ulong Unknown = 256
+)
 {
+    /// <summary>
+    /// Gets the magic identifier of a pack2 file.
+    /// </summary>
+    public static readonly IReadOnlyList<byte> MAGIC_BYTES = new[] { (byte)'P', (byte)'A', (byte)'K' };
+
     /// <summary>
     /// Gets the size of a <see cref="Pack2Header"/> as stored within a pack.
     /// </summary>
-    public const int Size = 160;
-
-    /// <summary>
-    /// Gets the magic string of the pack2 file type.
-    /// </summary>
-    public string Magic { get; }
-
-    /// <summary>
-    /// Gets the version of the pack. Often combined with the <see cref="Magic"/> value in other pack implementations.
-    /// </summary>
-    public byte Version { get; }
-
-    /// <summary>
-    /// Gets the number of assets stored in the pack.
-    /// </summary>
-    public uint AssetCount { get; }
-
-    /// <summary>
-    /// Gets the length in bytes of the pack.
-    /// </summary>
-    public ulong Length { get; }
-
-    /// <summary>
-    /// Gets the offset into the pack of the asset map, in bytes.
-    /// </summary>
-    public ulong AssetMapOffset { get; }
-
-    /// <summary>
-    /// An unknown value that is always set to 256.
-    /// </summary>
-    public ulong Unknown { get; }
-
-    /// <summary>
-    /// A value assumed to be a checksum. How it is calculated is unknown.
-    /// </summary>
-    public readonly byte[] Checksum;
-
-    /// <summary>
-    /// Initialises a new instance of the <see cref="Pack2Header"/> struct.
-    /// </summary>
-    /// <param name="assetCount">The number of assets stored in the pack.</param>
-    /// <param name="length">The length in bytes of the pack.</param>
-    /// <param name="assetMapOffset">The offset into the pack of the asset map, in bytes.</param>
-    /// <param name="checkSum">The pack checksum.</param>
-    /// <param name="version">The version of the pack.</param>
-    /// <param name="unknown">The unknown value.</param>
-    public Pack2Header(uint assetCount, ulong length, ulong assetMapOffset, byte[] checkSum, byte version = 1, ulong unknown = 256)
-    {
-        Magic = "PAK";
-        Version = version;
-        AssetCount = assetCount;
-        Length = length;
-        AssetMapOffset = assetMapOffset;
-        Unknown = unknown;
-        Checksum = checkSum;
-    }
+    public static readonly int Size = MAGIC_BYTES.Count
+        + sizeof(byte) // Version
+        + sizeof(uint) // AssetCount
+        + sizeof(ulong) // Length
+        + sizeof(ulong) // AssetMapOffset
+        + sizeof(ulong) // Unknown
+        + 128; // Checksum
 
     /// <summary>
     /// Serializes this <see cref="Pack2Header"/> to a byte buffer.
@@ -79,16 +50,16 @@ public class Pack2Header
             throw new ArgumentException($"Buffer must be at least {Size} bytes", nameof(buffer));
 
         // Write the magic bytes
-        buffer[0] = 0x50;
-        buffer[1] = 0x41;
-        buffer[2] = 0x4b;
+        buffer[0] = MAGIC_BYTES[0];
+        buffer[1] = MAGIC_BYTES[1];
+        buffer[2] = MAGIC_BYTES[2];
         buffer[3] = Version;
 
         BinaryPrimitives.WriteUInt32LittleEndian(buffer[4..8], AssetCount);
         BinaryPrimitives.WriteUInt64LittleEndian(buffer[8..16], Length);
         BinaryPrimitives.WriteUInt64LittleEndian(buffer[16..24], AssetMapOffset);
         BinaryPrimitives.WriteUInt64LittleEndian(buffer[24..32], Unknown);
-        Checksum.CopyTo(buffer[32..]);
+        Checksum.Span.CopyTo(buffer[32..]);
     }
 
     /// <summary>
@@ -98,12 +69,28 @@ public class Pack2Header
     /// <returns>An <see cref="Pack2Header"/>.</returns>
     public static Pack2Header Deserialize(ReadOnlySpan<byte> buffer)
     {
-        byte version = buffer[3];
-        uint assetCount = BinaryPrimitives.ReadUInt32LittleEndian(buffer[4..8]);
-        ulong length = BinaryPrimitives.ReadUInt64LittleEndian(buffer[8..16]);
-        ulong assetMapOffset = BinaryPrimitives.ReadUInt64LittleEndian(buffer[16..24]);
-        ulong unknown = BinaryPrimitives.ReadUInt64LittleEndian(buffer[24..32]);
+        int offset = 0;
 
-        return new Pack2Header(assetCount, length, assetMapOffset, buffer[32..].ToArray(), version, unknown);
+        foreach (byte value in MAGIC_BYTES)
+        {
+            if (buffer[offset++] != value)
+                throw new InvalidOperationException("The buffer data does not represent a pack header; MAGIC bytes missing");
+        }
+
+        byte version = buffer[offset++];
+
+        uint assetCount = BinaryPrimitives.ReadUInt32LittleEndian(buffer[offset..]);
+        offset += sizeof(uint);
+
+        ulong length = BinaryPrimitives.ReadUInt64LittleEndian(buffer[offset..]);
+        offset += sizeof(ulong);
+
+        ulong assetMapOffset = BinaryPrimitives.ReadUInt64LittleEndian(buffer[offset..]);
+        offset += sizeof(ulong);
+
+        ulong unknown = BinaryPrimitives.ReadUInt64LittleEndian(buffer[offset..]);
+        offset += sizeof(ulong);
+
+        return new Pack2Header(assetCount, length, assetMapOffset, buffer[offset..].ToArray(), version, unknown);
     }
 }

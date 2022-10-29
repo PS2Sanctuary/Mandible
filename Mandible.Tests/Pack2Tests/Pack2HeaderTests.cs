@@ -7,7 +7,7 @@ namespace Mandible.Tests.Pack2Tests;
 public class Pack2HeaderTests
 {
     private static readonly Pack2Header EXPECTED_HEADER;
-    private static readonly byte[] EXPECTED_BYTES = new byte[33]
+    private static readonly byte[] EXPECTED_BYTES =
     {
             0x50, 0x41, 0x4b, // PAK
             0x04, // Version
@@ -26,7 +26,7 @@ public class Pack2HeaderTests
 
         byte[] checksumBytes = new byte[128];
         checksumBytes[0] = 0xff;
-        EXPECTED_HEADER = new(1, 2, 3, checksumBytes, 4, 256);
+        EXPECTED_HEADER = new Pack2Header(1, 2, 3, checksumBytes, 4);
     }
 
     [Fact]
@@ -34,13 +34,15 @@ public class Pack2HeaderTests
     {
         Pack2Header header = Pack2Header.Deserialize(EXPECTED_BYTES);
 
-        Assert.Equal(EXPECTED_HEADER.Magic, header.Magic);
         Assert.Equal(EXPECTED_HEADER.Version, header.Version);
         Assert.Equal(EXPECTED_HEADER.AssetCount, header.AssetCount);
         Assert.Equal(EXPECTED_HEADER.Length, header.Length);
         Assert.Equal(EXPECTED_HEADER.AssetMapOffset, header.AssetMapOffset);
         Assert.Equal(EXPECTED_HEADER.Unknown, header.Unknown);
-        Assert.Equal(EXPECTED_HEADER.Checksum, header.Checksum);
+
+        Assert.Equal(EXPECTED_HEADER.Checksum.Length, header.Checksum.Length);
+        for (int i = 0; i < header.Checksum.Length; i++)
+            Assert.Equal(EXPECTED_HEADER.Checksum.Span[i], header.Checksum.Span[i]);
     }
 
     [Fact]
