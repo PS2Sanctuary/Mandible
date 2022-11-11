@@ -22,10 +22,23 @@ public static class NameExtractor
     /// <summary>
     /// Gets the CRC-64 hash of the namelist file name ( {NAMELIST} ).
     /// </summary>
-    private const ulong NamelistFileNameHash = 4699449473529019696;
+    private static readonly ulong NamelistFileNameHash = PackCrc64.Calculate("{NAMELIST}");
 
-    private static readonly byte[] IllegalNameCharacters = new[] { '!', '"', '#', '$', '%', '&', '*', '+', ',', '/', ':', ';', '=', '>', '?', '@', '\\', '^', '`', '|', '~', '\t', '\r', '\n', ' ' }.Select(c => (byte)c).ToArray();
-    private static readonly string[] KnownFileExtensions = { "adr", "agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3", "cnk4", "cnk5", "crc", "crt", "cso", "cur", "dat", "db", "dds", "def", "dir", "dll", "dma", "dme", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb", "eco", "efb", "exe", "fsb", "fxd", "fxo", "gfx", "gnf", "i64", "ini", "jpg", "lst", "lua", "mrn", "pak", "pem", "playerstudio", "png", "prsb", "psd", "pssb", "tga", "thm", "tome", "ttf", "txt", "vnfo", "wav", "xlsx", "xml", "xrsb", "xssb", "zone" };
+    private static readonly byte[] IllegalNameCharacters = new[]
+    {
+        '!', '"', '#', '$', '%', '&', '*', '+', ',', '/', ':', ';', '=', '>', '?',
+        '@', '\\', '^', '`', '|', '~', '\t', '\r', '\n', ' '
+    }.Select(c => (byte)c).ToArray();
+
+    private static readonly string[] KnownFileExtensions =
+    {
+        "adr", "agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3",
+        "cnk4", "cnk5", "crc", "crt", "cso", "cur", "dat", "db", "dds", "def", "dir", "dll",
+        "dma", "dme", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb", "eco", "efb", "exe", "fsb",
+        "fxd", "fxo", "gfx", "gnf", "i64", "ini", "jpg", "lst", "lua", "mrn", "pak", "pem",
+        "playerstudio", "png", "prsb", "psd", "pssb", "tga", "thm", "tome", "ttf", "txt", "vnfo",
+        "wav", "xlsx", "xml", "xrsb", "xssb", "zone"
+    };
 
     /// <summary>
     /// Extracts names from pack2 files. Expect this operation to take multiple minutes
@@ -59,9 +72,7 @@ public static class NameExtractor
 
             if (deepExtract)
                 await ExtractFromAssetsAsync(reader, nl, ct).ConfigureAwait(false);
-
-            string fileName = Path.GetFileNameWithoutExtension(packPath);
-            if (fileName == "data_x64_0" && !deepExtract)
+            else if (Path.GetFileNameWithoutExtension(packPath) == "data_x64_0")
                 await ExtractFromAssetsAsync(reader, nl, ct).ConfigureAwait(false);
         }
 
@@ -72,16 +83,7 @@ public static class NameExtractor
     {
         IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
 
-        Asset2Header? namelistHeader = null;
-        foreach (Asset2Header asset in assetHeaders)
-        {
-            if (asset.NameHash == NamelistFileNameHash)
-            {
-                namelistHeader = asset;
-                break;
-            }
-        }
-
+        Asset2Header? namelistHeader = assetHeaders.FirstOrDefault(asset => asset.NameHash == NamelistFileNameHash);
         if (namelistHeader is null)
             return;
 
@@ -140,6 +142,9 @@ public static class NameExtractor
                     reader.Advance(1);
 
                 reader.TryReadTo(out ReadOnlySpan<byte> nameBytes, extension);
+                if (nameBytes.Length == 0)
+                    continue;
+
                 string name = Encoding.ASCII.GetString(nameBytes) + '.' + KnownFileExtensions[i];
                 names.Add(name);
 

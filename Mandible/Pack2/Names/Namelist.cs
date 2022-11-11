@@ -168,12 +168,13 @@ public class Namelist
     public void Append(ReadOnlySpan<byte> buffer)
     {
         int startIndex = 0;
-        int endIndex = 0;
 
         for (int i = 0; i < buffer.Length; i++)
         {
             byte cur = buffer[i];
-            if (cur == (byte)'\r' || cur == (byte)'\n')
+            int endIndex;
+
+            if (cur is (byte)'\r' or (byte)'\n')
                 endIndex = i;
             else
                 continue;
@@ -199,7 +200,7 @@ public class Namelist
     /// <exception cref="TaskCanceledException">Thrown if the operation is canceled.</exception>
     public async Task WriteAsync(Stream outputStream, CancellationToken ct = default)
     {
-        using StreamWriter sw = new(outputStream, null, -1, true);
+        await using StreamWriter sw = new(outputStream, null, -1, true);
         sw.NewLine = "\n";
 
         foreach (string name in _hashedNamePairs.Values.OrderBy(s => s))
