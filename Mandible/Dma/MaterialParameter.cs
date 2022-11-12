@@ -73,8 +73,9 @@ public class MaterialParameter : IBufferWritable
     /// Reads a <see cref="MaterialParameter"/> instance from a buffer.
     /// </summary>
     /// <param name="buffer">The buffer.</param>
+    /// <param name="amountRead">The amount of data read from the <paramref name="buffer"/>.</param>
     /// <returns>A <see cref="MaterialParameter"/> instance.</returns>
-    public static MaterialParameter Read(ReadOnlySpan<byte> buffer)
+    public static MaterialParameter Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
         uint semanticHash = BinaryPrimitives.ReadUInt32LittleEndian(buffer);
         uint d3Class = BinaryPrimitives.ReadUInt32LittleEndian(buffer[4..]);
@@ -82,6 +83,7 @@ public class MaterialParameter : IBufferWritable
         uint dataLength = BinaryPrimitives.ReadUInt32LittleEndian(buffer[12..]);
         ReadOnlyMemory<byte> data = buffer.Slice(16, (int)dataLength).ToArray();
 
+        amountRead = 16 + (int)dataLength;
         return new MaterialParameter
         (
             semanticHash,
@@ -93,14 +95,14 @@ public class MaterialParameter : IBufferWritable
 
     /// <inheritdoc />
     public int GetRequiredBufferSize()
-        => sizeof(uint)
-           + sizeof(uint)
-           + sizeof(uint)
-           + sizeof(uint)
+        => sizeof(uint) // SemanticHash
+           + sizeof(uint) // D3DXClass
+           + sizeof(uint) // D3DXType
+           + sizeof(uint) // DataLength
            + Data.Length;
 
     /// <inheritdoc />
-    public void Write(Span<byte> buffer)
+    public int Write(Span<byte> buffer)
     {
         int requiredBufferSize = GetRequiredBufferSize();
         if (buffer.Length < requiredBufferSize)
@@ -111,5 +113,7 @@ public class MaterialParameter : IBufferWritable
         BinaryPrimitives.WriteUInt32LittleEndian(buffer[8..], D3DXParameterType);
         BinaryPrimitives.WriteUInt32LittleEndian(buffer[12..], (uint)Data.Length);
         Data.Span.CopyTo(buffer[16..]);
+
+        return requiredBufferSize;
     }
 }

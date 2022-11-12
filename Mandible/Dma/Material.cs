@@ -60,23 +60,30 @@ public class Material : IBufferWritable
     /// Reads a <see cref="Material"/> instance from a buffer.
     /// </summary>
     /// <param name="buffer">The buffer.</param>
+    /// <param name="amountRead">The amount of data read from the <paramref name="buffer"/>.</param>
     /// <returns>A <see cref="Material"/> instance.</returns>
-    public static Material Read(ReadOnlySpan<byte> buffer)
+    public static Material Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
-        uint nameHash = BinaryPrimitives.ReadUInt32LittleEndian(buffer);
-        uint materialDefinitionHash = BinaryPrimitives.ReadUInt32LittleEndian(buffer[8..]);
-        uint parameterCount = BinaryPrimitives.ReadUInt32LittleEndian(buffer[12..]);
+        int offset = 0;
+
+        uint nameHash = BinaryPrimitives.ReadUInt32LittleEndian(buffer[offset..]);
+        offset += sizeof(uint);
+
+        uint materialDefinitionHash = BinaryPrimitives.ReadUInt32LittleEndian(buffer[offset..]);
+        offset += sizeof(uint);
+
+        uint parameterCount = BinaryPrimitives.ReadUInt32LittleEndian(buffer[offset..]);
+        offset += sizeof(uint);
 
         List<MaterialParameter> parameters = new();
-        int offset = 16;
-
         for (int i = 0; i < parameterCount; i++)
         {
-            MaterialParameter parameter = MaterialParameter.Read(buffer[offset..]);
+            MaterialParameter parameter = MaterialParameter.Read(buffer[offset..], out int paramAmountRead);
             parameters.Add(parameter);
-            offset += parameter.GetRequiredBufferSize();
+            offset += paramAmountRead;
         }
 
+        amountRead = offset;
         return new Material
         (
             nameHash,
@@ -87,14 +94,14 @@ public class Material : IBufferWritable
 
     /// <inheritdoc />
     public int GetRequiredBufferSize()
-        => sizeof(uint)
-           + sizeof(uint)
-           + sizeof(uint)
-           + sizeof(uint)
+        => sizeof(uint) // NameHash
+           + sizeof(uint) // RequiredBufferSize
+           + sizeof(uint) // MaterialDefinitionHash
+           + sizeof(uint) // ParameterCount
            + Parameters.Sum(p => p.GetRequiredBufferSize());
 
     /// <inheritdoc />
-    public void Write(Span<byte> buffer)
+    public int Write(Span<byte> buffer)
     {
         int requiredBufferSize = GetRequiredBufferSize();
         if (buffer.Length < requiredBufferSize)
@@ -107,9 +114,8 @@ public class Material : IBufferWritable
 
         int offset = 16;
         foreach (MaterialParameter param in Parameters)
-        {
-            param.Write(buffer[offset..]);
-            offset += param.GetRequiredBufferSize();
-        }
+            offset += param.Write(buffer[offset..]);
+
+        return requiredBufferSize;
     }
 }

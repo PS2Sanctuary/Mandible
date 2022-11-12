@@ -1,5 +1,6 @@
 using Mandible.Abstractions;
 using Mandible.Exceptions;
+using MemoryReaders;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -26,9 +27,14 @@ struct dmat
 public class Dmat : IBufferWritable
 {
     /// <summary>
+    /// Gets the DMAT version supported by this class.
+    /// </summary>
+    public const int SUPPORTED_VERSION = 1;
+
+    /// <summary>
     /// Gets the magic bytes that indicate
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> Magic = new[] { (byte)'D', (byte)'M', (byte)'A', (byte)'T' };
+    public static readonly ReadOnlyMemory<byte> Magic = Encoding.ASCII.GetBytes("DMAT");
 
     /// <summary>
     /// Gets the file names of the textures to be applied to the materials.
@@ -55,68 +61,69 @@ public class Dmat : IBufferWritable
     /// Reads a <see cref="Dmat"/> instance from a buffer.
     /// </summary>
     /// <param name="buffer">The buffer.</param>
+    /// <param name="amountRead">The amount of data read from the <paramref name="buffer"/>.</param>
     /// <returns>A <see cref="Dmat"/> instance.</returns>
-    public static Dmat Read(ReadOnlySpan<byte> buffer)
+    public static Dmat Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
-        for (int i = 0; i < Magic.Length; i++)
-        {
-            if (buffer[i] != Magic.Span[i])
-                throw new UnrecognisedMagicException(buffer[..4].ToArray(), Magic.ToArray());
-        }
+        if (buffer.IndexOf(Magic.Span) != 0)
+            throw new UnrecognisedMagicException(buffer[..Magic.Length].ToArray(), Magic.ToArray());
+        int offset = Magic.Length;
 
-        uint version = BinaryPrimitives.ReadUInt32LittleEndian(buffer[4..]);
-        if (version != 1)
+        uint version = BinaryPrimitives.ReadUInt32LittleEndian(buffer[offset..]);
+        offset += sizeof(uint);
+        if (version != SUPPORTED_VERSION)
             throw new UnsupportedVersionException(1, version);
 
-        uint texturesCount = BinaryPrimitives.ReadUInt32LittleEndian(buffer[8..]);
-        int offset = 12;
+        uint texturesCount = BinaryPrimitives.ReadUInt32LittleEndian(buffer[offset..]);
+        offset += sizeof(uint);
+
         List<string> textureFileNames = new();
+        SpanReader<byte> reader = new(buffer[offset..]);
 
         for (int i = 0; i < texturesCount; i++)
         {
-            int length = 1;
-            while (buffer[offset] != 0)
-            {
-                length++;
-                offset++;
-            }
+            bool readName = reader.TryReadTo(out ReadOnlySpan<byte> fileNameBytes, 0);
+            if (!readName)
+                break;
 
-            string textureFileName = Encoding.ASCII.GetString(buffer[(offset - length)..offset]);
+            string textureFileName = Encoding.ASCII.GetString(fileNameBytes);
+            offset += fileNameBytes.Length;
             textureFileNames.Add(textureFileName);
-            offset++;
         }
 
         uint materialCount = BinaryPrimitives.ReadUInt32LittleEndian(buffer[offset..]);
-        List<Material> materials = new();
+        offset += sizeof(uint);
 
+        List<Material> materials = new();
         for (int i = 0; i < materialCount; i++)
         {
-            Material material = Material.Read(buffer[offset..]);
+            Material material = Material.Read(buffer[offset..], out int matAmountRead);
             materials.Add(material);
-            offset += material.GetRequiredBufferSize();
+            offset += matAmountRead;
         }
 
+        amountRead = offset;
         return new Dmat(textureFileNames, materials);
     }
 
     /// <inheritdoc />
     public int GetRequiredBufferSize()
-        => 4 // magic
-           + sizeof(uint)
-           + sizeof(uint)
+        => Magic.Length
+           + sizeof(uint) // Version
+           + sizeof(uint) // TextureFileNamesCount
            + TextureFileNames.Sum(t => t.Length + 1) // name + null terminator
-           + sizeof(uint)
+           + sizeof(uint) // MaterialsCount
            + Materials.Sum(m => m.GetRequiredBufferSize());
 
     /// <inheritdoc />
-    public void Write(Span<byte> buffer)
+    public int Write(Span<byte> buffer)
     {
         int requiredBufferSize = GetRequiredBufferSize();
         if (buffer.Length < requiredBufferSize)
             throw new InvalidBufferSizeException(requiredBufferSize, buffer.Length);
 
         Magic.Span.CopyTo(buffer);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer[4..], 1);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer[4..], SUPPORTED_VERSION);
         BinaryPrimitives.WriteUInt32LittleEndian(buffer[8..], (uint)TextureFileNames.Count);
 
         int offset = 12;
@@ -133,9 +140,8 @@ public class Dmat : IBufferWritable
         offset += sizeof(uint);
 
         foreach (Material material in Materials)
-        {
-            material.Write(buffer[offset..]);
-            offset += material.GetRequiredBufferSize();
-        }
+            offset += material.Write(buffer[offset..]);
+
+        return offset;
     }
 }

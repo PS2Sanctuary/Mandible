@@ -18,8 +18,9 @@ public interface IBufferWritable
     /// Writes this object to a buffer.
     /// </summary>
     /// <param name="buffer">The buffer.</param>
+    /// <returns>The amount of data written to the buffer.</returns>
     /// <exception cref="Mandible.Exceptions.InvalidBufferSizeException">
     /// Thrown when the <paramref name="buffer"/> is too small.
     /// </exception>
-    void Write(Span<byte> buffer);
+    int Write(Span<byte> buffer);
 }
