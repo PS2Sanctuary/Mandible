@@ -3,6 +3,7 @@ using MemoryReaders;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Mandible.Pack2.Names;
@@ -23,34 +24,34 @@ public static class AssetNameScraper
     {
         UNSCRAPEABLE_FILE_MAGICS = new[]
         {
-            Encoding.UTF8.GetBytes("CDTA"),
-            Encoding.UTF8.GetBytes("CFX"),
-            Encoding.UTF8.GetBytes("CNK"),
-            Encoding.UTF8.GetBytes("DDS"),
-            Encoding.UTF8.GetBytes("DSKE"),
-            Encoding.UTF8.GetBytes("DXBC"),
-            Encoding.UTF8.GetBytes("FSB"),
-            Encoding.UTF8.GetBytes("GNF"),
-            Encoding.UTF8.GetBytes("INDR"),
-            Encoding.UTF8.GetBytes("RIFF"),
-            Encoding.UTF8.GetBytes("VNFO"),
+            Encoding.ASCII.GetBytes("CDTA"),
+            Encoding.ASCII.GetBytes("CFX"),
+            Encoding.ASCII.GetBytes("CNK"),
+            Encoding.ASCII.GetBytes("DDS"),
+            Encoding.ASCII.GetBytes("DSKE"),
+            Encoding.ASCII.GetBytes("DXBC"),
+            Encoding.ASCII.GetBytes("FSB"),
+            Encoding.ASCII.GetBytes("GNF"),
+            Encoding.ASCII.GetBytes("INDR"),
+            Encoding.ASCII.GetBytes("RIFF"),
+            Encoding.ASCII.GetBytes("VNFO"),
             new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G' },
             new byte[] { 0xff, 0xd8, 0xff } // JPG
         };
 
         SCRAPEABLE_BINARY_FILE_MAGICS = new[]
         {
-            Encoding.UTF8.GetBytes("CHKF"),
-            Encoding.UTF8.GetBytes("DMAT"),
-            Encoding.UTF8.GetBytes("DMOD"),
-            Encoding.UTF8.GetBytes("ZONE"),
-            Encoding.UTF8.GetBytes("*TEXTUREPART") // .eco
+            Encoding.ASCII.GetBytes("CHKF"),
+            Encoding.ASCII.GetBytes("DMAT"),
+            Encoding.ASCII.GetBytes("DMOD"),
+            Encoding.ASCII.GetBytes("ZONE"),
+            Encoding.ASCII.GetBytes("*TEXTUREPART") // .eco
         };
 
         DEDICATED_ASSET_HANDLERS = new (byte[], DedicatedAssetHandler)[]
         {
-            //(Encoding.UTF8.GetBytes("DMAT"), ScrapeDMAT),
-            //(Encoding.UTF8.GetBytes("DMOD"), ScrapeDMOD)
+            //(Encoding.ASCII.GetBytes("DMAT"), ScrapeDMAT),
+            //(Encoding.ASCII.GetBytes("DMOD"), ScrapeDMOD)
         };
 
         string[] knownFileExtensions =
@@ -63,11 +64,8 @@ public static class AssetNameScraper
             "wav", "xlsx", "xml", "xrsb", "xssb", "zone"
         };
 
-        byte[][] convertedKnownFileExtensions = new byte[knownFileExtensions.Length][];
-        for (int i = 0; i < knownFileExtensions.Length; i++)
-            convertedKnownFileExtensions[i] = Encoding.UTF8.GetBytes(knownFileExtensions[i]);
-
-        KNOWN_FILE_EXTENSIONS = convertedKnownFileExtensions;
+        KNOWN_FILE_EXTENSIONS = knownFileExtensions.Select(ext => Encoding.ASCII.GetBytes(ext))
+            .ToList();
     }
 
     /// <summary>
@@ -97,7 +95,7 @@ public static class AssetNameScraper
             {
                 returnList.Add(Path.ChangeExtension(name, "dx11ssb"));
             }
-            else if (name.EndsWith(".mrn"))
+            else if (name.EndsWith(".mrn") && !name.Contains("X64"))
             {
                 string fileName = Path.GetFileNameWithoutExtension(name);
                 returnList.Add($"{fileName}X64.mrn");
@@ -158,8 +156,9 @@ public static class AssetNameScraper
             if (!reader.TryAdvanceTo((byte)'.'))
                 break;
 
-            foreach (byte[] extName in KNOWN_FILE_EXTENSIONS)
+            for (int i = 0; i < KNOWN_FILE_EXTENSIONS.Count; i++)
             {
+                byte[] extName = KNOWN_FILE_EXTENSIONS[i];
                 if (!reader.IsNext(extName, true))
                     continue;
 
@@ -167,14 +166,11 @@ public static class AssetNameScraper
                 reader.Rewind(extName.Length + 2); // Rewind to the first letter of the name
 
                 // Rewind until we encounter an invalid character, or reach the start of the file
-                while (reader.TryPeek(out byte currentChar) && IsValidLetter(currentChar))
-                {
+                while (reader.TryPeek(out byte currentChar) && IsValidLetter(currentChar) && reader.Consumed != 0)
                     reader.Rewind(1);
-                    if (reader.Consumed == 0)
-                        break;
-                }
 
-                reader.Advance(1); // Advance back past the first invalid character encountered above
+                if (reader.Consumed != 0)
+                    reader.Advance(1); // Advance back past the first invalid character encountered above
                 int startIndex = reader.Consumed;
                 bool read = reader.TryReadExact(out ReadOnlySpan<byte> fullName, endIndex - startIndex);
 
@@ -190,7 +186,7 @@ public static class AssetNameScraper
     }
 
     private static IReadOnlyList<string> ScrapeDMAT(ReadOnlySpan<byte> dmatData)
-        => Dmat.Read(dmatData).TextureFileNames;
+        => Dmat.Read(dmatData, out _).TextureFileNames;
 
     private static IReadOnlyList<string> ScrapeDMOD(ReadOnlySpan<byte> dmodData)
     {
@@ -198,7 +194,7 @@ public static class AssetNameScraper
         bool advanced = reader.TryAdvanceTo(new[] { (byte)'D', (byte)'M', (byte)'A', (byte)'T' }, false);
 
         return advanced
-            ? Dmat.Read(dmodData[reader.Consumed..]).TextureFileNames
+            ? Dmat.Read(dmodData[reader.Consumed..], out _).TextureFileNames
             : Array.Empty<string>();
     }
 
