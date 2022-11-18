@@ -50,8 +50,8 @@ public static class AssetNameScraper
 
         DEDICATED_ASSET_HANDLERS = new (byte[], DedicatedAssetHandler)[]
         {
-            //(Encoding.ASCII.GetBytes("DMAT"), ScrapeDMAT),
-            //(Encoding.ASCII.GetBytes("DMOD"), ScrapeDMOD)
+            (Encoding.ASCII.GetBytes("DMAT"), ScrapeDMAT),
+            (Encoding.ASCII.GetBytes("DMOD"), ScrapeDMOD)
         };
 
         string[] knownFileExtensions =
