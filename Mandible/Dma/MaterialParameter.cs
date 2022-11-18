@@ -1,74 +1,38 @@
 using Mandible.Abstractions;
 using Mandible.Exceptions;
+using Mandible.Util;
 using System;
-using System.Buffers.Binary;
 
 namespace Mandible.Dma;
-
-/*
-struct material_parameter
-{
-    unsigned int semantic_hash;
-    unsigned int d3dxparameter_class;
-    unsigned int d3dxparameter_type;
-    unsigned int data_length;
-    byte data[data_length];
-};
-*/
 
 /// <summary>
 /// Represents a material parameter of the <see cref="Material"/> class.
 /// </summary>
-public class MaterialParameter : IBufferWritable
+/// <param name="SemanticHash">The case-sensitive Jenkins hash of the parameter's semantic.</param>
+/// <param name="D3DXParameterClass">
+/// The <a href="https://docs.microsoft.com/windows/win32/direct3d9/d3dxparameter-class">D3DXPARAMETER_CLASS</a>
+/// of the parameter.
+/// </param>
+/// <param name="D3DXParameterType">
+/// The <a href="https://docs.microsoft.com/windows/win32/direct3d9/d3dxparameter-type">D3DXPARAMETER_TYPE</a>
+/// of the parameter.
+/// </param>
+/// <param name="Data">
+/// Gets the parameter data.
+/// <remarks>
+/// For texture parameters, this is a <c>uint</c> containing an upper-case Jenkins hash
+/// of a texture name stored in the parent <see cref="Dmat.TextureFileNames"/> list,
+/// or <c>0</c> to indicate no texture.
+/// </remarks>
+/// </param>
+public record MaterialParameter
+(
+    uint SemanticHash,
+    uint D3DXParameterClass,
+    uint D3DXParameterType,
+    ReadOnlyMemory<byte> Data
+) : IBufferWritable
 {
-    /// <summary>
-    /// Gets the case-sensitive Jenkins hash of the parameter's semantic.
-    /// </summary>
-    public uint SemanticHash { get; }
-
-    /// <summary>
-    /// Gets the <a href="https://docs.microsoft.com/windows/win32/direct3d9/d3dxparameter-class">D3DXPARAMETER_CLASS</a>
-    /// of the parameter.
-    /// </summary>
-    public uint D3DXParameterClass { get; }
-
-    /// <summary>
-    /// Gets the <a href="https://docs.microsoft.com/windows/win32/direct3d9/d3dxparameter-type">D3DXPARAMETER_TYPE</a>
-    /// of the parameter.
-    /// </summary>
-    public uint D3DXParameterType { get; }
-
-    /// <summary>
-    /// Gets the parameter data.
-    /// </summary>
-    /// <remarks>
-    /// For texture parameters, this is a <c>uint</c> containing an upper-case Jenkins hash
-    /// of a texture name stored in the parent <see cref="Dmat.TextureFileNames"/> list,
-    /// or <c>0</c> to indicate no texture.
-    /// </remarks>
-    public ReadOnlyMemory<byte> Data { get; }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MaterialParameter"/> class.
-    /// </summary>
-    /// <param name="semanticHash">The case-sensitive Jenkins hash of the parameter's semantic.</param>
-    /// <param name="d3DxParameterClass">The D3DX parameter class.</param>
-    /// <param name="d3DxParameterType">The D3DX parameter type.</param>
-    /// <param name="data">The parameter data.</param>
-    public MaterialParameter
-    (
-        uint semanticHash,
-        uint d3DxParameterClass,
-        uint d3DxParameterType,
-        ReadOnlyMemory<byte> data
-    )
-    {
-        SemanticHash = semanticHash;
-        D3DXParameterClass = d3DxParameterClass;
-        D3DXParameterType = d3DxParameterType;
-        Data = data;
-    }
-
     /// <summary>
     /// Reads a <see cref="MaterialParameter"/> instance from a buffer.
     /// </summary>
@@ -77,19 +41,21 @@ public class MaterialParameter : IBufferWritable
     /// <returns>A <see cref="MaterialParameter"/> instance.</returns>
     public static MaterialParameter Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
-        uint semanticHash = BinaryPrimitives.ReadUInt32LittleEndian(buffer);
-        uint d3Class = BinaryPrimitives.ReadUInt32LittleEndian(buffer[4..]);
-        uint d3Type = BinaryPrimitives.ReadUInt32LittleEndian(buffer[8..]);
-        uint dataLength = BinaryPrimitives.ReadUInt32LittleEndian(buffer[12..]);
-        ReadOnlyMemory<byte> data = buffer.Slice(16, (int)dataLength).ToArray();
+        BinaryReader reader = new(buffer);
 
-        amountRead = 16 + (int)dataLength;
+        uint semanticHash = reader.ReadUInt32LE();
+        uint d3Class = reader.ReadUInt32LE();
+        uint d3Type = reader.ReadUInt32LE();
+        uint dataLength = reader.ReadUInt32LE();
+        ReadOnlySpan<byte> data = reader.ReadBytes((int)dataLength);
+
+        amountRead = reader.Consumed;
         return new MaterialParameter
         (
             semanticHash,
             d3Class,
             d3Type,
-            data
+            data.ToArray()
         );
     }
 
@@ -108,12 +74,13 @@ public class MaterialParameter : IBufferWritable
         if (buffer.Length < requiredBufferSize)
             throw new InvalidBufferSizeException(requiredBufferSize, buffer.Length);
 
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer, SemanticHash);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer[4..], D3DXParameterClass);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer[8..], D3DXParameterType);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer[12..], (uint)Data.Length);
-        Data.Span.CopyTo(buffer[16..]);
+        BinaryWriter writer = new(buffer);
+        writer.WriteUInt32LE(SemanticHash);
+        writer.WriteUInt32LE(D3DXParameterClass);
+        writer.WriteUInt32LE(D3DXParameterType);
+        writer.WriteUInt32LE((uint)Data.Length);
+        writer.WriteBytes(Data.Span);
 
-        return requiredBufferSize;
+        return writer.Written;
     }
 }
