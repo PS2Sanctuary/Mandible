@@ -133,3 +133,9 @@ csharp_style_namespace_declarations=file_scoped:warning
 [*.{cs,vb}]
 end_of_line=crlf
 dotnet_style_require_accessibility_modifiers=for_non_interface_members:error
+
+[/Mandible/7zip/**]
+dotnet_diagnostic.cs1570.severity = none
+dotnet_diagnostic.cs8618.severity = none
+dotnet_diagnostic.cs8625.severity = none
+dotnet_diagnostic.cs1591.severity = none
