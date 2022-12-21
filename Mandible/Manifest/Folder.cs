@@ -59,7 +59,7 @@ public record Folder
             if (reader.Name == "folder")
                 children.Add(await DeserializeFromXmlAsync(reader, ct).ConfigureAwait(false));
             else if (reader.Name == "file")
-                files.Add(ManifestFile.DeserializeFromXml(reader));
+                files.Add(await ManifestFile.DeserializeFromXmlAsync(reader, ct).ConfigureAwait(false));
         }
 
         return new Folder(nameAttribute, downloadPriority, children, files);

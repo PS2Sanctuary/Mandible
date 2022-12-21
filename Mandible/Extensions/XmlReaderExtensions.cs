@@ -92,6 +92,23 @@ public static class XmlReaderExtensions
     }
 
     /// <summary>
+    /// Gets the value of a required attribute containing an UInt32 value.
+    /// </summary>
+    /// <param name="reader">The <see cref="XmlReader"/>.</param>
+    /// <param name="attributeName">The name of the attribute to retrieve.</param>
+    /// <returns>The value of the <paramref name="attributeName"/>.</returns>
+    /// <exception cref="FormatException">
+    /// Thrown if the <paramref name="attributeName"/> does not exist.
+    /// </exception>
+    public static uint GetRequiredUInt32(this XmlReader reader, string attributeName)
+    {
+        string? attribute = reader.GetAttribute(attributeName);
+        return attribute is not null
+            ? uint.Parse(attribute)
+            : throw new FormatException($"Element did not contain a {attributeName} attribute");
+    }
+
+    /// <summary>
     /// Gets the value of a required attribute containing a unix seconds timestamp.
     /// </summary>
     /// <param name="reader">The <see cref="XmlReader"/>.</param>
