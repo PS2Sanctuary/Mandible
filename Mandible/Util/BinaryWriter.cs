@@ -6,6 +6,9 @@ using System.Text;
 
 namespace Mandible.Util;
 
+/// <summary>
+/// A utility for writing binary data to a <see cref="Span{T}"/>.
+/// </summary>
 public ref struct BinaryWriter
 {
     /// <summary>
@@ -62,42 +65,72 @@ public ref struct BinaryWriter
             Written += count;
     }
 
+    /// <summary>
+    /// Writes the given bytes to the underlying span.
+    /// </summary>
+    /// <param name="data">The bytes to write.</param>
     public void WriteBytes(ReadOnlySpan<byte> data)
     {
         data.CopyTo(Span[Written..]);
         Written += data.Length;
     }
 
+    /// <summary>
+    /// Writes an unsigned 16-bit value in little endian.
+    /// </summary>
+    /// <param name="value">The value to write.</param>
     public void WriteUInt16LE(ushort value)
     {
         BinaryPrimitives.WriteUInt16LittleEndian(Span[Written..], value);
         Written += sizeof(ushort);
     }
 
+    /// <summary>
+    /// Writes a signed 16-bit value in little endian.
+    /// </summary>
+    /// <param name="value">The value to write.</param>
     public void WriteInt16LE(short value)
     {
         BinaryPrimitives.WriteInt16LittleEndian(Span[Written..], value);
         Written += sizeof(short);
     }
 
+    /// <summary>
+    /// Writes an unsigned 32-bit value in little endian.
+    /// </summary>
+    /// <param name="value">The value to write.</param>
     public void WriteUInt32LE(uint value)
     {
         BinaryPrimitives.WriteUInt32LittleEndian(Span[Written..], value);
         Written += sizeof(uint);
     }
 
+    /// <summary>
+    /// Writes a signed 32-bit value in little endian.
+    /// </summary>
+    /// <param name="value">The value to write.</param>
     public void WriteInt32LE(int value)
     {
         BinaryPrimitives.WriteInt32LittleEndian(Span[Written..], value);
         Written += sizeof(int);
     }
 
+    /// <summary>
+    /// Writes a null-terminated string.
+    /// </summary>
+    /// <param name="value">The value to write.</param>
+    /// <param name="encoding">The encoding to use. Defaults to <see cref="Encoding.ASCII"/>.</param>
     public void WriteStringNullTerminated(string value, Encoding? encoding = null)
     {
         WriteString(value, encoding);
         Span[Written++] = 0;
     }
 
+    /// <summary>
+    /// Writes a string.
+    /// </summary>
+    /// <param name="value">The value to write.</param>
+    /// <param name="encoding">The encoding to use. Defaults to <see cref="Encoding.ASCII"/>.</param>
     public void WriteString(string value, Encoding? encoding = null)
     {
         encoding ??= Encoding.ASCII;
@@ -110,15 +143,5 @@ public ref struct BinaryWriter
 
         Written += byteCount;
         ArrayPool<byte>.Shared.Return(buffer);
-    }
-
-    public string ReadStringLengthPrefixedUInt32(int length, Encoding? encoding = null)
-    {
-        encoding ??= Encoding.ASCII;
-
-        string value = encoding.GetString(Span.Slice(Written, length));
-        Written += length;
-
-        return value;
     }
 }

@@ -28,5 +28,10 @@ public interface IPack2Writer
         CancellationToken ct = default
     );
 
+    /// <summary>
+    /// Closes the writer.
+    /// </summary>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the potentially asynchronous operation.</returns>
     ValueTask CloseAsync(CancellationToken ct = default);
 }

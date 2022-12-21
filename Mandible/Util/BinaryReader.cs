@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Mandible.Util;
 
+/// <summary>
+/// A utility for reading binary data from a <see cref="ReadOnlySpan{T}"/>.
+/// </summary>
 public ref struct BinaryReader
 {
     /// <summary>
@@ -83,6 +86,11 @@ public ref struct BinaryReader
             Consumed += count;
     }
 
+    /// <summary>
+    /// Reads a span of bytes from the current position of the reader..
+    /// </summary>
+    /// <param name="length">The number of bytes to read.</param>
+    /// <returns>A <see cref="ReadOnlySpan{T}"/> over the length of bytes to be read.</returns>
     public ReadOnlySpan<byte> ReadBytes(int length)
     {
         ReadOnlySpan<byte> value = Span.Slice(Consumed, length);
@@ -90,6 +98,10 @@ public ref struct BinaryReader
         return value;
     }
 
+    /// <summary>
+    /// Reads an unsigned 16-bit integer in little endian.
+    /// </summary>
+    /// <returns>The value.</returns>
     public ushort ReadUInt16LE()
     {
         ushort value = BinaryPrimitives.ReadUInt16LittleEndian(Span[Consumed..]);
@@ -97,6 +109,10 @@ public ref struct BinaryReader
         return value;
     }
 
+    /// <summary>
+    /// Reads a signed 16-bit integer in little endian.
+    /// </summary>
+    /// <returns>The value.</returns>
     public short ReadInt16LE()
     {
         short value = BinaryPrimitives.ReadInt16LittleEndian(Span[Consumed..]);
@@ -104,6 +120,10 @@ public ref struct BinaryReader
         return value;
     }
 
+    /// <summary>
+    /// Reads an unsigned 32-bit integer in little endian.
+    /// </summary>
+    /// <returns>The value.</returns>
     public uint ReadUInt32LE()
     {
         uint value = BinaryPrimitives.ReadUInt32LittleEndian(Span[Consumed..]);
@@ -111,6 +131,10 @@ public ref struct BinaryReader
         return value;
     }
 
+    /// <summary>
+    /// Reads a signed 32-bit integer in little endian.
+    /// </summary>
+    /// <returns>The value.</returns>
     public int ReadInt32LE()
     {
         int value = BinaryPrimitives.ReadInt32LittleEndian(Span[Consumed..]);
@@ -118,6 +142,14 @@ public ref struct BinaryReader
         return value;
     }
 
+    /// <summary>
+    /// Reads a null-terminated string.
+    /// </summary>
+    /// <param name="encoding">The encoding of the string. Defaults to <see cref="Encoding.ASCII"/></param>
+    /// <returns>The value.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if a null terminator does not exist in the underlying span.
+    /// </exception>
     public string ReadStringNullTerminated(Encoding? encoding = null)
     {
         encoding ??= Encoding.ASCII;
@@ -132,6 +164,12 @@ public ref struct BinaryReader
         return value;
     }
 
+    /// <summary>
+    /// Reads a string.
+    /// </summary>
+    /// <param name="length">The number of bytes consumed by the string.</param>
+    /// <param name="encoding">The encoding of the string. Defaults to <see cref="Encoding.ASCII"/></param>
+    /// <returns>The value.</returns>
     public string ReadString(int length, Encoding? encoding = null)
     {
         encoding ??= Encoding.ASCII;
