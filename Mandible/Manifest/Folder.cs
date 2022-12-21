@@ -46,20 +46,23 @@ public record Folder
         List<Folder> children = new();
         List<ManifestFile> files = new();
 
-        while (await reader.ReadAsync().ConfigureAwait(false))
+        if (!reader.IsEmptyElement)
         {
-            ct.ThrowIfCancellationRequested();
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                ct.ThrowIfCancellationRequested();
 
-            if (reader.NodeType is XmlNodeType.EndElement)
-                break;
+                if (reader.NodeType is XmlNodeType.EndElement && reader.Name is "folder")
+                    break;
 
-            if (reader.NodeType is not XmlNodeType.Element)
-                continue;
+                if (reader.NodeType is not XmlNodeType.Element)
+                    continue;
 
-            if (reader.Name == "folder")
-                children.Add(await DeserializeFromXmlAsync(reader, ct).ConfigureAwait(false));
-            else if (reader.Name == "file")
-                files.Add(await ManifestFile.DeserializeFromXmlAsync(reader, ct).ConfigureAwait(false));
+                if (reader.Name == "folder")
+                    children.Add(await DeserializeFromXmlAsync(reader, ct).ConfigureAwait(false));
+                else if (reader.Name == "file")
+                    files.Add(await ManifestFile.DeserializeFromXmlAsync(reader, ct).ConfigureAwait(false));
+            }
         }
 
         return new Folder(nameAttribute, downloadPriority, children, files);

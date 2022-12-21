@@ -67,18 +67,21 @@ public record ManifestFile
 
         List<ManifestFilePatch> patches = new();
 
-        while (await reader.ReadAsync().ConfigureAwait(false))
+        if (!reader.IsEmptyElement)
         {
-            ct.ThrowIfCancellationRequested();
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                ct.ThrowIfCancellationRequested();
 
-            if (reader.NodeType is XmlNodeType.EndElement)
-                break;
+                if (reader.NodeType is XmlNodeType.EndElement && reader.Name == "file")
+                    break;
 
-            if (reader.NodeType is not XmlNodeType.Element)
-                continue;
+                if (reader.NodeType is not XmlNodeType.Element)
+                    continue;
 
-            if (reader.Name == "patch")
-                patches.Add(ManifestFilePatch.DeserializeFromXml(reader));
+                if (reader.Name == "patch")
+                    patches.Add(ManifestFilePatch.DeserializeFromXml(reader));
+            }
         }
 
         return new ManifestFile
