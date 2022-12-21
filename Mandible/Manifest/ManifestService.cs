@@ -66,9 +66,15 @@ public class ManifestService : IManifestService
                 MemoryStream ms = new();
 
                 if (file is { CompressedSize: { }, UncompressedSize: { } } && file.CompressedSize < file.UncompressedSize)
+                {
+                    if (digest.CompressionType != "lzma")
+                        throw new Exception("Can only decompress files from digests using LZMA");
                     LMZADecompress(file.CompressedSize.Value, manifestData, ms);
+                }
                 else
+                {
                     await manifestData.CopyToAsync(ms, ct).ConfigureAwait(false);
+                }
 
                 ms.Seek(0, SeekOrigin.Begin);
                 return ms;
