@@ -13,8 +13,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommandDotNet" Version="7.0.1" />
-    <PackageReference Include="CommandDotNet.Spectre" Version="3.0.1" />
+    <PackageReference Include="CommandDotNet" Version="7.0.2" />
+    <PackageReference Include="CommandDotNet.Spectre" Version="3.0.2" />
   </ItemGroup>
 
   <ItemGroup>
