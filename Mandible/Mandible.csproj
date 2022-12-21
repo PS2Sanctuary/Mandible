@@ -19,9 +19,10 @@
     <PackageId>carlst99.Mandible</PackageId>
     <Authors>Carl Stephens</Authors>
     <PackageLicenseExpression>ISC</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/carlst99/Mandible</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/PS2Sanctuary/Mandible</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/carlst99/Mandible</RepositoryUrl>
+    <RepositoryUrl>https://github.com/PS2Sanctuary/Mandible</RepositoryUrl>
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\nuget</PackageOutputPath>
   </PropertyGroup>
 
@@ -51,6 +52,7 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)../README.md">
       <Pack>True</Pack>
+      <PackagePath></PackagePath>
     </None>
   </ItemGroup>
 
