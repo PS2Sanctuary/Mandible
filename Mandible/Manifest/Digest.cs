@@ -34,7 +34,7 @@ public record Digest
     string? IconPath,
     int PackageSizeKB,
     int FileCount,
-    string LaunchPath,
+    string? LaunchPath,
     string DefaultLocalFolder,
     Uri ShaAssetUrl,
     DateTimeOffset Timestamp,
@@ -60,7 +60,7 @@ public record Digest
         string? iconPath = null;
         int packageSizeKB = 0;
         int fileCount = 0;
-        string launchPath = string.Empty;
+        string? launchPath = null;
         string defaultLocalFolder = string.Empty;
         Uri shaAssetUrl = null!;
         DateTimeOffset timestamp = DateTimeOffset.MinValue;
@@ -89,7 +89,7 @@ public record Digest
                 iconPath = reader.GetAttribute("iconPath");
                 packageSizeKB = reader.GetRequiredInt32("packageSizeKB");
                 fileCount = reader.GetRequiredInt32("fileCount");
-                launchPath = reader.GetRequiredAttribute("launchPath");
+                launchPath = reader.GetAttribute("launchPath");
                 defaultLocalFolder = reader.GetRequiredAttribute("defaultLocalFolder");
                 shaAssetUrl = new Uri(reader.GetRequiredAttribute("shaAssetURL"));
                 timestamp = reader.GetRequiredTimestamp("timestamp");
