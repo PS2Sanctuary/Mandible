@@ -11,7 +11,7 @@ public class ManifestFilePatchTests
     [Fact]
     public void TestDeserialize()
     {
-        XmlReader reader = GetXmlReader
+        using XmlReader reader = GetXmlReader
         (
             // lang=xml
             """
@@ -29,7 +29,7 @@ public class ManifestFilePatchTests
 
     private static XmlReader GetXmlReader(string xml)
     {
-        XmlReader reader = XmlReader.Create(new StringReader(xml), new XmlReaderSettings() { Async = true });
+        XmlReader reader = XmlReader.Create(new StringReader(xml), new XmlReaderSettings { Async = true });
         reader.Read();
         return reader;
     }

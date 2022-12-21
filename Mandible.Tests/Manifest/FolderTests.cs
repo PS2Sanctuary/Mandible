@@ -11,7 +11,7 @@ public class FolderTests
     [Fact]
     public async Task TestDeserialize_DownloadPriority()
     {
-        XmlReader reader = GetXmlReader
+        using XmlReader reader = GetXmlReader
         (
             // lang=xml
             """
@@ -33,7 +33,7 @@ public class FolderTests
     [Fact]
     public async Task TestDeserialize_Nested()
     {
-        XmlReader reader = GetXmlReader
+        using XmlReader reader = GetXmlReader
         (
             // lang=xml
             """

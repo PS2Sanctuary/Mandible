@@ -12,7 +12,7 @@ public class ManifestFileTests
     [Fact]
     public async Task TestDeserialize_FileToDeleteAsync()
     {
-        XmlReader reader = GetXmlReader
+        using XmlReader reader = GetXmlReader
         (
             // lang=xml
             """
@@ -32,7 +32,7 @@ public class ManifestFileTests
     [Fact]
     public async Task TestDeserialize_AllValuesAsync()
     {
-        XmlReader reader = GetXmlReader
+        using XmlReader reader = GetXmlReader
         (
             // lang=xml
             """
@@ -55,7 +55,7 @@ public class ManifestFileTests
     [Fact]
     public async Task TestDeserialize_WithPatchesAsync()
     {
-        XmlReader reader = GetXmlReader
+        using XmlReader reader = GetXmlReader
         (
             // lang=xml
             """
@@ -74,7 +74,7 @@ public class ManifestFileTests
 
     private static XmlReader GetXmlReader(string xml)
     {
-        XmlReader reader = XmlReader.Create(new StringReader(xml), new XmlReaderSettings() { Async = true });
+        XmlReader reader = XmlReader.Create(new StringReader(xml), new XmlReaderSettings { Async = true });
         reader.Read();
         return reader;
     }
