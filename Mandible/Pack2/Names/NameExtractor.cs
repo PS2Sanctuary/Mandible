@@ -57,7 +57,8 @@ public static class NameExtractor
     (
         string packDirectoryPath,
         bool deepExtract = false,
-        CancellationToken ct = default)
+        CancellationToken ct = default
+    )
     {
         if (!Directory.Exists(packDirectoryPath))
             throw new DirectoryNotFoundException("The pack directory path does not exist: " + packDirectoryPath);
@@ -97,8 +98,10 @@ public static class NameExtractor
 
         foreach (Asset2Header asset in assetHeaders)
         {
+            ct.ThrowIfCancellationRequested();
             using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(asset, ct).ConfigureAwait(false);
 
+            //IReadOnlyList<string> names = AssetNameScraper.ScrapeFromAssetData(buffer.Span);
             if (IsBinaryFile(buffer.Span))
                 continue;
 

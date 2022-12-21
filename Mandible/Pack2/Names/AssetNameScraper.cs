@@ -117,6 +117,7 @@ public static class AssetNameScraper
     {
         SpanReader<byte> reader = new(assetData);
 
+        // FXD files have an offset header, gotta check for them individually
         bool isFxd = assetData.Length > 11
             && assetData[8..].IndexOf(Encoding.UTF8.GetBytes("FXD")) == 0;
         if (isFxd)
