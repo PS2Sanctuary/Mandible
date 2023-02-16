@@ -11,13 +11,14 @@ public static class Crc32
     /// Calculates a CRC-32 hash of the given data.
     /// </summary>
     /// <param name="data">The data to hash.</param>
+    /// <param name="seed">The seed to use.</param>
     /// <returns>The CRC-32 hash.</returns>
-    public static uint Hash(ReadOnlySpan<byte> data)
+    public static uint Hash(ReadOnlySpan<byte> data, uint seed = 0)
     {
-        uint crc = uint.MaxValue;
+        uint crc = ~seed;
 
         foreach (byte element in data)
-            crc = Crc32Table[(element ^ crc) & 0xff] ^ (crc >> 8);
+            crc = (crc >> 8) ^ Crc32Table[(byte)(crc ^ element)];
 
         return ~crc;
     }
