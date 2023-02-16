@@ -11,9 +11,8 @@
     <Version>1.4.0</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
     <PackageReleaseNotes>
-      Added support for writing pack2 files.
-      Added support for parsing and interacting with digests/files from the Daybreak Manifest CDN.
-      Added support for reading and writing DMA files.
+      Added support for generating pack2 data hashes of the actual written asset data.
+      IPack2Writer#ValidateAsync no longer returns a value, instead opting to let implementations throw.
     </PackageReleaseNotes>
 
     <PackageId>carlst99.Mandible</PackageId>

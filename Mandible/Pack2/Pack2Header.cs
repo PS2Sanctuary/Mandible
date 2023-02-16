@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Mandible.Exceptions;
+using System;
 using System.Buffers.Binary;
-using System.Collections.Generic;
 
 namespace Mandible.Pack2;
 
@@ -26,12 +26,12 @@ public record Pack2Header
     /// <summary>
     /// Gets the magic identifier of a pack2 file.
     /// </summary>
-    public static readonly IReadOnlyList<byte> MAGIC_BYTES = new[] { (byte)'P', (byte)'A', (byte)'K' };
+    public static readonly ReadOnlyMemory<byte> MAGIC_BYTES = new[] { (byte)'P', (byte)'A', (byte)'K' };
 
     /// <summary>
     /// Gets the size of a <see cref="Pack2Header"/> as stored within a pack.
     /// </summary>
-    public static readonly int Size = MAGIC_BYTES.Count
+    public static readonly int Size = MAGIC_BYTES.Length
         + sizeof(byte) // Version
         + sizeof(uint) // AssetCount
         + sizeof(ulong) // Length
@@ -50,9 +50,7 @@ public record Pack2Header
             throw new ArgumentException($"Buffer must be at least {Size} bytes", nameof(buffer));
 
         // Write the magic bytes
-        buffer[0] = MAGIC_BYTES[0];
-        buffer[1] = MAGIC_BYTES[1];
-        buffer[2] = MAGIC_BYTES[2];
+        MAGIC_BYTES.Span.CopyTo(buffer);
         buffer[3] = Version;
 
         BinaryPrimitives.WriteUInt32LittleEndian(buffer[4..8], AssetCount);
@@ -67,14 +65,17 @@ public record Pack2Header
     /// </summary>
     /// <param name="buffer">The buffer.</param>
     /// <returns>An <see cref="Pack2Header"/>.</returns>
+    /// <exception cref="UnrecognisedMagicException">
+    /// Thrown if the <paramref name="buffer"/> contains an invalid magic.
+    /// </exception>
     public static Pack2Header Deserialize(ReadOnlySpan<byte> buffer)
     {
         int offset = 0;
 
-        foreach (byte value in MAGIC_BYTES)
+        foreach (byte value in MAGIC_BYTES.Span)
         {
             if (buffer[offset++] != value)
-                throw new InvalidOperationException("The buffer data does not represent a pack header; MAGIC bytes missing");
+                throw new UnrecognisedMagicException(MAGIC_BYTES.ToArray(), buffer[..MAGIC_BYTES.Length].ToArray());
         }
 
         byte version = buffer[offset++];

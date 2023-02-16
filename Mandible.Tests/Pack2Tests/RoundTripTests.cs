@@ -36,7 +36,8 @@ public class RoundTripTests
         using RandomAccessDataReaderService dr2 = new(OUTPUT_PATH);
         using Pack2Reader reader2 = new(dr2);
 
-        Assert.True(await reader2.ValidateAsync());
+        // This should not throw
+        await reader2.ValidateAsync();
 
         Pack2Header expectedHeader = await reader.ReadHeaderAsync();
         Pack2Header actualHeader = await reader2.ReadHeaderAsync();

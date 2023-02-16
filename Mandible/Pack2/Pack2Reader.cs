@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.HighPerformance.Buffers;
 using Mandible.Abstractions.Pack2;
 using Mandible.Abstractions.Services;
+using Mandible.Exceptions;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -14,11 +15,6 @@ namespace Mandible.Pack2;
 /// <inheritdoc cref="IPack2Reader" />
 public class Pack2Reader : IPack2Reader, IDisposable
 {
-    /// <summary>
-    /// Gets the magic bytes of a pack file.
-    /// </summary>
-    protected static readonly byte[] MagicBytes = { 0x50, 0x41, 0x4B };
-
     /// <summary>
     /// Gets the indicator placed in front of an asset data block to indicate that it has been compressed.
     /// </summary>
@@ -58,7 +54,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <inheritdoc />
     public virtual async ValueTask<Pack2Header> ReadHeaderAsync(CancellationToken ct = default)
     {
-        await DoValidationChecks(ct).ConfigureAwait(false);
+        await ValidateAsync(ct).ConfigureAwait(false);
         using MemoryOwner<byte> data = MemoryOwner<byte>.Allocate(Pack2Header.Size);
 
         await _dataReader.ReadAsync(data.Memory, 0, ct).ConfigureAwait(false);
@@ -69,7 +65,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <inheritdoc />
     public virtual async ValueTask<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(CancellationToken ct = default)
     {
-        await DoValidationChecks(ct).ConfigureAwait(false);
+        await ValidateAsync(ct).ConfigureAwait(false);
 
         Pack2Header header = await ReadHeaderAsync(ct).ConfigureAwait(false);
         List<Asset2Header> assetHeaders = new();
@@ -94,7 +90,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <inheritdoc />
     public virtual async ValueTask<int> GetAssetLengthAsync(Asset2Header header, CancellationToken ct = default)
     {
-        await DoValidationChecks(ct).ConfigureAwait(false);
+        await ValidateAsync(ct).ConfigureAwait(false);
 
         if (header.ZipStatus is Asset2ZipDefinition.Unzipped or Asset2ZipDefinition.UnzippedAlternate)
             return (int)header.DataSize;
@@ -113,7 +109,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
         CancellationToken ct = default
     )
     {
-        await DoValidationChecks(ct).ConfigureAwait(false);
+        await ValidateAsync(ct).ConfigureAwait(false);
         MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate((int)header.DataSize);
 
         await _dataReader.ReadAsync
@@ -127,12 +123,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
         {
             uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(buffer.Span[4..8]);
             MemoryOwner<byte> unzippedBuffer = MemoryOwner<byte>.Allocate((int)decompressedLength);
-
-            await Task.Run
-            (
-                () => (int)UnzipAssetData(buffer.Span, unzippedBuffer.Span),
-                ct
-            ).ConfigureAwait(false);
+            UnzipAssetData(buffer.Span, unzippedBuffer.Span);
 
             buffer.Dispose();
             return unzippedBuffer;
@@ -142,47 +133,42 @@ public class Pack2Reader : IPack2Reader, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual async Task<bool> ValidateAsync(CancellationToken ct = default)
+    /// <exception cref="ObjectDisposedException">Thrown if this reader has been disposed.</exception>
+    /// <exception cref="InvalidBufferSizeException">
+    /// Thrown if the underlying data source is too short to contain pack2 data.
+    /// </exception>
+    /// <exception cref="UnrecognisedMagicException">
+    /// Thrown if the underlying data source does not appear to represent pack2 data.
+    /// </exception>
+    /// <exception cref="UnsupportedVersionException">
+    /// Thrown if the underlying pack2 data is of an unsupported version.
+    /// </exception>
+    public virtual async Task ValidateAsync(CancellationToken ct = default)
     {
         if (IsValid)
-            return true;
+            return;
 
-        using MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate(MagicBytes.Length + 1);
-        int amountRead = await _dataReader.ReadAsync(buffer.Memory, 0, ct).ConfigureAwait(false);
-        if (amountRead != MagicBytes.Length + 1)
-            return false;
-
-        for (int i = 0; i < MagicBytes.Length; i++)
-        {
-            if (buffer.Span[i] != MagicBytes[i])
-                return false;
-        }
-
-        // Check version
-        if (buffer.Span[MagicBytes.Length] != 1)
-            return false;
-
-        IsValid = true;
-        return true;
-    }
-
-    /// <summary>
-    /// Checks to ensure that this <see cref="Pack2Reader"/> instance has not been disposed,
-    /// and that the underlying data source represents a pack2.
-    /// </summary>
-    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    /// <exception cref="ObjectDisposedException">Thrown if this <see cref="Pack2Reader"/> instance has been disposed.</exception>
-    /// <exception cref="InvalidDataException">Thrown if the underlying data source does not represent a pack2.</exception>
-    protected async Task DoValidationChecks(CancellationToken ct)
-    {
         if (IsDisposed)
             throw new ObjectDisposedException(nameof(Pack2Reader));
 
-        bool isValid = await ValidateAsync(ct).ConfigureAwait(false);
+        // Ensure that there is space for the header
+        using MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate(Pack2Header.Size);
+        int amountRead = await _dataReader.ReadAsync(buffer.Memory, 0, ct).ConfigureAwait(false);
+        if (amountRead != Pack2Header.Size)
+            throw new InvalidBufferSizeException(Pack2Header.Size, amountRead);
 
-        if (!isValid)
-            throw new InvalidDataException("The underlying data source does not appear to represent a pack2 file.");
+        // This checks the magic for us
+        Pack2Header header = Pack2Header.Deserialize(buffer.Span);
+
+        if (header.Version is not 1)
+            throw new UnsupportedVersionException(1, header.Version);
+
+        // Ensure that the pack is long enough to contain the asset map denoted by the header
+        long upperBoundLength = (long)header.AssetMapOffset + Asset2Header.Size * header.AssetCount;
+        if (_dataReader.GetLength() < upperBoundLength)
+            throw new InvalidBufferSizeException((int)upperBoundLength, buffer.Length);
+
+        IsValid = true;
     }
 
     /// <summary>
@@ -193,11 +179,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <returns>The length of the decompressed data.</returns>
     /// <exception cref="InvalidDataException">Thrown if the compressed data was not in the expected format.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if the output buffer was not long enough.</exception>
-    protected virtual uint UnzipAssetData
-    (
-        ReadOnlySpan<byte> data,
-        Span<byte> outputBuffer
-    )
+    protected virtual uint UnzipAssetData(ReadOnlySpan<byte> data, Span<byte> outputBuffer)
     {
         // Read the compression information
         uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(data[..4]);
