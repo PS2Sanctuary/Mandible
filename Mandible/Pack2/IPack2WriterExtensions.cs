@@ -18,7 +18,7 @@ public static class IPack2WriterExtensions
     /// <param name="assetName">The name of the asset.</param>
     /// <param name="assetData">The asset data.</param>
     /// <param name="zip">Indicates whether the asset data should be compressed.</param>
-    /// <param name="crc">The CRC-32 hash of the <paramref name="assetData"/>.</param>
+    /// <param name="dataHashOverride">Overrides the data hash of the written asset.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>A <see cref="ValueTask"/> representing the potentially asynchronous operation.</returns>
     public static ValueTask WriteAssetAsync
@@ -27,12 +27,12 @@ public static class IPack2WriterExtensions
         string assetName,
         ReadOnlyMemory<byte> assetData,
         Asset2ZipDefinition zip,
-        uint crc = 0,
+        uint? dataHashOverride = null,
         CancellationToken ct = default
     )
     {
         ulong nameHash = PackCrc64.Calculate(assetName);
-        return writer.WriteAssetAsync(nameHash, assetData, zip, crc, ct);
+        return writer.WriteAssetAsync(nameHash, assetData, zip, dataHashOverride, ct);
     }
 
     /// <summary>

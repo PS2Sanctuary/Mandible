@@ -16,7 +16,7 @@ public interface IPack2Writer
     /// <param name="assetNameHash">The CRC-64 hash of the asset's name.</param>
     /// <param name="assetData">The asset data.</param>
     /// <param name="zip">Indicates whether the asset data should be compressed.</param>
-    /// <param name="crcDataHash">The CRC-32 hash of the <paramref name="assetData"/>.</param>
+    /// <param name="dataHashOverride">Overrides the data hash of the written asset.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>A <see cref="ValueTask"/> representing the potentially asynchronous operation.</returns>
     ValueTask WriteAssetAsync
@@ -24,7 +24,7 @@ public interface IPack2Writer
         ulong assetNameHash,
         ReadOnlyMemory<byte> assetData,
         Asset2ZipDefinition zip,
-        uint crcDataHash = 0,
+        uint? dataHashOverride = null,
         CancellationToken ct = default
     );
 
