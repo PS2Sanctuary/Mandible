@@ -119,17 +119,16 @@ public class Pack2Reader : IPack2Reader, IDisposable
             ct
         ).ConfigureAwait(false);
 
-        if (header.ZipStatus is Asset2ZipDefinition.Zipped or Asset2ZipDefinition.ZippedAlternate)
-        {
-            uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(buffer.Span[4..8]);
-            MemoryOwner<byte> unzippedBuffer = MemoryOwner<byte>.Allocate((int)decompressedLength);
-            UnzipAssetData(buffer.Span, unzippedBuffer.Span);
+        if (header.ZipStatus is Asset2ZipDefinition.Unzipped or Asset2ZipDefinition.UnzippedAlternate)
+            return buffer;
 
-            buffer.Dispose();
-            return unzippedBuffer;
-        }
+        uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(buffer.Span[4..8]);
+        MemoryOwner<byte> unzippedBuffer = MemoryOwner<byte>.Allocate((int)decompressedLength);
+        UnzipAssetData(buffer.Span, unzippedBuffer.Span);
 
-        return buffer;
+        buffer.Dispose();
+        return unzippedBuffer;
+
     }
 
     /// <inheritdoc />
