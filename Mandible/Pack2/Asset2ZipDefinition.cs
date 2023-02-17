@@ -6,14 +6,14 @@
 public enum Asset2ZipDefinition : uint
 {
     /// <summary>
-    /// Indicates that the asset data is not zipped.
+    /// Indicates that the asset data is not zipped. Alternate representation, no longer used.
     /// </summary>
     UnzippedAlternate = 0x00,
 
     /// <summary>
-    /// Indicates that the asset data is zipped.
+    /// Indicates that the asset data is zipped. Alternate representation, no longer used.
     /// </summary>
-    Zipped = 0x01,
+    ZippedAlternate = 0x01,
 
     /// <summary>
     /// Indicates that the asset data is not zipped.
@@ -23,5 +23,5 @@ public enum Asset2ZipDefinition : uint
     /// <summary>
     /// Indicates that the asset data is zipped.
     /// </summary>
-    ZippedAlternate = 0x11
+    Zipped = 0x11
 }
