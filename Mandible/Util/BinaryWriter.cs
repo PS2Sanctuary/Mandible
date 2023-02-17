@@ -76,6 +76,13 @@ public ref struct BinaryWriter
     }
 
     /// <summary>
+    /// Writes a byte value.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    public void WriteByte(byte value)
+        => Span[Written++] = value;
+
+    /// <summary>
     /// Writes an unsigned 16-bit value in little endian.
     /// </summary>
     /// <param name="value">The value to write.</param>
@@ -113,6 +120,26 @@ public ref struct BinaryWriter
     {
         BinaryPrimitives.WriteInt32LittleEndian(Span[Written..], value);
         Written += sizeof(int);
+    }
+
+    /// <summary>
+    /// Writes a 32-bit floating point value in little endian.
+    /// </summary>
+    /// <param name="value">The value to write.</param>
+    public void WriteSingleLE(float value)
+    {
+        BinaryPrimitives.WriteSingleLittleEndian(Span[Written..], value);
+        Written += sizeof(float);
+    }
+
+    /// <summary>
+    /// Writes a 32-bit floating point value in big endian.
+    /// </summary>
+    /// <param name="value">The value to write.</param>
+    public void WriteSingleBE(float value)
+    {
+        BinaryPrimitives.WriteSingleBigEndian(Span[Written..], value);
+        Written += sizeof(float);
     }
 
     /// <summary>

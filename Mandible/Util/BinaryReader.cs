@@ -87,7 +87,7 @@ public ref struct BinaryReader
     }
 
     /// <summary>
-    /// Reads a span of bytes from the current position of the reader..
+    /// Reads a span of bytes from the current position of the reader.
     /// </summary>
     /// <param name="length">The number of bytes to read.</param>
     /// <returns>A <see cref="ReadOnlySpan{T}"/> over the length of bytes to be read.</returns>
@@ -97,6 +97,13 @@ public ref struct BinaryReader
         Consumed += length;
         return value;
     }
+
+    /// <summary>
+    /// Reads a byte value.
+    /// </summary>
+    /// <returns>The value.</returns>
+    public byte ReadByte()
+        => Span[Consumed++];
 
     /// <summary>
     /// Reads an unsigned 16-bit integer in little endian.
@@ -139,6 +146,28 @@ public ref struct BinaryReader
     {
         int value = BinaryPrimitives.ReadInt32LittleEndian(Span[Consumed..]);
         Consumed += sizeof(int);
+        return value;
+    }
+
+    /// <summary>
+    /// Reads a 32-bit floating point value in little endian.
+    /// </summary>
+    /// <returns>The value.</returns>
+    public float ReadSingleLE()
+    {
+        float value = BinaryPrimitives.ReadSingleLittleEndian(Span[Consumed..]);
+        Consumed += sizeof(float);
+        return value;
+    }
+
+    /// <summary>
+    /// Reads a 32-bit floating point value in big endian.
+    /// </summary>
+    /// <returns>The value.</returns>
+    public float ReadSingleBE()
+    {
+        float value = BinaryPrimitives.ReadSingleBigEndian(Span[Consumed..]);
+        Consumed += sizeof(float);
         return value;
     }
 
