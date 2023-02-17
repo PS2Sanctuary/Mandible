@@ -23,6 +23,10 @@ public static class Crc32
         return ~crc;
     }
 
+    /// <summary>
+    /// CRC-32/ISO-HDLC
+    /// width=32 poly=0x04c11db7 init=0xffffffff refin=true refout=true xorout=0xffffffff check=0xcbf43926 residue=0xdebb20e3
+    /// </summary>
     private static readonly uint[] Crc32Table =
     {
         0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
