@@ -34,20 +34,4 @@ public static class IPack2WriterExtensions
         ulong nameHash = PackCrc64.Calculate(assetName);
         return writer.WriteAssetAsync(nameHash, assetData, zip, dataHashOverride, ct);
     }
-
-    /// <summary>
-    /// Writes an asset to the pack.
-    /// </summary>
-    /// <param name="writer">The <see cref="IPack2Writer"/> to use.</param>
-    /// <param name="asset">The asset header.</param>
-    /// <param name="assetData">The asset data.</param>
-    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    /// <returns>A <see cref="ValueTask"/> representing the potentially asynchronous operation.</returns>
-    public static ValueTask WriteAssetAsync
-    (
-        this IPack2Writer writer,
-        Asset2Header asset,
-        ReadOnlyMemory<byte> assetData,
-        CancellationToken ct = default
-    ) => writer.WriteAssetAsync(asset.NameHash, assetData, asset.ZipStatus, asset.DataHash, ct);
 }
