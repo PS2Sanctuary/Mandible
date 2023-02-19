@@ -4,7 +4,7 @@ using Mandible.Util;
 namespace Mandible.Zone;
 
 /// <summary>
-/// Represents a DataOffset definition of the <see cref="Zone"/> class.
+/// Represents a DataOffsets definition of the <see cref="Zone"/> class.
 /// </summary>
 public class DataOffsets
 {

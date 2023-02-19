@@ -33,7 +33,7 @@ struct ChunkInfo
     uint CountY;
 };
 
-struct FloatMinMax
+struct FloatRange
 {
     float Minimum;
     float Maximum;
@@ -42,12 +42,12 @@ struct FloatMinMax
 struct TextureInfo
 {
     char Name[];
-    char CnxName[];
-    char SbnyName[];
+    char ColorNxMapName[];
+    char SpecBlendNyMapName[];
     uint DetailRepeat;
     float BlendStrength;
-    FloatMinMax Specular;
-    FloatMinMax Smoothness;
+    FloatRange Specular;
+    FloatRange Smoothness;
     char PhysicsMatName[];
 };
 
@@ -68,27 +68,22 @@ struct EcoTint
 struct EcoLayer
 {
     float Density;
-    FloatMinMax Scale;
+    FloatRange Scale;
     float SlopePeak;
     float SlopeExtent;
-    FloatMinMax Elevation;
+    FloatRange Elevation;
     byte MinAlpha;
     char FloraName[];
     uint TintsLen;
     EcoTint Tints[TintsLen];
 };
 
-struct FloraInfo
-{
-    uint LayersLen;
-    EcoLayer Layers[LayersLen];
-};
-
 struct Eco
 {
     uint Index;
     TextureInfo Texture;
-    FloraInfo Flora;
+    uint LayersLen;
+    EcoLayer Layers[LayersLen];
 };
 
 struct Flora
@@ -103,7 +98,10 @@ struct Flora
 
 struct InvisibleWall
 {
-    // Unknown; no reference data
+    uint UnknownValue1;
+    float UnknownValue2;
+    float UnknownValue3;
+    float UnknownValue4;
 };
 
 struct Vector4
@@ -114,15 +112,15 @@ struct Vector4
     float W;
 };
 
-struct Instance
+struct ObjectInstance
 {
     Vector4 Translation;
     Vector4 Rotation;
     Vector4 Scale;
-    uint UnknownValue1;
+    uint Id;
+    byte UnknownValue1;
     byte UnknownValue2;
-    byte UnknownValue3; // This byte is not present in v1
-    float UnknownValue4;
+    float UnknownValue3;
 };
 
 struct RuntimeObject
@@ -130,10 +128,10 @@ struct RuntimeObject
     char ActorFile[];
     float RenderDistance;
     uint InstancesLen;
-    Instance Instances[InstancesLen];
+    ObjectInstance Instances[InstancesLen];
 };
 
-enum LightType : u32
+enum LightType : ushort
 {
     Point = 1,
     Spot = 2
@@ -147,23 +145,23 @@ struct ColorARGB
     byte B;
 };
 
-struct Vector2
-{
-    float X;
-    float Y;
-};
-
 struct Light
 {
     char Name[];
     char ColorName[];
     LightType Type;
-    bool UnknownValue1;
+    ushort UnknownValue1;
+    bool UnknownValue2;
     Vector4 Translation;
     Vector4 Rotation;
-    Vector2 UnknownValue2;
+    float Range;
+    float InnerRange;
     ColorARGB Color;
-    byte UnknownValue3[26];
+    uint UnknownValue3;
+    byte UnknownValue4;
+    Vector4 UnknownValue5;
+    char UnknownValue6[];
+    uint Id;
 };
 
 struct Zone
@@ -177,8 +175,8 @@ struct Zone
     uint EcosLen;
     Eco Ecos[EcosLen];
     
-    uint FlorasLen;
-    Flora Floras[FlorasLen];
+    uint FloraeLen;
+    Flora Florae[FloraeLen];
     
     uint InvisWallsLen;
     InvisibleWall InvisWalls[InvisWallsLen];
@@ -190,7 +188,7 @@ struct Zone
     Light Lights[LightsLen];
     
     uint UVal1Len;
-    u8 UnknownValue1[UVal1Len];
+    byte UnknownValue1[UVal1Len];
 };
 
 Zone main @ 0x00;

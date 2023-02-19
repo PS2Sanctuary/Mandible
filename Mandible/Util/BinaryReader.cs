@@ -106,6 +106,24 @@ public ref struct BinaryReader
         => Span[Consumed++];
 
     /// <summary>
+    /// Reads a boolean value.
+    /// </summary>
+    /// <param name="allNonZeroAreTrue">
+    /// Indicates that all non-zero binary values are valid <c>true</c> representations, rather than just <c>1</c>.
+    /// </param>
+    /// <returns>The value.</returns>
+    /// <exception cref="Exception">
+    /// Thrown if a value greater than one is encountered, when <paramref name="allNonZeroAreTrue"/> is <c>false</c>.
+    /// </exception>
+    public bool ReadBoolean(bool allNonZeroAreTrue = false)
+        => ReadByte() switch {
+            0 => false,
+            1 => true,
+            _ when allNonZeroAreTrue => true,
+            _ => throw new Exception()
+        };
+
+    /// <summary>
     /// Reads an unsigned 16-bit integer in little endian.
     /// </summary>
     /// <returns>The value.</returns>
@@ -186,6 +204,9 @@ public ref struct BinaryReader
         int terminatorIndex = Span[Consumed..].IndexOf((byte)0);
         if (terminatorIndex == -1)
             throw new InvalidOperationException("Null-terminator not found");
+
+        if (terminatorIndex - Consumed is 0)
+            return string.Empty;
 
         string value = encoding.GetString(Span.Slice(Consumed, terminatorIndex));
         Consumed += terminatorIndex + 1;

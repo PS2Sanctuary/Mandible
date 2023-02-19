@@ -83,6 +83,13 @@ public ref struct BinaryWriter
         => Span[Written++] = value;
 
     /// <summary>
+    /// Writes a boolean value.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    public void WriteBoolean(bool value)
+        => WriteByte(value is false ? (byte)0 : (byte)1);
+
+    /// <summary>
     /// Writes an unsigned 16-bit value in little endian.
     /// </summary>
     /// <param name="value">The value to write.</param>
@@ -160,6 +167,9 @@ public ref struct BinaryWriter
     /// <param name="encoding">The encoding to use. Defaults to <see cref="Encoding.ASCII"/>.</param>
     public void WriteString(string value, Encoding? encoding = null)
     {
+        if (value.Length is 0)
+            return;
+
         encoding ??= Encoding.ASCII;
 
         int byteCount = encoding.GetByteCount(value);
