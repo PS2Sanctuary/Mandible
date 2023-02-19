@@ -106,6 +106,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     public virtual async Task<MemoryOwner<byte>> ReadAssetDataAsync
     (
         Asset2Header header,
+        bool raw = false,
         CancellationToken ct = default
     )
     {
@@ -119,7 +120,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
             ct
         ).ConfigureAwait(false);
 
-        if (header.ZipStatus is Asset2ZipDefinition.Unzipped or Asset2ZipDefinition.UnzippedAlternate)
+        if (raw || header.ZipStatus is Asset2ZipDefinition.Unzipped or Asset2ZipDefinition.UnzippedAlternate)
             return buffer;
 
         uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(buffer.Span[4..8]);

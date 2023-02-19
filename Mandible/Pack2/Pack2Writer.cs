@@ -51,11 +51,12 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
         ReadOnlyMemory<byte> assetData,
         Asset2ZipDefinition zip,
         uint? dataHashOverride = null,
+        bool raw = false,
         CancellationToken ct = default
     )
     {
         byte[] compressed = Array.Empty<byte>();
-        bool compress = zip is Asset2ZipDefinition.Zipped or Asset2ZipDefinition.ZippedAlternate;
+        bool compress = !raw && zip is Asset2ZipDefinition.Zipped or Asset2ZipDefinition.ZippedAlternate;
 
         if (compress)
         {
@@ -140,7 +141,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
     private void IncrementOffsetToNextBoundary()
     {
         _currentOffset += 0x100;
-        _currentOffset = (int)((uint)_currentOffset & 0xFFFFFF00);
+        _currentOffset = (long)((ulong)_currentOffset & 0xFFFFFFFFFFFFFF00);
     }
 
     private class DefaultHashProvider : IAssetHashProvider

@@ -17,6 +17,7 @@ public interface IPack2Writer
     /// <param name="assetData">The asset data.</param>
     /// <param name="zip">Indicates whether the asset data should be compressed.</param>
     /// <param name="dataHashOverride">Overrides the data hash of the written asset.</param>
+    /// <param name="raw">Indicates whether the data may be transformed in any way (i.e. compressed).</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>A <see cref="ValueTask"/> representing the potentially asynchronous operation.</returns>
     ValueTask WriteAssetAsync
@@ -25,6 +26,7 @@ public interface IPack2Writer
         ReadOnlyMemory<byte> assetData,
         Asset2ZipDefinition zip,
         uint? dataHashOverride = null,
+        bool raw = false,
         CancellationToken ct = default
     );
 

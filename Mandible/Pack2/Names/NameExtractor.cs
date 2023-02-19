@@ -88,7 +88,7 @@ public static class NameExtractor
         if (namelistHeader is null)
             return;
 
-        using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(namelistHeader, ct).ConfigureAwait(false);
+        using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(namelistHeader, false, ct).ConfigureAwait(false);
         namelist.Append(buffer.Span);
     }
 
@@ -99,7 +99,7 @@ public static class NameExtractor
         foreach (Asset2Header asset in assetHeaders)
         {
             ct.ThrowIfCancellationRequested();
-            using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(asset, ct).ConfigureAwait(false);
+            using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(asset, false, ct).ConfigureAwait(false);
 
             //IReadOnlyList<string> names = AssetNameScraper.ScrapeFromAssetData(buffer.Span);
             if (IsBinaryFile(buffer.Span))

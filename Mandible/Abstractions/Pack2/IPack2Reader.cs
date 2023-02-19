@@ -37,11 +37,13 @@ public interface IPack2Reader
     /// Reads an asset from the pack. The asset is decompressed if required.
     /// </summary>
     /// <param name="header">The asset to retrieve.</param>
+    /// <param name="raw">Indicates whether to retrieve the raw (i.e. compressed) asset data.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>A buffer containing the asset data..</returns>
     Task<MemoryOwner<byte>> ReadAssetDataAsync
     (
         Asset2Header header,
+        bool raw = false,
         CancellationToken ct = default
     );
 

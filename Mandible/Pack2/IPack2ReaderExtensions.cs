@@ -103,7 +103,7 @@ public static class IPack2ReaderExtensions
             FileOptions.Asynchronous
         );
 
-        using MemoryOwner<byte> data = await reader.ReadAssetDataAsync(assetHeader, ct).ConfigureAwait(false);
+        using MemoryOwner<byte> data = await reader.ReadAssetDataAsync(assetHeader, false, ct).ConfigureAwait(false);
         await RandomAccess.WriteAsync(outputHandle, data.Memory, 0, ct).ConfigureAwait(false);
     }
 }
