@@ -4,18 +4,31 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Mandible.Locale;
 
+/// <summary>
+/// Represents an entry from a locale directory file.
+/// </summary>
+/// <param name="LookupHash">The Jenkin's Lookup hash of the data entry.</param>
+/// <param name="DataEntryByteOffset">The byte offset into the data file at which the entry begins.</param>
+/// <param name="DataEntryByteLength">The byte length of the entry.</param>
+/// <param name="Unknown">Unknown. Always observed to be 'd'.</param>
 public record LocaleDirectoryEntry
 (
     uint LookupHash,
-    long DataEntryOffset,
+    long DataEntryByteOffset,
     int DataEntryByteLength,
     char Unknown = 'd'
 )
 {
-    public static bool TryParse(ReadOnlySpan<char> entryLine, [NotNullWhen(true)] out LocaleDirectoryEntry? entry)
+    /// <summary>
+    /// Attempts to parse a <see cref="LocaleDirectoryEntry"/> object from a string.
+    /// </summary>
+    /// <param name="entry">The entry string.</param>
+    /// <param name="result">The parsed object, or <c>null</c> if parsing failed.</param>
+    /// <returns><c>True</c> if parsing was successful, otherwise <c>false</c>.</returns>
+    public static bool TryParse(ReadOnlySpan<char> entry, [NotNullWhen(true)] out LocaleDirectoryEntry? result)
     {
-        entry = null;
-        SpanReader<char> reader = new(entryLine);
+        result = null;
+        SpanReader<char> reader = new(entry);
 
         if (!reader.TryReadTo(out ReadOnlySpan<char> lookupHashStr, '\t'))
             return false;
@@ -35,11 +48,11 @@ public record LocaleDirectoryEntry
         if (!reader.TryRead(out char unknown))
             return false;
 
-        entry = new LocaleDirectoryEntry(lookupHash, offset, length, unknown);
+        result = new LocaleDirectoryEntry(lookupHash, offset, length, unknown);
         return true;
     }
 
     /// <inheritdoc />
     public override string ToString()
-        => $"{LookupHash}\t{DataEntryOffset}\t{DataEntryByteLength}\t{Unknown}";
+        => $"{LookupHash}\t{DataEntryByteOffset}\t{DataEntryByteLength}\t{Unknown}";
 }

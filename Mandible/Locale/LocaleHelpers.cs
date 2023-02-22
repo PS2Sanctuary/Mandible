@@ -7,6 +7,9 @@ using System.Text;
 
 namespace Mandible.Locale;
 
+/// <summary>
+/// Contains utility methods for interacting with locale files.
+/// </summary>
 public static class LocaleHelpers
 {
     /// <summary>
