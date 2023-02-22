@@ -11,8 +11,12 @@
     <Version>1.4.0</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
     <PackageReleaseNotes>
+      Added parameters to support reading and writing raw data.
       Added support for generating pack2 data hashes of the actual written asset data.
       IPack2Writer#ValidateAsync no longer returns a value, instead opting to let implementations throw.
+      Added models for de/serializing ZONE files.
+      Added helpers and models for working with locale files.
+      Renamed Jenkins#GetItemLocaleID to LocaleStringIdToLookup.
     </PackageReleaseNotes>
 
     <PackageId>carlst99.Mandible</PackageId>
@@ -51,7 +55,7 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)../README.md">
       <Pack>True</Pack>
-      <PackagePath></PackagePath>
+      <PackagePath>.</PackagePath>
     </None>
   </ItemGroup>
 

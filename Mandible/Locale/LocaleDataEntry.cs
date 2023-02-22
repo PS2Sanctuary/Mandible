@@ -1,6 +1,7 @@
 using Mandible.Util;
 using MemoryReaders;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Mandible.Locale;
 
@@ -26,7 +27,7 @@ public class LocaleDataEntry
         return new LocaleDataEntry(lookupId, type, content);
     }
 
-    public static bool TryParse(ReadOnlySpan<char> entryLine, out LocaleDataEntry? entry)
+    public static bool TryParse(ReadOnlySpan<char> entryLine, [NotNullWhen(true)] out LocaleDataEntry? entry)
     {
         entry = null;
         SpanReader<char> reader = new(entryLine);
@@ -48,10 +49,14 @@ public class LocaleDataEntry
         else
             type = new string(typeStr);
 
-        if (!reader.TryReadTo(out ReadOnlySpan<char> contentStr, '\r'))
+        if (!reader.TryReadExact(out ReadOnlySpan<char> contentStr, reader.Remaining))
             return false;
 
         entry = new LocaleDataEntry(lookupHash, type, new string(contentStr));
         return true;
     }
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"{LookupHash}\t{Type}\t{Content}";
 }
