@@ -1,4 +1,5 @@
 using Mandible.Dma;
+using Mandible.Zone;
 using MemoryReaders;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace Mandible.Pack2.Names;
 /// </summary>
 public static class AssetNameScraper
 {
-    private delegate IReadOnlyList<string> DedicatedAssetHandler(ReadOnlySpan<byte> assetData);
+    private delegate void DedicatedAssetHandler(ReadOnlySpan<byte> assetData, ICollection<string> namesOutput);
 
     private static readonly IReadOnlyList<byte[]> UNSCRAPEABLE_FILE_MAGICS;
     private static readonly IReadOnlyList<byte[]> SCRAPEABLE_BINARY_FILE_MAGICS;
@@ -41,7 +42,7 @@ public static class AssetNameScraper
 
         SCRAPEABLE_BINARY_FILE_MAGICS = new[]
         {
-            Encoding.ASCII.GetBytes("CHKF"),
+            Encoding.ASCII.GetBytes("CHKF"), // Player Studio format
             Encoding.ASCII.GetBytes("DMAT"),
             Encoding.ASCII.GetBytes("DMOD"),
             Encoding.ASCII.GetBytes("ZONE"),
@@ -51,17 +52,19 @@ public static class AssetNameScraper
         DEDICATED_ASSET_HANDLERS = new (byte[], DedicatedAssetHandler)[]
         {
             (Encoding.ASCII.GetBytes("DMAT"), ScrapeDMAT),
-            (Encoding.ASCII.GetBytes("DMOD"), ScrapeDMOD)
+            (Encoding.ASCII.GetBytes("DMOD"), ScrapeDMOD),
+            (Encoding.ASCII.GetBytes("ZONE"), ScrapeZONE)
         };
 
         string[] knownFileExtensions =
         {
-            "adr", "agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3",
-            "cnk4", "cnk5", "crc", "crt", "cso", "cur", "dat", "db", "dds", "def", "dir", "dll",
-            "dma", "dme", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb", "eco", "efb", "exe", "fsb",
-            "fxd", "fxo", "gfx", "gnf", "i64", "ini", "jpg", "lst", "lua", "mrn", "pak", "pem",
-            "playerstudio", "png", "prsb", "psd", "pssb", "tga", "thm", "tome", "ttf", "txt", "vnfo",
-            "wav", "xlsx", "xml", "xrsb", "xssb", "zone"
+            "adr", "agr", "Agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3",
+            "cnk4", "cnk5", "crc", "crt", "cso", "cur", "Cur", "dat", "Dat", "db", "dds", "DDS", "def", "Def",
+            "dir", "Dir", "dll", "DLL", "dma", "dme", "DME", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb",
+            "eco", "efb", "exe", "fsb", "fxd", "fxo", "gfx", "gnf", "i64", "ini", "INI", "Ini", "jpg", "JPG",
+            "lst", "lua", "mrn", "pak", "pem", "playerstudio", "PlayerStudio", "png", "prsb", "psd", "pssb",
+            "tga", "TGA", "thm", "tome", "ttf", "txt", "vnfo", "wav", "xlsx", "xml", "xrsb", "xssb", "zone",
+            "Zone"
         };
 
         KNOWN_FILE_EXTENSIONS = knownFileExtensions.Select(ext => Encoding.ASCII.GetBytes(ext))
@@ -78,33 +81,33 @@ public static class AssetNameScraper
         if (!IsScrapeAbleAsset(data))
             return Array.Empty<string>();
 
-        IReadOnlyList<string> names = ScrapeInternal(data);
+        List<string> names = new();
+        ScrapeInternal(data, names);
 
-        List<string> returnList = new();
         foreach (string name in names)
         {
             if (name.EndsWith(".efb"))
             {
-                returnList.Add(Path.ChangeExtension(name, "dx11efb"));
+                names.Add(Path.ChangeExtension(name, "dx11efb"));
             }
             else if (name.EndsWith(".xrsb"))
             {
-                returnList.Add(Path.ChangeExtension(name, "dx11rsb"));
+                names.Add(Path.ChangeExtension(name, "dx11rsb"));
             }
             else if (name.EndsWith("xssb"))
             {
-                returnList.Add(Path.ChangeExtension(name, "dx11ssb"));
+                names.Add(Path.ChangeExtension(name, "dx11ssb"));
             }
             else if (name.EndsWith(".mrn") && !name.Contains("X64"))
             {
                 string fileName = Path.GetFileNameWithoutExtension(name);
-                returnList.Add($"{fileName}X64.mrn");
+                names.Add($"{fileName}X64.mrn");
             }
 
-            returnList.Add(name);
+            names.Add(name);
         }
 
-        return returnList;
+        return names;
     }
 
     /// <summary>
@@ -141,25 +144,33 @@ public static class AssetNameScraper
             && assetData[..maxCheckLength].IndexOf((byte)0) == -1;
     }
 
-    private static IReadOnlyList<string> ScrapeInternal(ReadOnlySpan<byte> data)
+    private static void ScrapeInternal(ReadOnlySpan<byte> data, ICollection<string> namesOutput)
     {
         SpanReader<byte> reader = new(data);
 
         foreach ((byte[] magic, DedicatedAssetHandler handler) in DEDICATED_ASSET_HANDLERS)
         {
-            if (reader.IsNext(magic))
-                return handler(data);
+            if (!reader.IsNext(magic))
+                continue;
+
+            try
+            {
+                handler(data, namesOutput);
+                return;
+            }
+            catch
+            {
+                // We'll simply scrape it naively
+            }
         }
 
-        List<string> names = new();
         while (!reader.End)
         {
             if (!reader.TryAdvanceTo((byte)'.'))
                 break;
 
-            for (int i = 0; i < KNOWN_FILE_EXTENSIONS.Count; i++)
+            foreach (byte[] extName in KNOWN_FILE_EXTENSIONS)
             {
-                byte[] extName = KNOWN_FILE_EXTENSIONS[i];
                 if (!reader.IsNext(extName, true))
                     continue;
 
@@ -177,26 +188,49 @@ public static class AssetNameScraper
 
                 // Only include names that aren't just an extension
                 if (read && fullName.IndexOf((byte)'.') != 0)
-                    names.Add(Encoding.UTF8.GetString(fullName));
+                    namesOutput.Add(Encoding.UTF8.GetString(fullName));
 
                 reader.Advance(endIndex - startIndex);
             }
         }
-
-        return names;
     }
 
-    private static IReadOnlyList<string> ScrapeDMAT(ReadOnlySpan<byte> dmatData)
-        => Dmat.Read(dmatData, out _).TextureFileNames;
+    private static void ScrapeDMAT(ReadOnlySpan<byte> dmatData, ICollection<string> namesOutput)
+    {
+        foreach (string element in Dmat.Read(dmatData, out _).TextureFileNames)
+            namesOutput.Add(element);
+    }
 
-    private static IReadOnlyList<string> ScrapeDMOD(ReadOnlySpan<byte> dmodData)
+    private static void ScrapeDMOD(ReadOnlySpan<byte> dmodData, ICollection<string> namesOutput)
     {
         SpanReader<byte> reader = new(dmodData);
         bool advanced = reader.TryAdvanceTo(new[] { (byte)'D', (byte)'M', (byte)'A', (byte)'T' }, false);
 
-        return advanced
-            ? Dmat.Read(dmodData[reader.Consumed..], out _).TextureFileNames
-            : Array.Empty<string>();
+        if (!advanced)
+            return;
+
+        foreach (string element in Dmat.Read(dmodData[reader.Consumed..], out _).TextureFileNames)
+            namesOutput.Add(element);
+    }
+
+    private static void ScrapeZONE(ReadOnlySpan<byte> zoneData, ICollection<string> namesOutput)
+    {
+        Zone.Zone zone = Zone.Zone.Read(zoneData, out _);
+
+        foreach (Eco eco in zone.Ecos)
+        {
+            namesOutput.Add(eco.TextureInfo.ColorNxMapName);
+            namesOutput.Add(eco.TextureInfo.SpecBlendNyMapName);
+        }
+
+        foreach (Flora flora in zone.Florae)
+        {
+            namesOutput.Add(flora.Model);
+            namesOutput.Add(flora.Texture);
+        }
+
+        foreach (RuntimeObject obj in zone.Objects)
+            namesOutput.Add(obj.ActorFile);
     }
 
     private static bool IsValidLetter(byte value)
