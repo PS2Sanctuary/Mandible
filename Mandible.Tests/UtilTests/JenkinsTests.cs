@@ -22,10 +22,10 @@ public class JenkinsTests
     }
 
     [Fact]
-    public void TestGetItemLocaleID()
+    public void TestLocaleStringIdToLookup()
     {
         const uint expected = 3335246055;
-        uint actual = Jenkins.GetItemLocaleID(318); // Vehicle name ID for the Sunderer
+        uint actual = Jenkins.LocaleStringIdToLookup(318); // Vehicle name ID for the Sunderer
         Assert.Equal(expected, actual);
     }
 }

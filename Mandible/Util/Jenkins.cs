@@ -10,12 +10,12 @@ namespace Mandible.Util;
 public static class Jenkins
 {
     /// <summary>
-    /// ForgeLight specific - gets the locale ID of an item/vehicle.
+    /// ForgeLight specific - converts an in-game locale string ID to a lookup hash.
     /// </summary>
-    /// <param name="itemNameID">The NAME ID of the item/vehicle.</param>
-    /// <returns>The calculated locale ID.</returns>
-    public static uint GetItemLocaleID(uint itemNameID)
-        => Lookup2("Global.Text." + itemNameID);
+    /// <param name="localeStringId">The locale string ID (often referred to as name ID).</param>
+    /// <returns>The calculated lookup hash.</returns>
+    public static uint LocaleStringIdToLookup(uint localeStringId)
+        => Lookup2("Global.Text." + localeStringId);
 
     /// <summary>
     /// Performs a one-at-a-time hash on the input characters.
@@ -24,7 +24,6 @@ public static class Jenkins
     /// <returns>The hash.</returns>
     public static uint OneAtATime(ReadOnlySpan<char> data)
     {
-        // Note: PS2LS uses a signed int here. Might be a ForgeLight thing?
         uint hash = 0;
 
         foreach (char c in data)
