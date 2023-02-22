@@ -102,10 +102,9 @@ public class Zone : IBufferWritable
     /// </summary>
     /// <param name="buffer">The buffer.</param>
     /// <param name="amountRead">The amount of data read from the <paramref name="buffer"/></param>
-    /// <param name="version">The zone version that is represented in the <paramref name="buffer"/>.</param>
     /// <returns>A <see cref="Zone"/> instance.</returns>
     /// <exception cref="UnrecognisedMagicException">Thrown if the buffer does not represent a zone asset.</exception>
-    public static Zone Read(ReadOnlySpan<byte> buffer, out int amountRead, ZoneVersion? version = null)
+    public static Zone Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
         BinaryReader reader = new(buffer);
 
@@ -113,11 +112,7 @@ public class Zone : IBufferWritable
             throw new UnrecognisedMagicException(buffer[..MAGIC.Length].ToArray(), MAGIC.ToArray());
         reader.Advance(MAGIC.Length);
 
-        uint internalVersion = reader.ReadUInt32LE();
-        version ??= (ZoneVersion)internalVersion;
-        if (internalVersion != (uint)version)
-            throw new InvalidOperationException("Version mismatch!");
-
+        ZoneVersion version = (ZoneVersion)reader.ReadUInt32LE();
         DataOffsets.Read(ref reader);
         TileInfo tileInfo = TileInfo.Read(ref reader);
         ChunkInfo chunkInfo = ChunkInfo.Read(ref reader);
@@ -140,18 +135,18 @@ public class Zone : IBufferWritable
         uint objectsCount = reader.ReadUInt32LE();
         List<RuntimeObject> objects = new();
         for (int i = 0; i < objectsCount; i++)
-            objects.Add(RuntimeObject.Read(ref reader, version.Value));
+            objects.Add(RuntimeObject.Read(ref reader, version));
 
         uint lightsCount = reader.ReadUInt32LE();
         List<Light> lights = new();
         for (int i = 0; i < lightsCount; i++)
-            lights.Add(Light.Read(ref reader, version.Value));
+            lights.Add(Light.Read(ref reader));
 
         uint unknownValue1Count = reader.ReadUInt32LE();
         byte[] unknownValue1 = reader.ReadBytes((int)unknownValue1Count).ToArray();
 
         amountRead = reader.Consumed;
-        return new Zone(version.Value, tileInfo, chunkInfo, ecos, florae, invisibleWalls, objects, lights, unknownValue1);
+        return new Zone(version, tileInfo, chunkInfo, ecos, florae, invisibleWalls, objects, lights, unknownValue1);
     }
 
     /// <inheritdoc />
@@ -180,7 +175,7 @@ public class Zone : IBufferWritable
 
         size += sizeof(uint); // Lights.Count
         foreach (Light light in Lights)
-            size += light.GetSize(Version);
+            size += light.GetSize();
 
         size += sizeof(uint) // UnknownValue1.Count
             + UnknownValue1.Length;
@@ -225,7 +220,7 @@ public class Zone : IBufferWritable
         uint lightsOffset = (uint)writer.Written;
         writer.WriteUInt32LE((uint)Lights.Count);
         foreach (Light light in Lights)
-            light.Write(ref writer, Version);
+            light.Write(ref writer);
 
         uint unknownValue1Offset = (uint)writer.Written;
         writer.WriteUInt32LE((uint)UnknownValue1.Length);

@@ -11,12 +11,18 @@ public enum LightType : ushort
     Spot = 2
 }
 
+public enum LightDataVersion : ushort
+{
+    Default = 0,
+    PlanetSideArenaExtended = 1
+}
+
 public class Light
 {
     public string Name { get; set; }
     public string ColorName { get; set; }
     public LightType Type { get; set; }
-    public ushort UnknownValue1 { get; set; }
+    public LightDataVersion DataVersion { get; set; }
     public bool UnknownValue2 { get; set; }
     public Vector4 Translation { get; set; }
     public Vector4 Rotation { get; set; }
@@ -49,7 +55,7 @@ public class Light
         string name,
         string colorName,
         LightType type,
-        ushort unknownValue1,
+        LightDataVersion dataVersion,
         bool unknownValue2,
         Vector4 translation,
         Vector4 rotation,
@@ -66,7 +72,7 @@ public class Light
         Name = name;
         ColorName = colorName;
         Type = type;
-        UnknownValue1 = unknownValue1;
+        DataVersion = dataVersion;
         UnknownValue2 = unknownValue2;
         Translation = translation;
         Rotation = rotation;
@@ -80,12 +86,12 @@ public class Light
         Id = id;
     }
 
-    public static Light Read(ref BinaryReader reader, ZoneVersion version)
+    public static Light Read(ref BinaryReader reader)
     {
         string name = reader.ReadStringNullTerminated();
         string colorName = reader.ReadStringNullTerminated();
         LightType type = (LightType)reader.ReadUInt16LE();
-        ushort unknownValue1 = reader.ReadUInt16LE();
+        LightDataVersion unknownValue1 = (LightDataVersion)reader.ReadUInt16LE();
         bool unknownValue2 = reader.ReadBoolean();
         Vector4 translation = Vector4.Read(ref reader);
         Vector4 rotation = Vector4.Read(ref reader);
@@ -101,7 +107,7 @@ public class Light
         float? unknownValue7 = null;
         uint? unknownValue8 = null;
         bool? unknownValue9 = null;
-        if (version is ZoneVersion.V1_PSA)
+        if (unknownValue1 is LightDataVersion.PlanetSideArenaExtended)
         {
             unknownValue7 = reader.ReadSingleLE();
             unknownValue8 = reader.ReadUInt32LE();
@@ -133,7 +139,7 @@ public class Light
         };
     }
 
-    public int GetSize(ZoneVersion version)
+    public int GetSize()
     {
         int size = Name.Length + 1
             + ColorName.Length + 1
@@ -151,7 +157,7 @@ public class Light
             + UnknownValue6.Length + 1
             + sizeof(uint); // Id
 
-        if (version is ZoneVersion.V1_PSA)
+        if (DataVersion is LightDataVersion.PlanetSideArenaExtended)
         {
             size += sizeof(float); // UnknownValue7;
             size += sizeof(uint); // UnknownValue8;
@@ -161,16 +167,16 @@ public class Light
         return size;
     }
 
-    public void Write(ref BinaryWriter writer, ZoneVersion version)
+    public void Write(ref BinaryWriter writer)
     {
-        int requiredSize = GetSize(version);
+        int requiredSize = GetSize();
         if (requiredSize > writer.Remaining)
             throw new InvalidBufferSizeException(requiredSize, writer.Remaining);
 
         writer.WriteStringNullTerminated(Name);
         writer.WriteStringNullTerminated(ColorName);
         writer.WriteUInt16LE((ushort)Type);
-        writer.WriteUInt16LE(UnknownValue1);
+        writer.WriteUInt16LE((ushort)DataVersion);
         writer.WriteBoolean(UnknownValue2);
         Translation.Write(ref writer);
         Rotation.Write(ref writer);
@@ -183,19 +189,19 @@ public class Light
         writer.WriteStringNullTerminated(UnknownValue6);
         writer.WriteUInt32LE(Id);
 
-        if (version is ZoneVersion.V1_PSA)
-        {
-            if (UnknownValue7 is null || UnknownValue8 is null || UnknownValue9 is null)
-            {
-                throw new InvalidOperationException
-                (
-                    $"None of UnknownValue7, UnknownValue8 and UnknownValue9 may be null when serializing as {version}"
-                );
-            }
+        if (DataVersion is not LightDataVersion.PlanetSideArenaExtended)
+            return;
 
-            writer.WriteSingleLE(UnknownValue7.Value);
-            writer.WriteUInt32LE(UnknownValue8.Value);
-            writer.WriteBoolean(UnknownValue9.Value);
+        if (UnknownValue7 is null || UnknownValue8 is null || UnknownValue9 is null)
+        {
+            throw new InvalidOperationException
+            (
+                $"None of UnknownValue7, UnknownValue8 and UnknownValue9 may be null when serializing as {DataVersion}"
+            );
         }
+
+        writer.WriteSingleLE(UnknownValue7.Value);
+        writer.WriteUInt32LE(UnknownValue8.Value);
+        writer.WriteBoolean(UnknownValue9.Value);
     }
 }
