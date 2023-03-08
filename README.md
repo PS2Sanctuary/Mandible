@@ -3,16 +3,22 @@
 [![Nuget | carlst99.Mandible](https://img.shields.io/nuget/v/carlst99.Mandible?label=carlst99.Mandible)](https://www.nuget.org/packages/carlst99.Mandible)
 
 Mandible eases the process of working with the packed assets of a game that uses the [ForgeLight Engine](https://en.wikipedia.org/wiki/Daybreak_Game_Company#ForgeLight_engine).
-Current features include:
 
-- Read `.pack` files.
-- Read and write `.pack2` files.
-  - Namelist extraction utility.
+Mandible currently supports the following formats:
+(R = read, W = write)
+
+- `.dma/DMAT` (R/W)
+- Locale data (R/W)
+- `.pack` (R)
+- `.pack2/PAK` (R/W)
+- `.zone/ZONE` (R/W)
+
+Additional features include:
+
+- A `pack2` namelist extraction utility.
 - Parsing and downloading of digests and files served by the Daybreak Manifest CDN.
-- Read and write `.dma` files.
-- `CRC-64 "Jones"` and Jenkin's `lookup2` implementations.
 
-Documentation on the file formats that Mandible supports can be found in the [docs](docs) folder.
+Documentation and ImHex patterns on some of the file formats that Mandible supports can be found in the [docs](docs) folder.
 
 A command-line tool is also distributed with Mandible, which offers:
 
