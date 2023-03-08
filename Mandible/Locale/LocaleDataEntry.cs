@@ -10,16 +10,6 @@ namespace Mandible.Locale;
 public class LocaleDataEntry
 {
     /// <summary>
-    /// Gets the string representation of the UCDT data entry type.
-    /// </summary>
-    public const string TypeUCDT = "ucdt";
-
-    /// <summary>
-    /// Gets the string representation of the UGDT data entry type.
-    /// </summary>
-    public const string TypeUGDT = "ugdt";
-
-    /// <summary>
     /// Gets or sets the Jenkin's Lookup hash of the data entry.
     /// </summary>
     public uint LookupHash { get; set; }
@@ -27,7 +17,7 @@ public class LocaleDataEntry
     /// <summary>
     /// Gets or sets the type of the data entry.
     /// </summary>
-    public string Type { get; set; }
+    public LocaleDataType Type { get; set; }
 
     /// <summary>
     /// Gets or sets the content of the data entry.
@@ -40,7 +30,7 @@ public class LocaleDataEntry
     /// <param name="lookupHash">The Jenkin's lookup hash.</param>
     /// <param name="type">The type.</param>
     /// <param name="content">The content.</param>
-    public LocaleDataEntry(uint lookupHash, string type, string content)
+    public LocaleDataEntry(uint lookupHash, LocaleDataType type, string content)
     {
         LookupHash = lookupHash;
         Type = type;
@@ -66,14 +56,14 @@ public class LocaleDataEntry
         if (!reader.TryReadTo(out ReadOnlySpan<char> typeStr, '\t'))
             return false;
 
-        // Minor memory optimization so we aren't creating thousands of type objects
-        string type;
-        if (typeStr.SequenceEqual(TypeUCDT))
-            type = TypeUCDT;
-        else if (typeStr.SequenceEqual(TypeUGDT))
-            type = TypeUGDT;
+        // Minor memory optimization so we aren't creating thousands of type strings
+        LocaleDataType type;
+        if (typeStr.SequenceEqual(LocaleDataType.UCDT.TypeValue))
+            type = LocaleDataType.UCDT;
+        else if (typeStr.SequenceEqual(LocaleDataType.UGDT.TypeValue))
+            type = LocaleDataType.UGDT;
         else
-            type = new string(typeStr);
+            type = new LocaleDataType(new string(typeStr));
 
         if (!reader.TryReadExact(out ReadOnlySpan<char> contentStr, reader.Remaining))
             return false;
