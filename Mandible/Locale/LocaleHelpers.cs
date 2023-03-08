@@ -59,7 +59,18 @@ public static class LocaleHelpers
         return sb.ToString();
     }
 
-    public static void WriteLocaleFiles
+    /// <summary>
+    /// Writes locale data.
+    /// </summary>
+    /// <param name="dataEntries">The data entries to write.</param>
+    /// <param name="languageIdentifier">The language of the entries.</param>
+    /// <param name="gameIdentifier">The game that the locale is constructed for.</param>
+    /// <param name="localeDataOutput">A stream to write the data entries to.</param>
+    /// <param name="localeDirectoryOutput">A stream to write the directory entries to.</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown if the <paramref name="localeDataOutput"/> is not seekable, or at the start.
+    /// </exception>
+    public static void WriteLocaleData
     (
         IEnumerable<LocaleDataEntry> dataEntries,
         string languageIdentifier,
@@ -69,10 +80,10 @@ public static class LocaleHelpers
     )
     {
         if (!localeDataOutput.CanSeek)
-            throw new InvalidOperationException($"The {nameof(localeDataOutput)} must be seekable");
+            throw new ArgumentException($"The data stream must be seekable", nameof(localeDataOutput));
 
         if (localeDataOutput.Position is not 0)
-            throw new InvalidOperationException("The data stream must be at the beginning");
+            throw new ArgumentException("The data stream must be at the beginning", nameof(localeDataOutput));
 
         localeDataOutput.Write(Encoding.UTF8.Preamble);
 
@@ -122,16 +133,26 @@ public static class LocaleHelpers
             directoryWriter.WriteLine(entry.ToString());
     }
 
-    public static List<LocaleDataEntry> ReadDataEntries(Stream localeDirectory, Stream localeData)
+    /// <summary>
+    /// Reads locale data.
+    /// </summary>
+    /// <param name="localeDirectory">A stream containing the locale directory.</param>
+    /// <param name="localeData">A stream containing the locale data.</param>
+    /// <returns>The read <see cref="LocaleDataEntry"/> objects.</returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown if the <paramref name="localeData"/> does not contain a BOM marker.
+    /// </exception>
+    /// <exception cref="FormatException">Thrown if either input stream contains invalid formatting.</exception>
+    public static List<LocaleDataEntry> ReadLocaleData(Stream localeDirectory, Stream localeData)
     {
         byte[] lineBreak = { (byte)'\r', (byte)'\n' };
         using StreamReader directoryReader = new(localeDirectory, Encoding.UTF8, leaveOpen: true);
         List<LocaleDataEntry> dataEntries = new();
 
         Span<byte> bom = stackalloc byte[Encoding.UTF8.Preamble.Length];
-        localeData.Read(bom);
-        if (!bom.SequenceEqual(Encoding.UTF8.Preamble))
-            throw new InvalidOperationException("Data stream does not contain BOM");
+        int bomReadLen = localeData.Read(bom);
+        if (bomReadLen != Encoding.UTF8.Preamble.Length || !bom.SequenceEqual(Encoding.UTF8.Preamble))
+            throw new ArgumentException("Data stream does not contain a BOM", nameof(localeData));
 
         while (!directoryReader.EndOfStream)
         {
@@ -148,7 +169,7 @@ public static class LocaleHelpers
 
             int amountRead = localeData.Read(data);
             if (amountRead != expectedLength)
-                throw new Exception("Failed to read the expected number of characters from the data stream");
+                throw new FormatException("Failed to read the expected number of characters from the data stream");
             if (!data.EndsWith(lineBreak))
                 throw new FormatException("Data entry does not end with line break");
 
