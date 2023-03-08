@@ -2,6 +2,7 @@ using Mandible.Exceptions;
 using Mandible.Util;
 
 namespace Mandible.Zone;
+
 /// <summary>
 /// Represents a TextureInfo definition of the <see cref="Zone"/> class.
 /// </summary>
