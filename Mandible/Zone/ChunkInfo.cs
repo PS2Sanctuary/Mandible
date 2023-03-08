@@ -63,7 +63,7 @@ public class ChunkInfo
     /// Reads a <see cref="ChunkInfo"/> instance from a <see cref="BinaryReader"/>.
     /// </summary>
     /// <param name="reader">The reader.</param>
-    /// <returns>A <see cref="DataOffsets"/> instance.</returns>
+    /// <returns>A <see cref="ChunkInfo"/> instance.</returns>
     public static ChunkInfo Read(ref BinaryReader reader)
     {
         uint tileCount = reader.ReadUInt32LE();

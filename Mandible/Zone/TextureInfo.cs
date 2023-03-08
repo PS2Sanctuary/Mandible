@@ -2,18 +2,62 @@ using Mandible.Exceptions;
 using Mandible.Util;
 
 namespace Mandible.Zone;
-
+/// <summary>
+/// Represents a TextureInfo definition of the <see cref="Zone"/> class.
+/// </summary>
 public class TextureInfo
 {
+    /// <summary>
+    /// The name of the texture.
+    /// </summary>
     public string Name { get; set; }
+
+    /// <summary>
+    /// The name of the Color NX map used by the texture.
+    /// </summary>
     public string ColorNxMapName { get; set; }
+
+    /// <summary>
+    /// The name of the specular blend NY map used by the texture.
+    /// </summary>
     public string SpecBlendNyMapName { get; set; }
+
+    /// <summary>
+    /// The number of times the texture repeats.
+    /// </summary>
     public uint DetailRepeat { get; set; }
+
+    /// <summary>
+    /// The blend strength of the texture.
+    /// </summary>
     public float BlendStrength { get; set; }
+
+    /// <summary>
+    /// The specular range of the texture.
+    /// </summary>
     public FloatRange Specular { get; set; }
+
+    /// <summary>
+    /// The smoothness range of the texture.
+    /// </summary>
     public FloatRange Smoothness { get; set; }
+
+    /// <summary>
+    /// The name of the physics material that this texture uses.
+    /// </summary>
     public string PhysicsMatName { get; set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TextureInfo"/> class.
+    /// </summary>
+    /// <param name="name">The name of the texture.</param>
+    /// <param name="colorNxMapName">The name of the Color NX map used by the texture.</param>
+    /// <param name="specBlendNyMapName">The name of the specular blend NY map used by the texture.</param>
+    /// <param name="detailRepeat">The number of times the texture repeats.</param>
+    /// <param name="blendStrength">The blend strength of the texture.</param>
+    /// <param name="specular">The specular range of the texture.</param>
+    /// <param name="smoothness">The smoothness range of the texture.</param>
+    /// <param name="physicsMatName">The name of the physics material that this texture uses.</param>
     public TextureInfo
     (
         string name,
@@ -36,6 +80,11 @@ public class TextureInfo
         PhysicsMatName = physicsMatName;
     }
 
+    /// <summary>
+    /// Reads a <see cref="TextureInfo"/> instance from a <see cref="BinaryReader"/>.
+    /// </summary>
+    /// <param name="reader">The reader.</param>
+    /// <returns>A <see cref="TextureInfo"/> instance.</returns>
     public static TextureInfo Read(ref BinaryReader reader)
     {
         string name = reader.ReadStringNullTerminated();
@@ -60,6 +109,9 @@ public class TextureInfo
         );
     }
 
+    /// <summary>
+    /// Gets the serialized size of this <see cref="TextureInfo"/>.
+    /// </summary>
     public int GetSize()
         => Name.Length + 1
             + ColorNxMapName.Length + 1
@@ -70,6 +122,13 @@ public class TextureInfo
             + FloatRange.Size // Smoothness
             + PhysicsMatName.Length + 1;
 
+    /// <summary>
+    /// Writes this <see cref="TextureInfo"/> instance to a <see cref="BinaryWriter"/>.
+    /// </summary>
+    /// <param name="writer">The writer.</param>
+    /// <exception cref="InvalidBufferSizeException">
+    /// Thrown if there is not enough space remaining in the writer.
+    /// </exception>
     public void Write(ref BinaryWriter writer)
     {
         int requiredSize = GetSize();
