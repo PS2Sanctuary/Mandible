@@ -4,8 +4,7 @@
 
 Mandible eases the process of working with the packed assets of a game that uses the [ForgeLight Engine](https://en.wikipedia.org/wiki/Daybreak_Game_Company#ForgeLight_engine).
 
-Mandible currently supports the following formats:
-(R = read, W = write)
+Mandible currently supports the following formats (R = read, W = write):
 
 - `.dma/DMAT` (R/W)
 - Locale data (R/W)
