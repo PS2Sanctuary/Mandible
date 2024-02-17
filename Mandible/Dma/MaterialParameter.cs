@@ -5,18 +5,58 @@ using System;
 
 namespace Mandible.Dma;
 
+#pragma warning disable CS1591
+/// <summary>
+/// Represents a
+/// <a href="https://docs.microsoft.com/windows/win32/direct3d9/d3dxparameter-class">DirectX parameter class</a>.
+/// </summary>
+public enum D3DXParameterClass : uint
+{
+    Scalar = 0,
+    Vector = 1,
+    MatrixRows = 2,
+    MatrixColumns = 3,
+    Object = 4,
+    Struct = 5,
+    ForceDword = 0x7fffffff
+};
+
+/// <summary>
+/// Represents a
+/// <a href="https://docs.microsoft.com/windows/win32/direct3d9/d3dxparameter-type">DirectX parameter type</a>.
+/// </summary>
+public enum D3DXParameterType : uint
+{
+    Void,
+    Boolean,
+    Integer,
+    Float,
+    String,
+    Texture,
+    Texture1D,
+    Texture2D,
+    Texture3D,
+    TextureCube,
+    Sampler,
+    Sampler1D,
+    Sampler2D,
+    Sampler3D,
+    SamplerCube,
+    PixelShader,
+    VertexShader,
+    PixelFragment,
+    VertexFragment,
+    Unsupported,
+    ForceDword = 0x7fffffff
+};
+#pragma warning restore CS1591
+
 /// <summary>
 /// Represents a material parameter of the <see cref="Material"/> class.
 /// </summary>
 /// <param name="SemanticHash">The case-sensitive Jenkins hash of the parameter's semantic.</param>
-/// <param name="D3DXParameterClass">
-/// The <a href="https://docs.microsoft.com/windows/win32/direct3d9/d3dxparameter-class">D3DXPARAMETER_CLASS</a>
-/// of the parameter.
-/// </param>
-/// <param name="D3DXParameterType">
-/// The <a href="https://docs.microsoft.com/windows/win32/direct3d9/d3dxparameter-type">D3DXPARAMETER_TYPE</a>
-/// of the parameter.
-/// </param>
+/// <param name="D3DXParameterClass">The parameter's DirectX parameter class.</param>
+/// <param name="D3DXParameterType">The parameter's DirectX parameter type.</param>
 /// <param name="Data">
 /// Gets the parameter data.
 /// <remarks>
