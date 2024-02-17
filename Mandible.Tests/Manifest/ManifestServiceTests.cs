@@ -37,7 +37,7 @@ public class ManifestServiceTests
             );
 
         Assert.Equal(159, digest.DigestBuilderVersion);
-        Assert.Equal(1, digest.Folders.Count);
+        Assert.Single(digest.Folders);
     }
 
     [Fact]

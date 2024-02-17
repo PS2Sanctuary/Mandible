@@ -76,14 +76,14 @@ public class DigestTests
         Assert.Equal(4, digest.FallbackHosts.Count);
         Assert.Equal("faydwer.patch.daybreakgames.com", digest.FallbackHosts[2]);
 
-        Assert.Equal(1, digest.ExternalDigests.Count);
+        Assert.Single(digest.ExternalDigests);
         Assert.Equal
         (
             new Uri("http://manifest.patch.daybreakgames.com/patch/sha/manifest/planetside2/planetside2-livecommon/live/planetside2-livecommon.sha.soe"),
             digest.ExternalDigests[0]
         );
 
-        Assert.Equal(1, digest.Folders.Count);
+        Assert.Single(digest.Folders);
         Assert.Equal(4, digest.Folders[0].Children.Count);
         Assert.Equal(8, digest.Folders[0].Files.Count);
     }
