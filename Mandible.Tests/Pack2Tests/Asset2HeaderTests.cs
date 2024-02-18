@@ -6,7 +6,7 @@ namespace Mandible.Tests.Pack2Tests;
 
 public class Asset2HeaderTests
 {
-    private static readonly Asset2Header EXPECTED_HEADER = new(1, 2, 3, Asset2ZipDefinition.Zipped, 4);
+    private static readonly Asset2Header EXPECTED_HEADER = new(1, 2, 3, Asset2ZipDefinition.ZippedAlternate, 4);
     private static readonly byte[] EXPECTED_BYTES = new byte[]
     {
             0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Name hash
