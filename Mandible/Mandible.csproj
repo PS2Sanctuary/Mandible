@@ -1,22 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <!-- NuGet-related properties -->
   <PropertyGroup>
-    <Version>1.5.0</Version>
+    <Version>1.6.0</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
     <PackageReleaseNotes>
-      Added parameters to support reading and writing raw data.
-      Added support for generating pack2 data hashes of the actual written asset data.
-      IPack2Writer#ValidateAsync no longer returns a value, instead opting to let implementations throw.
-      Added models for de/serializing ZONE files.
-      Added helpers and models for working with locale files.
-      Renamed Jenkins#GetItemLocaleID to LocaleStringIdToLookup.
+      - Multi-target net6.0 &amp; net8.0
+      - Update dependencies
     </PackageReleaseNotes>
 
     <PackageId>carlst99.Mandible</PackageId>
