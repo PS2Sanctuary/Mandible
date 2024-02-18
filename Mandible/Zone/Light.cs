@@ -5,34 +5,116 @@ using System;
 
 namespace Mandible.Zone;
 
+/// <summary>
+/// Enumerates the types of lights.
+/// </summary>
 public enum LightType : ushort
 {
+    /// <summary>
+    /// Indicates the light data is for a point light.
+    /// </summary>
     Point = 1,
+
+    /// <summary>
+    /// Indicates the light data is for a spot light.
+    /// </summary>
     Spot = 2
 }
 
+/// <summary>
+/// Defines the version of the light data.
+/// </summary>
 public enum LightDataVersion : ushort
 {
+    /// <summary>
+    /// The default light data version.
+    /// </summary>
     Default = 0,
+
+    /// <summary>
+    /// Indicates the light data contains extended information for the PlanetSide Arena variant of ForgeLight.
+    /// </summary>
     PlanetSideArenaExtended = 1
 }
 
+/// <summary>
+/// Represents light data that is consumed by the ForgeLight engine.
+/// </summary>
 public class Light
 {
+    /// <summary>
+    /// The name of the light.
+    /// </summary>
     public string Name { get; set; }
+
+    /// <summary>
+    /// The identifying name of the color of the light.
+    /// </summary>
     public string ColorName { get; set; }
+
+    /// <summary>
+    /// The type of the light.
+    /// </summary>
     public LightType Type { get; set; }
+
+    /// <summary>
+    /// The version of light data represented by this instance.
+    /// </summary>
     public LightDataVersion DataVersion { get; set; }
+
+    /// <summary>
+    /// UnknownValue2.
+    /// </summary>
     public bool UnknownValue2 { get; set; }
+
+    /// <summary>
+    /// The position of the light in the world.
+    /// </summary>
     public Vector4 Translation { get; set; }
+
+    /// <summary>
+    /// The direction in which the light is pointing.
+    /// </summary>
     public Vector4 Rotation { get; set; }
+
+    /// <summary>
+    /// The range (in meters?) of the light.
+    /// </summary>
     public float Range { get; set; }
+
+    /// <summary>
+    /// Unknown.
+    /// </summary>
     public float InnerRange { get; set; }
+
+    /// <summary>
+    /// The color of the light.
+    /// </summary>
     public ColorARGB Color { get; set; }
+
+    /// <summary>
+    /// UnknownValue3.
+    /// </summary>
     public uint UnknownValue3 { get; set; }
+
+    /// <summary>
+    /// UnknownValue4.
+    /// </summary>
     public byte UnknownValue4 { get; set; }
+
+    /// <summary>
+    /// UnknownValue5.
+    /// </summary>
     public Vector4 UnknownValue5 { get; set; }
+
+    /// <summary>
+    /// UnknownValue6.
+    /// </summary>
     public string UnknownValue6 { get; set; }
+
+    /// <summary>
+    /// The ID of the light object.
+    /// </summary>
     public uint Id { get; set; }
 
     /// <summary>
@@ -50,6 +132,9 @@ public class Light
     /// </summary>
     public bool? UnknownValue9 { get; set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Light"/> class.
+    /// </summary>
     public Light
     (
         string name,
@@ -86,6 +171,11 @@ public class Light
         Id = id;
     }
 
+    /// <summary>
+    /// Reads a <see cref="Light"/> instance from a <see cref="BinaryReader"/>.
+    /// </summary>
+    /// <param name="reader">The reader.</param>
+    /// <returns>A <see cref="Light"/> instance.</returns>
     public static Light Read(ref BinaryReader reader)
     {
         string name = reader.ReadStringNullTerminated();
@@ -139,6 +229,10 @@ public class Light
         };
     }
 
+    /// <summary>
+    /// Gets the number of bytes that this <see cref="Light"/> will use when stored within a pack.
+    /// </summary>
+    /// <returns>The size in bytes of this <see cref="Light"/>.</returns>
     public int GetSize()
     {
         int size = Name.Length + 1
@@ -167,6 +261,13 @@ public class Light
         return size;
     }
 
+    /// <summary>
+    /// Writes this <see cref="Light"/> instance to a <see cref="BinaryWriter"/>.
+    /// </summary>
+    /// <param name="writer">The writer.</param>
+    /// <exception cref="InvalidBufferSizeException">
+    /// Thrown if there is not enough space remaining in the writer.
+    /// </exception>
     public void Write(ref BinaryWriter writer)
     {
         int requiredSize = GetSize();
