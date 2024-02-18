@@ -37,10 +37,7 @@ public class IndexCommands
         string outputDirectory,
 
         [Option('n', Description = "A path to a namelist file.")]
-        string? namelistPath,
-
-        [Option('p', Description = "Disable pretty-printing of the JSON output.")]
-        bool noPrettyPrint = false
+        string? namelistPath
     )
     {
         if (!CommandUtils.TryFindPacksFromPath(_console, inputPath, out List<string> packFiles, out List<string> pack2Files))
@@ -62,13 +59,13 @@ public class IndexCommands
         if (packFiles.Count > 0)
         {
             List<PackIndex> packIndexes = await BuildIndexAsync(packFiles);
-            await SaveIndexes(packIndexes, "pack", !noPrettyPrint, outputDirectory);
+            await SaveIndexes(packIndexes, "pack", outputDirectory);
         }
 
         if (pack2Files.Count > 0)
         {
             List<PackIndex> pack2Indexes = await BuildIndex2Async(pack2Files, namelist);
-            await SaveIndexes(pack2Indexes, "pack2", !noPrettyPrint, outputDirectory);
+            await SaveIndexes(pack2Indexes, "pack2", outputDirectory);
         }
 
         _console.Markup("[green]Indexing Complete![/]");
@@ -159,15 +156,11 @@ public class IndexCommands
 
     private async Task SaveIndexes
     (
-        IReadOnlyList<PackIndex> indexes,
+        IReadOnlyCollection<PackIndex> indexes,
         string suffix,
-        bool prettyPrint,
         string outputDirectory
     )
     {
-        JsonSerializerOptions jsonOptions = new();
-        jsonOptions.WriteIndented = prettyPrint;
-
         await _console.Progress()
             .StartAsync
             (
@@ -183,7 +176,13 @@ public class IndexCommands
                     );
 
                     IndexMetadata metadata = IndexMetadata.FromIndexList(indexes);
-                    await JsonSerializer.SerializeAsync(metadataStream, metadata, jsonOptions, _ct).ConfigureAwait(false);
+                    await JsonSerializer.SerializeAsync
+                    (
+                        metadataStream,
+                        metadata,
+                        CliJsonContext.Default.IndexMetadata,
+                        _ct
+                    );
                     saveTask.Increment(increment);
 
                     foreach (PackIndex index2 in indexes)
@@ -195,7 +194,13 @@ public class IndexCommands
                             FileMode.Create
                         );
 
-                        await JsonSerializer.SerializeAsync(index2Stream, index2, jsonOptions, _ct).ConfigureAwait(false);
+                        await JsonSerializer.SerializeAsync
+                        (
+                            index2Stream,
+                            index2,
+                            CliJsonContext.Default.PackIndex,
+                            _ct
+                        );
                         saveTask.Increment(increment);
                     }
                 }
