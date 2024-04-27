@@ -7,15 +7,20 @@
 
 ### Description
 
-Pack2 files store asset data for games that run on the ForgeLight engine. This format supersedes the [Pack](PackFormat.md) format, and includes better support for detecting modified game files. Furthermore, some data is compressed using `zlib`. It was introduced in PlanetSide 2's DX11 update in April 2019.
+Pack2 files store asset data for games that run on the ForgeLight engine. This format supersedes the [Pack](PackFormat.md) format,
+and includes better support for detecting modified game files. Furthermore, some data is compressed using `zlib`. It was
+introduced in PlanetSide 2's DX11 update in April 2019.
 
 ### Format
 
-Pack2 files have an [initial header](#pack-header) with basic info, such as the asset count and pack length. A buffer containing only `0x00` values is then written up to an offset of `0x200`.
+Pack2 files have an [initial header](#pack-header) with basic info, such as the asset count and pack length. A buffer containing
+only `0x00` values is then written up to an offset of `0x200`.
 
-Next, the [asset data](#asset-data) is written. The asset data blocks also contain compression information, if applicable. Note that this data is in **big endian** format.
+Next, the [asset data](#asset-data) is written. The asset data blocks also contain compression information, if applicable. Note
+that this data is in **big endian** format.
 
-Finally, an *asset map* is written, which contains numerous sequential [asset headers](#asset-header) that hold information about the stored asset data.
+Finally, an *asset map* is written, which contains numerous sequential [asset headers](#asset-header) that hold information about
+the stored asset data.
 
 #### Pack Header
 
@@ -51,4 +56,4 @@ Finally, an *asset map* is written, which contains numerous sequential [asset he
 | Asset Offset          | `uint_64` | `00 94 02 00 00 00 00 00` | The offset of the asset data within the pack.                                                                                                                           |    
 | Stored data size      | `uint_64` | `97 01 00 00 00 00 00 00` | The size of the stored asset data.                                                                                                                                      |
 | Compression Indicator | `uint_32` | `11 00 00 00`             | Compressed: `0x11/0x01`; Uncompressed: `0x10/0x00`.                                                                                                                     |
-| CRC-32 Data Hash      | `uint_32` | `FF 44 AF 89`             | A CRC-32 hash of the stored? data.                                                                                                                                      |
+| CRC-32 Data Hash      | `uint_32` | `FF 44 AF 89`             | A CRC-32 hash of the stored data.                                                                                                                                       |

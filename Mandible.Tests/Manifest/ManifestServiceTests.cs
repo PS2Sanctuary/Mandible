@@ -1,7 +1,6 @@
 using Mandible.Manifest;
 using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
-using Moq.Protected;
+using RichardSzalay.MockHttp;
 using System;
 using System.IO;
 using System.Net;
@@ -19,23 +18,10 @@ public class ManifestServiceTests
     {
         const string digestEndpoint = "https://my.url";
 
-        ManifestService ms = GetManifestService(out Mock<HttpMessageHandler> handler);
+        ManifestService ms = GetManifestService(digestEndpoint + ".txt", out MockHttpMessageHandler handler);
         Digest digest = await ms.GetDigestAsync(digestEndpoint, CancellationToken.None);
 
-        Uri expectedUri = new(digestEndpoint + ".txt");
-        handler.Protected()
-            .Verify
-            (
-                "SendAsync",
-                Times.Exactly(1),
-                ItExpr.Is<HttpRequestMessage>
-                (
-                    req => req.Method == HttpMethod.Get
-                        && req.RequestUri == expectedUri
-                ),
-                ItExpr.IsAny<CancellationToken>()
-            );
-
+        handler.VerifyNoOutstandingExpectation();
         Assert.Equal(159, digest.DigestBuilderVersion);
         Assert.Single(digest.Folders);
     }
@@ -57,57 +43,31 @@ public class ManifestServiceTests
             new Uri("http://pls.patch.daybreakgames.com/patch/sha/planetside2/planetside2.sha.zs"),
             DateTimeOffset.Now,
             "lzma",
-            new [] { "pls.patch.daybreakgames.com", "antonica.patch.daybreakgames.com" },
+            [ "pls.patch.daybreakgames.com", "antonica.patch.daybreakgames.com" ],
             Array.Empty<Uri>(),
             Array.Empty<Folder>()
         );
         ManifestFile file = new("manifest.xml", 2, 1, 0, DateTimeOffset.Now, null, "abcdefgh", null, null, Array.Empty<ManifestFilePatch>());
 
-        ManifestService ms = GetManifestService(out Mock<HttpMessageHandler> handler);
+        const string expectedUrl = "http://pls.patch.daybreakgames.com/patch/sha/planetside2/planetside2.sha.zs/ab/cde/fgh";
+        ManifestService ms = GetManifestService(expectedUrl, out MockHttpMessageHandler handler);
         Stream fileData = await ms.GetFileDataAsync(digest, file, CancellationToken.None);
 
-        Uri expectedUri = new("http://pls.patch.daybreakgames.com/patch/sha/planetside2/planetside2.sha.zs/ab/cde/fgh");
-        handler.Protected()
-            .Verify
-            (
-                "SendAsync",
-                Times.Once(),
-                ItExpr.Is<HttpRequestMessage>
-                (
-                    req => req.Method == HttpMethod.Get
-                           && req.RequestUri == expectedUri
-                ),
-                ItExpr.IsAny<CancellationToken>()
-            );
-
+        handler.VerifyNoOutstandingExpectation();
         Assert.True(fileData.CanSeek);
         Assert.Equal(0, fileData.Position);
     }
 
-    private static ManifestService GetManifestService(out Mock<HttpMessageHandler> handlerMock)
+    private static ManifestService GetManifestService(string expectedUrl, out MockHttpMessageHandler handlerMock)
     {
-        handlerMock = new Mock<HttpMessageHandler>();
-        handlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>
-            (
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync
-            (
-                new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent(DIGEST_DATA)
-                }
-            )
-            .Verifiable();
+        handlerMock = new MockHttpMessageHandler();
+        handlerMock.Expect(HttpMethod.Get, expectedUrl)
+            .Respond(HttpStatusCode.OK, new StringContent(DIGEST_DATA));
 
         return new ManifestService
         (
             NullLogger<ManifestService>.Instance,
-            new HttpClient(handlerMock.Object)
+            handlerMock.ToHttpClient()
         );
     }
 
