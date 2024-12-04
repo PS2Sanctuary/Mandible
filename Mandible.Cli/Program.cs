@@ -9,6 +9,9 @@ namespace Mandible.Cli;
 public class Program
 {
     [Subcommand]
+    public DownloadCommands? DownloadCommands { get; set; }
+
+    [Subcommand]
     public IndexCommands? IndexCommands { get; set; }
 
     [Subcommand]
