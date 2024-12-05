@@ -4,8 +4,10 @@ using Mandible.Cli.Objects;
 using Mandible.Cli.Util;
 using Mandible.Manifest;
 using Spectre.Console;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -67,6 +69,19 @@ public class DownloadCommands
             string outputPath = Path.Combine(outputDirectory, file.Name);
             if (File.Exists(outputPath) && !force)
             {
+                // Check the SHA hash to see if we need to re-download the file
+                if (file.Sha is not null)
+                {
+                    await using FileStream inputFs = new(outputPath, FileMode.Open);
+                    byte[] sha1 = await SHA1.HashDataAsync(inputFs, _ct);
+
+                    if (Convert.ToHexString(sha1).Equals(file.Sha, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _console.WriteLine($"Skipping {file.Name} as the same version already exists");
+                        continue;
+                    }
+                }
+
                 if (!_console.Confirm($"{file.Name} already exists. Overwrite? [y/N]", false))
                     continue;
             }
