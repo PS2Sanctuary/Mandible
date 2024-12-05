@@ -95,7 +95,7 @@ public class UnpackCommands
 
     private async Task ExportPack2AssetsAsync
     (
-        IReadOnlyList<string> pack2Files,
+        List<string> pack2Files,
         string outputPath,
         Namelist? namelist
     )
@@ -116,7 +116,7 @@ public class UnpackCommands
                         if (!Directory.Exists(myOutputPath))
                             Directory.CreateDirectory(myOutputPath);
 
-                        await reader.ExportAllAsync(myOutputPath, namelist, _ct).ConfigureAwait(false);
+                        await reader.ExportAllAsync(myOutputPath, namelist, _ct);
 
                         exportTask.Increment(increment);
                     }

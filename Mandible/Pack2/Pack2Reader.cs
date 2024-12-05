@@ -31,12 +31,12 @@ public class Pack2Reader : IPack2Reader, IDisposable
     protected readonly ZngInflater _inflater;
 
     /// <summary>
-    /// Gets a value indicating whether or not the underlying data source has been validated.
+    /// Gets a value indicating whether the underlying data source has been validated.
     /// </summary>
     protected bool IsValid { get; private set; }
 
     /// <summary>
-    /// Gets a value indicating whether or not this <see cref="Pack2Reader"/> instance has been disposed.
+    /// Gets a value indicating whether this <see cref="Pack2Reader"/> instance has been disposed.
     /// </summary>
     public bool IsDisposed { get; private set; }
 
