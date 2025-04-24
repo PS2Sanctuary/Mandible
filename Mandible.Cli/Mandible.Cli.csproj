@@ -13,9 +13,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommandDotNet" Version="7.0.5" />
-    <PackageReference Include="CommandDotNet.IoC.MicrosoftDependencyInjection" Version="6.0.0" />
-    <PackageReference Include="CommandDotNet.Spectre" Version="3.0.2" />
+    <PackageReference Include="CommandDotNet" Version="8.1.1" />
+    <PackageReference Include="CommandDotNet.IoC.MicrosoftDependencyInjection" Version="7.1.0" />
+    <PackageReference Include="CommandDotNet.Spectre" Version="4.1.0" />
   </ItemGroup>
 
   <ItemGroup>
