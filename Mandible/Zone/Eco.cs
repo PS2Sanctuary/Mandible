@@ -1,5 +1,5 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Exceptions;
-using Mandible.Util;
 using System.Collections.Generic;
 
 namespace Mandible.Zone;
@@ -80,8 +80,8 @@ public class Eco
     public void Write(ref BinaryWriter writer)
     {
         int requiredSize = GetSize();
-        if (requiredSize > writer.Remaining)
-            throw new InvalidBufferSizeException(requiredSize, writer.Remaining);
+        if (requiredSize > writer.RemainingLength)
+            throw new InvalidBufferSizeException(requiredSize, writer.RemainingLength);
 
         writer.WriteUInt32LE(Index);
         TextureInfo.Write(ref writer);

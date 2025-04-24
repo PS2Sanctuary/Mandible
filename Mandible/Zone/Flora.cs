@@ -1,5 +1,5 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Exceptions;
-using Mandible.Util;
 
 namespace Mandible.Zone;
 
@@ -35,7 +35,7 @@ public class Flora
         string name = reader.ReadStringNullTerminated();
         string texture = reader.ReadStringNullTerminated();
         string model = reader.ReadStringNullTerminated();
-        bool unknownValue1 = reader.ReadBoolean();
+        bool unknownValue1 = reader.ReadBool();
         float unknownValue2 = reader.ReadSingleLE();
         float unknownValue3 = reader.ReadSingleLE();
 
@@ -53,13 +53,13 @@ public class Flora
     public void Write(ref BinaryWriter writer)
     {
         int requiredSize = GetSize();
-        if (requiredSize > writer.Remaining)
-            throw new InvalidBufferSizeException(requiredSize, writer.Remaining);
+        if (requiredSize > writer.RemainingLength)
+            throw new InvalidBufferSizeException(requiredSize, writer.RemainingLength);
 
         writer.WriteStringNullTerminated(Name);
         writer.WriteStringNullTerminated(Texture);
         writer.WriteStringNullTerminated(Model);
-        writer.WriteBoolean(UnknownValue1);
+        writer.WriteBool(UnknownValue1);
         writer.WriteSingleLE(UnknownValue2);
         writer.WriteSingleLE(UnknownValue3);
     }

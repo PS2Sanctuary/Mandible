@@ -1,5 +1,5 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Exceptions;
-using Mandible.Util;
 
 namespace Mandible.Common;
 
@@ -41,8 +41,8 @@ public record struct ColorRGBA(byte R, byte G, byte B, byte Alpha)
     /// </exception>
     public void Write(ref BinaryWriter writer)
     {
-        if (writer.Remaining < Size)
-            throw new InvalidBufferSizeException(Size, writer.Remaining);
+        if (writer.RemainingLength < Size)
+            throw new InvalidBufferSizeException(Size, writer.RemainingLength);
 
         writer.WriteByte(R);
         writer.WriteByte(G);

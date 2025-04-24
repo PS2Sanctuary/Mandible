@@ -1,6 +1,6 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Abstractions;
 using Mandible.Exceptions;
-using Mandible.Util;
 using System;
 
 namespace Mandible.Dma;
@@ -89,7 +89,7 @@ public record MaterialParameter
         uint dataLength = reader.ReadUInt32LE();
         ReadOnlySpan<byte> data = reader.ReadBytes((int)dataLength);
 
-        amountRead = reader.Consumed;
+        amountRead = reader.Offset;
         return new MaterialParameter
         (
             semanticHash,
@@ -121,6 +121,6 @@ public record MaterialParameter
         writer.WriteUInt32LE((uint)Data.Length);
         writer.WriteBytes(Data.Span);
 
-        return writer.Written;
+        return writer.Offset;
     }
 }

@@ -1,6 +1,6 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Common;
 using Mandible.Exceptions;
-using Mandible.Util;
 using System;
 
 namespace Mandible.Zone;
@@ -182,7 +182,7 @@ public class Light
         string colorName = reader.ReadStringNullTerminated();
         LightType type = (LightType)reader.ReadUInt16LE();
         LightDataVersion unknownValue1 = (LightDataVersion)reader.ReadUInt16LE();
-        bool unknownValue2 = reader.ReadBoolean();
+        bool unknownValue2 = reader.ReadBool();
         Vector4 translation = Vector4.Read(ref reader);
         Vector4 rotation = Vector4.Read(ref reader);
         float range = reader.ReadSingleLE();
@@ -201,7 +201,7 @@ public class Light
         {
             unknownValue7 = reader.ReadSingleLE();
             unknownValue8 = reader.ReadUInt32LE();
-            unknownValue9 = reader.ReadBoolean();
+            unknownValue9 = reader.ReadBool();
         }
 
         return new Light
@@ -271,14 +271,14 @@ public class Light
     public void Write(ref BinaryWriter writer)
     {
         int requiredSize = GetSize();
-        if (requiredSize > writer.Remaining)
-            throw new InvalidBufferSizeException(requiredSize, writer.Remaining);
+        if (requiredSize > writer.RemainingLength)
+            throw new InvalidBufferSizeException(requiredSize, writer.RemainingLength);
 
         writer.WriteStringNullTerminated(Name);
         writer.WriteStringNullTerminated(ColorName);
         writer.WriteUInt16LE((ushort)Type);
         writer.WriteUInt16LE((ushort)DataVersion);
-        writer.WriteBoolean(UnknownValue2);
+        writer.WriteBool(UnknownValue2);
         Translation.Write(ref writer);
         Rotation.Write(ref writer);
         writer.WriteSingleLE(Range);
@@ -303,6 +303,6 @@ public class Light
 
         writer.WriteSingleLE(UnknownValue7.Value);
         writer.WriteUInt32LE(UnknownValue8.Value);
-        writer.WriteBoolean(UnknownValue9.Value);
+        writer.WriteBool(UnknownValue9.Value);
     }
 }

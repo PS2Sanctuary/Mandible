@@ -1,6 +1,6 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Common;
 using Mandible.Exceptions;
-using Mandible.Util;
 
 namespace Mandible.Zone;
 
@@ -19,8 +19,8 @@ public record struct EcoTint(ColorRGBA Color, int Strength)
 
     public void Write(ref BinaryWriter writer)
     {
-        if (Size > writer.Remaining)
-            throw new InvalidBufferSizeException(Size, writer.Remaining);
+        if (Size > writer.RemainingLength)
+            throw new InvalidBufferSizeException(Size, writer.RemainingLength);
 
         Color.Write(ref writer);
         writer.WriteInt32LE(Strength);

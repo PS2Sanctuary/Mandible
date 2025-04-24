@@ -1,10 +1,9 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Abstractions;
 using Mandible.Exceptions;
-using Mandible.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Mandible.Dma;
 
@@ -19,7 +18,7 @@ public record Dmat
     IReadOnlyList<Material> Materials
 ) : IBufferWritable
 {
-    private static readonly ReadOnlyMemory<byte> MAGIC = Encoding.ASCII.GetBytes("DMAT");
+    private static readonly ReadOnlyMemory<byte> MAGIC = "DMAT"u8.ToArray();
 
     /// <summary>
     /// Gets the DMAT version supported by this class.
@@ -37,17 +36,17 @@ public record Dmat
         if (buffer.IndexOf(MAGIC.Span) != 0)
             throw new UnrecognisedMagicException(buffer[..MAGIC.Length].ToArray(), MAGIC.ToArray());
         BinaryReader reader = new(buffer);
-        reader.Advance(MAGIC.Length);
+        reader.Seek(MAGIC.Length);
 
         uint version = reader.ReadUInt32LE();
         if (version != SUPPORTED_VERSION)
             throw new UnsupportedVersionException(1, version);
 
         uint texturesBlockLen = reader.ReadUInt32LE();
-        int texBlockStartOffset = reader.Consumed;
+        int texBlockStartOffset = reader.Offset;
         List<string> textureFileNames = new();
 
-        while (reader.Consumed - texBlockStartOffset < texturesBlockLen)
+        while (reader.Offset - texBlockStartOffset < texturesBlockLen)
             textureFileNames.Add(reader.ReadStringNullTerminated());
 
         uint materialCount = reader.ReadUInt32LE();
@@ -55,12 +54,12 @@ public record Dmat
         List<Material> materials = new();
         for (int i = 0; i < materialCount; i++)
         {
-            Material material = Material.Read(buffer[reader.Consumed..], out int matAmountRead);
+            Material material = Material.Read(buffer[reader.Offset..], out int matAmountRead);
             materials.Add(material);
-            reader.Advance(matAmountRead);
+            reader.Seek(matAmountRead);
         }
 
-        amountRead = reader.Consumed;
+        amountRead = reader.Offset;
         return new Dmat(textureFileNames, materials);
     }
 
@@ -92,10 +91,10 @@ public record Dmat
 
         foreach (Material material in Materials)
         {
-            int matAmountWritten = material.Write(buffer[writer.Written..]);
-            writer.Advance(matAmountWritten);
+            int matAmountWritten = material.Write(buffer[writer.Offset..]);
+            writer.Seek(matAmountWritten);
         }
 
-        return writer.Written;
+        return writer.Offset;
     }
 }

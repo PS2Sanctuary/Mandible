@@ -1,6 +1,6 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Abstractions;
 using Mandible.Exceptions;
-using Mandible.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,19 +31,19 @@ public record Material
         BinaryReader reader = new(buffer);
 
         uint nameHash = reader.ReadUInt32LE();
-        reader.Advance(sizeof(uint)); // Skip the data length field
+        reader.Seek(sizeof(uint)); // Skip the data length field
         uint materialDefinitionHash = reader.ReadUInt32LE();
         uint parameterCount = reader.ReadUInt32LE();
 
         List<MaterialParameter> parameters = new();
         for (int i = 0; i < parameterCount; i++)
         {
-            MaterialParameter parameter = MaterialParameter.Read(buffer[reader.Consumed..], out int paramAmountRead);
+            MaterialParameter parameter = MaterialParameter.Read(buffer[reader.Offset..], out int paramAmountRead);
             parameters.Add(parameter);
-            reader.Advance(paramAmountRead);
+            reader.Seek(paramAmountRead);
         }
 
-        amountRead = reader.Consumed;
+        amountRead = reader.Offset;
         return new Material
         (
             nameHash,
@@ -75,10 +75,10 @@ public record Material
 
         foreach (MaterialParameter param in Parameters)
         {
-            int paramAmountWritten = param.Write(buffer[writer.Written..]);
-            writer.Advance(paramAmountWritten);
+            int paramAmountWritten = param.Write(buffer[writer.Offset..]);
+            writer.Seek(paramAmountWritten);
         }
 
-        return writer.Written;
+        return writer.Offset;
     }
 }

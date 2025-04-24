@@ -1,5 +1,5 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Exceptions;
-using Mandible.Util;
 
 namespace Mandible.Zone;
 
@@ -37,8 +37,8 @@ public record struct FloatRange(float Min, float Max)
     /// </exception>
     public void Write(ref BinaryWriter writer)
     {
-        if (Size > writer.Remaining)
-            throw new InvalidBufferSizeException(Size, writer.Remaining);
+        if (Size > writer.RemainingLength)
+            throw new InvalidBufferSizeException(Size, writer.RemainingLength);
 
         writer.WriteSingleLE(Min);
         writer.WriteSingleLE(Max);

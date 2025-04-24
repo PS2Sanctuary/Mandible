@@ -1,6 +1,6 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Abstractions;
 using Mandible.Exceptions;
-using Mandible.Util;
 using System;
 using System.Collections.Generic;
 
@@ -14,7 +14,7 @@ public class Zone : IBufferWritable
     /// <summary>
     /// Gets the magic identifier of a zone file.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MAGIC = new[] { (byte)'Z', (byte)'O', (byte)'N', (byte)'E' };
+    public static readonly ReadOnlyMemory<byte> MAGIC = "ZONE"u8.ToArray();
 
     /// <summary>
     /// Gets or sets the version of the zone asset.
@@ -110,7 +110,7 @@ public class Zone : IBufferWritable
 
         if (buffer.IndexOf(MAGIC.Span) != 0)
             throw new UnrecognisedMagicException(buffer[..MAGIC.Length].ToArray(), MAGIC.ToArray());
-        reader.Advance(MAGIC.Length);
+        reader.Seek(MAGIC.Length);
 
         ZoneVersion version = (ZoneVersion)reader.ReadUInt32LE();
         DataOffsets.Read(ref reader);
@@ -145,7 +145,7 @@ public class Zone : IBufferWritable
         uint unknownValue1Count = reader.ReadUInt32LE();
         byte[] unknownValue1 = reader.ReadBytes((int)unknownValue1Count).ToArray();
 
-        amountRead = reader.Consumed;
+        amountRead = reader.Offset;
         return new Zone(version, tileInfo, chunkInfo, ecos, florae, invisibleWalls, objects, lights, unknownValue1);
     }
 
@@ -193,36 +193,36 @@ public class Zone : IBufferWritable
         BinaryWriter writer = new(buffer);
         writer.WriteBytes(MAGIC.Span);
         writer.WriteUInt32LE((uint)Version);
-        writer.Advance(DataOffsets.Size);
+        writer.Seek(DataOffsets.Size);
         TileInfo.Write(ref writer);
         ChunkInfo.Write(ref writer);
 
-        uint ecosOffset = (uint)writer.Written;
+        uint ecosOffset = (uint)writer.Offset;
         writer.WriteUInt32LE((uint)Ecos.Count);
         foreach (Eco eco in Ecos)
             eco.Write(ref writer);
 
-        uint floraeOffset = (uint)writer.Written;
+        uint floraeOffset = (uint)writer.Offset;
         writer.WriteUInt32LE((uint)Florae.Count);
         foreach (Flora flora in Florae)
             flora.Write(ref writer);
 
-        uint invisibleWallsOffset = (uint)writer.Written;
+        uint invisibleWallsOffset = (uint)writer.Offset;
         writer.WriteUInt32LE((uint)InvisibleWalls.Count); // InvisibleWalls.Count
         foreach (InvisibleWall wall in InvisibleWalls)
             wall.Write(ref writer);
 
-        uint objectsOffset = (uint)writer.Written;
+        uint objectsOffset = (uint)writer.Offset;
         writer.WriteUInt32LE((uint)Objects.Count);
         foreach (RuntimeObject obj in Objects)
             obj.Write(ref writer, Version);
 
-        uint lightsOffset = (uint)writer.Written;
+        uint lightsOffset = (uint)writer.Offset;
         writer.WriteUInt32LE((uint)Lights.Count);
         foreach (Light light in Lights)
             light.Write(ref writer);
 
-        uint unknownValue1Offset = (uint)writer.Written;
+        uint unknownValue1Offset = (uint)writer.Offset;
         writer.WriteUInt32LE((uint)UnknownValue1.Length);
         writer.WriteBytes(UnknownValue1);
 
@@ -237,9 +237,9 @@ public class Zone : IBufferWritable
         );
 
         BinaryWriter offsetsWriter = new(buffer);
-        offsetsWriter.Advance(MAGIC.Length + sizeof(ZoneVersion));
+        offsetsWriter.Seek(MAGIC.Length + sizeof(ZoneVersion));
         offsets.Write(ref offsetsWriter);
 
-        return writer.Written;
+        return writer.Offset;
     }
 }

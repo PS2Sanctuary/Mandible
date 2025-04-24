@@ -1,5 +1,5 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Exceptions;
-using Mandible.Util;
 using System.Collections.Generic;
 
 namespace Mandible.Zone;
@@ -79,8 +79,8 @@ public class RuntimeObject
     public void Write(ref BinaryWriter writer, ZoneVersion version)
     {
         int requiredSize = GetSize(version);
-        if (writer.Remaining < requiredSize)
-            throw new InvalidBufferSizeException(requiredSize, writer.Remaining);
+        if (writer.RemainingLength < requiredSize)
+            throw new InvalidBufferSizeException(requiredSize, writer.RemainingLength);
 
         writer.WriteStringNullTerminated(ActorFile);
         writer.WriteSingleLE(RenderDistance);

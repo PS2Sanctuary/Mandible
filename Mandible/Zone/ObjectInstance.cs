@@ -1,6 +1,6 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Common;
 using Mandible.Exceptions;
-using Mandible.Util;
 using System;
 
 namespace Mandible.Zone;
@@ -134,8 +134,8 @@ public class ObjectInstance
     public void Write(ref BinaryWriter writer, ZoneVersion version)
     {
         int requiredSize = GetSize(version);
-        if (requiredSize > writer.Remaining)
-            throw new InvalidBufferSizeException(requiredSize, writer.Remaining);
+        if (requiredSize > writer.RemainingLength)
+            throw new InvalidBufferSizeException(requiredSize, writer.RemainingLength);
 
         Translation.Write(ref writer);
         Rotation.Write(ref writer);

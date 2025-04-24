@@ -1,5 +1,5 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Exceptions;
-using Mandible.Util;
 
 namespace Mandible.Common;
 
@@ -41,8 +41,8 @@ public record struct Vector4(float X, float Y, float Z, float W)
     /// </exception>
     public void Write(ref BinaryWriter writer)
     {
-        if (writer.Remaining < Size)
-            throw new InvalidBufferSizeException(Size, writer.Remaining);
+        if (writer.RemainingLength < Size)
+            throw new InvalidBufferSizeException(Size, writer.RemainingLength);
 
         writer.WriteSingleLE(X);
         writer.WriteSingleLE(Y);
