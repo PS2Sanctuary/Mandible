@@ -8,11 +8,11 @@
 
   <!-- NuGet-related properties -->
   <PropertyGroup>
-    <Version>1.6.0</Version>
+    <Version>1.7.0</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
     <PackageReleaseNotes>
-      - Remove target for net6.0, add target for net9.0
-      - Update dependencies
+      - Migrate from built-in binary utilities to BinaryPrimitiveHelpers.
+      - Update dependencies.
     </PackageReleaseNotes>
 
     <PackageId>carlst99.Mandible</PackageId>
