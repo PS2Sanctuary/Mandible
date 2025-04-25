@@ -172,11 +172,11 @@ public class Light
     }
 
     /// <summary>
-    /// Reads a <see cref="Light"/> instance from a <see cref="BinaryReader"/>.
+    /// Reads a <see cref="Light"/> instance from a <see cref="BinaryPrimitiveReader"/>.
     /// </summary>
     /// <param name="reader">The reader.</param>
     /// <returns>A <see cref="Light"/> instance.</returns>
-    public static Light Read(ref BinaryReader reader)
+    public static Light Read(ref BinaryPrimitiveReader reader)
     {
         string name = reader.ReadStringNullTerminated();
         string colorName = reader.ReadStringNullTerminated();
@@ -262,13 +262,13 @@ public class Light
     }
 
     /// <summary>
-    /// Writes this <see cref="Light"/> instance to a <see cref="BinaryWriter"/>.
+    /// Writes this <see cref="Light"/> instance to a <see cref="BinaryPrimitiveWriter"/>.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <exception cref="InvalidBufferSizeException">
     /// Thrown if there is not enough space remaining in the writer.
     /// </exception>
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         int requiredSize = GetSize();
         if (requiredSize > writer.RemainingLength)

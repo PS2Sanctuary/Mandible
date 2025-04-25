@@ -18,11 +18,11 @@ public record struct ColorRGBA(byte R, byte G, byte B, byte Alpha)
     public const int Size = sizeof(byte) * 4;
 
     /// <summary>
-    /// Reads a <see cref="ColorRGBA"/> instance from a <see cref="BinaryReader"/>.
+    /// Reads a <see cref="ColorRGBA"/> instance from a <see cref="BinaryPrimitiveReader"/>.
     /// </summary>
     /// <param name="reader">The reader.</param>
     /// <returns>A <see cref="ColorRGBA"/> instance.</returns>
-    public static ColorRGBA Read(ref BinaryReader reader)
+    public static ColorRGBA Read(ref BinaryPrimitiveReader reader)
     {
         byte r = reader.ReadByte();
         byte g = reader.ReadByte();
@@ -33,13 +33,13 @@ public record struct ColorRGBA(byte R, byte G, byte B, byte Alpha)
     }
 
     /// <summary>
-    /// Writes this <see cref="ColorRGBA"/> instance to a <see cref="BinaryWriter"/>.
+    /// Writes this <see cref="ColorRGBA"/> instance to a <see cref="BinaryPrimitiveWriter"/>.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <exception cref="InvalidBufferSizeException">
     /// Thrown if the writer does not have enough remaining space.
     /// </exception>
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         if (writer.RemainingLength < Size)
             throw new InvalidBufferSizeException(Size, writer.RemainingLength);

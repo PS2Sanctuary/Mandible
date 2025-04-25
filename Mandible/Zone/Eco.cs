@@ -38,11 +38,11 @@ public class Eco
     }
 
     /// <summary>
-    /// Reads a <see cref="Eco"/> instance from a <see cref="BinaryReader"/>.
+    /// Reads a <see cref="Eco"/> instance from a <see cref="BinaryPrimitiveReader"/>.
     /// </summary>
     /// <param name="reader">The reader.</param>
     /// <returns>A <see cref="Eco"/> instance.</returns>
-    public static Eco Read(ref BinaryReader reader)
+    public static Eco Read(ref BinaryPrimitiveReader reader)
     {
         uint index = reader.ReadUInt32LE();
         TextureInfo textureInfo = TextureInfo.Read(ref reader);
@@ -71,13 +71,13 @@ public class Eco
     }
 
     /// <summary>
-    /// Writes this <see cref="Eco"/> instance to a <see cref="BinaryWriter"/>.
+    /// Writes this <see cref="Eco"/> instance to a <see cref="BinaryPrimitiveWriter"/>.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <exception cref="InvalidBufferSizeException">
     /// Thrown if there is not enough space remaining in the writer.
     /// </exception>
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         int requiredSize = GetSize();
         if (requiredSize > writer.RemainingLength)

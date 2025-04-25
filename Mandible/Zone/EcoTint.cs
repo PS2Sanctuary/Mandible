@@ -9,7 +9,7 @@ public record struct EcoTint(ColorRGBA Color, int Strength)
     public const int Size = ColorRGBA.Size // Color
         + sizeof(int); // Strength
 
-    public static EcoTint Read(ref BinaryReader reader)
+    public static EcoTint Read(ref BinaryPrimitiveReader reader)
     {
         ColorRGBA color = ColorRGBA.Read(ref reader);
         int strength = reader.ReadInt32LE();
@@ -17,7 +17,7 @@ public record struct EcoTint(ColorRGBA Color, int Strength)
         return new EcoTint(color, strength);
     }
 
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         if (Size > writer.RemainingLength)
             throw new InvalidBufferSizeException(Size, writer.RemainingLength);

@@ -37,7 +37,7 @@ public class EcoLayer
         Tints = tints;
     }
 
-    public static EcoLayer Read(ref BinaryReader reader)
+    public static EcoLayer Read(ref BinaryPrimitiveReader reader)
     {
         float density = reader.ReadSingleLE();
         FloatRange scale = FloatRange.Read(ref reader);
@@ -66,7 +66,7 @@ public class EcoLayer
             + sizeof(uint) // Tints.Count
             + EcoTint.Size * Tints.Count;
 
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         int requiredSize = GetSize();
         if (requiredSize > writer.RemainingLength)

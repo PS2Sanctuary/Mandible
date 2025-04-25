@@ -39,12 +39,12 @@ public class RuntimeObject
     }
 
     /// <summary>
-    /// Reads a <see cref="RuntimeObject"/> from a <see cref="BinaryReader"/>.
+    /// Reads a <see cref="RuntimeObject"/> from a <see cref="BinaryPrimitiveReader"/>.
     /// </summary>
     /// <param name="reader">The reader.</param>
     /// <param name="version">The zone version that the data is serialized as.</param>
     /// <returns>The deserialized <see cref="RuntimeObject"/>.</returns>
-    public static RuntimeObject Read(ref BinaryReader reader, ZoneVersion version)
+    public static RuntimeObject Read(ref BinaryPrimitiveReader reader, ZoneVersion version)
     {
         string actorFile = reader.ReadStringNullTerminated();
         float renderDistance = reader.ReadSingleLE();
@@ -69,14 +69,14 @@ public class RuntimeObject
             + Instances.Count * ObjectInstance.GetSize(version);
 
     /// <summary>
-    /// Writes this <see cref="RuntimeObject"/> to a <see cref="BinaryWriter"/>.
+    /// Writes this <see cref="RuntimeObject"/> to a <see cref="BinaryPrimitiveWriter"/>.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <param name="version">The zone version to serialize to.</param>
     /// <exception cref="InvalidBufferSizeException">
     /// Thrown if the writer does not have enough remaining space.
     /// </exception>
-    public void Write(ref BinaryWriter writer, ZoneVersion version)
+    public void Write(ref BinaryPrimitiveWriter writer, ZoneVersion version)
     {
         int requiredSize = GetSize(version);
         if (writer.RemainingLength < requiredSize)

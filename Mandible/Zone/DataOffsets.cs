@@ -68,11 +68,11 @@ public class DataOffsets
     }
 
     /// <summary>
-    /// Reads a <see cref="DataOffsets"/> instance from a <see cref="BinaryReader"/>.
+    /// Reads a <see cref="DataOffsets"/> instance from a <see cref="BinaryPrimitiveReader"/>.
     /// </summary>
     /// <param name="reader">The reader.</param>
     /// <returns>A <see cref="DataOffsets"/> instance.</returns>
-    public static DataOffsets Read(ref BinaryReader reader)
+    public static DataOffsets Read(ref BinaryPrimitiveReader reader)
     {
         uint ecos = reader.ReadUInt32LE();
         uint floras = reader.ReadUInt32LE();
@@ -85,13 +85,13 @@ public class DataOffsets
     }
 
     /// <summary>
-    /// Writes this <see cref="DataOffsets"/> instance to a <see cref="BinaryWriter"/>.
+    /// Writes this <see cref="DataOffsets"/> instance to a <see cref="BinaryPrimitiveWriter"/>.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <exception cref="InvalidBufferSizeException">
     /// Thrown if there is not enough space remaining in the writer.
     /// </exception>
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         if (Size > writer.RemainingLength)
             throw new InvalidBufferSizeException(Size, writer.RemainingLength);

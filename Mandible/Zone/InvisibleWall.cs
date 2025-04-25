@@ -23,7 +23,7 @@ public class InvisibleWall
         UnknownValue4 = unknownValue4;
     }
 
-    public static InvisibleWall Read(ref BinaryReader reader)
+    public static InvisibleWall Read(ref BinaryPrimitiveReader reader)
     {
         uint unknownValue1 = reader.ReadUInt32LE();
         float unknownValue2 = reader.ReadSingleLE();
@@ -33,7 +33,7 @@ public class InvisibleWall
         return new InvisibleWall(unknownValue1, unknownValue2, unknownValue3, unknownValue4);
     }
 
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         if (Size > writer.RemainingLength)
             throw new InvalidBufferSizeException(Size, writer.RemainingLength);

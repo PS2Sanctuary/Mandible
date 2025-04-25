@@ -82,11 +82,11 @@ public class TextureInfo
     }
 
     /// <summary>
-    /// Reads a <see cref="TextureInfo"/> instance from a <see cref="BinaryReader"/>.
+    /// Reads a <see cref="TextureInfo"/> instance from a <see cref="BinaryPrimitiveReader"/>.
     /// </summary>
     /// <param name="reader">The reader.</param>
     /// <returns>A <see cref="TextureInfo"/> instance.</returns>
-    public static TextureInfo Read(ref BinaryReader reader)
+    public static TextureInfo Read(ref BinaryPrimitiveReader reader)
     {
         string name = reader.ReadStringNullTerminated();
         string cnxName = reader.ReadStringNullTerminated();
@@ -124,13 +124,13 @@ public class TextureInfo
             + PhysicsMatName.Length + 1;
 
     /// <summary>
-    /// Writes this <see cref="TextureInfo"/> instance to a <see cref="BinaryWriter"/>.
+    /// Writes this <see cref="TextureInfo"/> instance to a <see cref="BinaryPrimitiveWriter"/>.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <exception cref="InvalidBufferSizeException">
     /// Thrown if there is not enough space remaining in the writer.
     /// </exception>
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         int requiredSize = GetSize();
         if (requiredSize > writer.RemainingLength)

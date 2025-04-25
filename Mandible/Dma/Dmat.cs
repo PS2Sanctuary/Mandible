@@ -35,7 +35,7 @@ public record Dmat
     {
         if (buffer.IndexOf(MAGIC.Span) != 0)
             throw new UnrecognisedMagicException(buffer[..MAGIC.Length].ToArray(), MAGIC.ToArray());
-        BinaryReader reader = new(buffer);
+        BinaryPrimitiveReader reader = new(buffer);
         reader.Seek(MAGIC.Length);
 
         uint version = reader.ReadUInt32LE();
@@ -79,7 +79,7 @@ public record Dmat
         if (buffer.Length < requiredBufferSize)
             throw new InvalidBufferSizeException(requiredBufferSize, buffer.Length);
 
-        BinaryWriter writer = new(buffer);
+        BinaryPrimitiveWriter writer = new(buffer);
         writer.WriteBytes(MAGIC.Span);
         writer.WriteUInt32LE(SUPPORTED_VERSION);
         writer.WriteUInt32LE((uint)TextureFileNames.Sum(t => t.Length + 1));

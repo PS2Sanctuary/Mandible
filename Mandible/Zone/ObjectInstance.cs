@@ -77,12 +77,12 @@ public class ObjectInstance
     }
 
     /// <summary>
-    /// Reads a <see cref="ObjectInstance"/> instance from a <see cref="BinaryReader"/>
+    /// Reads a <see cref="ObjectInstance"/> instance from a <see cref="BinaryPrimitiveReader"/>
     /// </summary>
     /// <param name="reader">The reader.</param>
     /// <param name="version">The zone version that the instance is being read from.</param>
     /// <returns>An <see cref="ObjectInstance"/> instance.</returns>
-    public static ObjectInstance Read(ref BinaryReader reader, ZoneVersion version)
+    public static ObjectInstance Read(ref BinaryPrimitiveReader reader, ZoneVersion version)
     {
         Vector4 translation = Vector4.Read(ref reader);
         Vector4 rotation = Vector4.Read(ref reader);
@@ -121,7 +121,7 @@ public class ObjectInstance
             + sizeof(float); // UnknownValue4
 
     /// <summary>
-    /// Writes this <see cref="ObjectInstance"/> to a <see cref="BinaryWriter"/>
+    /// Writes this <see cref="ObjectInstance"/> to a <see cref="BinaryPrimitiveWriter"/>
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <param name="version">The zone version to serialize as.</param>
@@ -131,7 +131,7 @@ public class ObjectInstance
     /// <exception cref="InvalidOperationException">
     /// Thrown if this instance has not been correctly initialized for the requested version.
     /// </exception>
-    public void Write(ref BinaryWriter writer, ZoneVersion version)
+    public void Write(ref BinaryPrimitiveWriter writer, ZoneVersion version)
     {
         int requiredSize = GetSize(version);
         if (requiredSize > writer.RemainingLength)

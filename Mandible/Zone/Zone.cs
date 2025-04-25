@@ -106,7 +106,7 @@ public class Zone : IBufferWritable
     /// <exception cref="UnrecognisedMagicException">Thrown if the buffer does not represent a zone asset.</exception>
     public static Zone Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
-        BinaryReader reader = new(buffer);
+        BinaryPrimitiveReader reader = new(buffer);
 
         if (buffer.IndexOf(MAGIC.Span) != 0)
             throw new UnrecognisedMagicException(buffer[..MAGIC.Length].ToArray(), MAGIC.ToArray());
@@ -190,7 +190,7 @@ public class Zone : IBufferWritable
         if (buffer.Length < requiredBufferSize)
             throw new InvalidBufferSizeException(requiredBufferSize, buffer.Length);
 
-        BinaryWriter writer = new(buffer);
+        BinaryPrimitiveWriter writer = new(buffer);
         writer.WriteBytes(MAGIC.Span);
         writer.WriteUInt32LE((uint)Version);
         writer.Seek(DataOffsets.Size);
@@ -236,7 +236,7 @@ public class Zone : IBufferWritable
             unknownValue1Offset
         );
 
-        BinaryWriter offsetsWriter = new(buffer);
+        BinaryPrimitiveWriter offsetsWriter = new(buffer);
         offsetsWriter.Seek(MAGIC.Length + sizeof(ZoneVersion));
         offsets.Write(ref offsetsWriter);
 

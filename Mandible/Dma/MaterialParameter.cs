@@ -81,7 +81,7 @@ public record MaterialParameter
     /// <returns>A <see cref="MaterialParameter"/> instance.</returns>
     public static MaterialParameter Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
-        BinaryReader reader = new(buffer);
+        BinaryPrimitiveReader reader = new(buffer);
 
         uint semanticHash = reader.ReadUInt32LE();
         uint d3Class = reader.ReadUInt32LE();
@@ -114,7 +114,7 @@ public record MaterialParameter
         if (buffer.Length < requiredBufferSize)
             throw new InvalidBufferSizeException(requiredBufferSize, buffer.Length);
 
-        BinaryWriter writer = new(buffer);
+        BinaryPrimitiveWriter writer = new(buffer);
         writer.WriteUInt32LE(SemanticHash);
         writer.WriteUInt32LE(D3DXParameterClass);
         writer.WriteUInt32LE(D3DXParameterType);

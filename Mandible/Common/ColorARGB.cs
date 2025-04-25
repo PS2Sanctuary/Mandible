@@ -18,11 +18,11 @@ public record struct ColorARGB(byte Alpha, byte R, byte G, byte B)
     public const int Size = sizeof(byte) * 4;
 
     /// <summary>
-    /// Reads a <see cref="ColorARGB"/> instance from a <see cref="BinaryReader"/>.
+    /// Reads a <see cref="ColorARGB"/> instance from a <see cref="BinaryPrimitiveReader"/>.
     /// </summary>
     /// <param name="reader">The reader.</param>
     /// <returns>A <see cref="ColorRGBA"/> instance.</returns>
-    public static ColorARGB Read(ref BinaryReader reader)
+    public static ColorARGB Read(ref BinaryPrimitiveReader reader)
     {
         byte alpha = reader.ReadByte();
         byte r = reader.ReadByte();
@@ -33,14 +33,14 @@ public record struct ColorARGB(byte Alpha, byte R, byte G, byte B)
     }
 
     /// <summary>
-    /// Writes this <see cref="ColorARGB"/> instance to a <see cref="BinaryWriter"/>.
+    /// Writes this <see cref="ColorARGB"/> instance to a <see cref="BinaryPrimitiveWriter"/>.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <returns></returns>
     /// <exception cref="InvalidBufferSizeException">
     /// Thrown if the writer does not have enough remaining space.
     /// </exception>
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         if (writer.RemainingLength < Size)
             throw new InvalidBufferSizeException(Size, writer.RemainingLength);

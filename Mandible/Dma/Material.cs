@@ -28,7 +28,7 @@ public record Material
     /// <returns>A <see cref="Material"/> instance.</returns>
     public static Material Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
-        BinaryReader reader = new(buffer);
+        BinaryPrimitiveReader reader = new(buffer);
 
         uint nameHash = reader.ReadUInt32LE();
         reader.Seek(sizeof(uint)); // Skip the data length field
@@ -67,7 +67,7 @@ public record Material
         if (buffer.Length < requiredBufferSize)
             throw new InvalidBufferSizeException(requiredBufferSize, buffer.Length);
 
-        BinaryWriter writer = new(buffer);
+        BinaryPrimitiveWriter writer = new(buffer);
         writer.WriteUInt32LE(NameHash);
         writer.WriteUInt32LE((uint)requiredBufferSize - sizeof(uint) - sizeof(uint));
         writer.WriteUInt32LE(MaterialDefinitionHash);

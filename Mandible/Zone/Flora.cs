@@ -30,7 +30,7 @@ public class Flora
         UnknownValue3 = unknownValue3;
     }
 
-    public static Flora Read(ref BinaryReader reader)
+    public static Flora Read(ref BinaryPrimitiveReader reader)
     {
         string name = reader.ReadStringNullTerminated();
         string texture = reader.ReadStringNullTerminated();
@@ -50,7 +50,7 @@ public class Flora
             + sizeof(float) // UnknownValue2
             + sizeof(float); // UnknownValue3
 
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         int requiredSize = GetSize();
         if (requiredSize > writer.RemainingLength)

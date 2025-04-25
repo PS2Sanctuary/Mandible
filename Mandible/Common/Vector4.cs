@@ -18,11 +18,11 @@ public record struct Vector4(float X, float Y, float Z, float W)
     public const int Size = sizeof(float) * 4;
 
     /// <summary>
-    /// Reads a <see cref="Vector4"/> instance from a <see cref="BinaryReader"/>.
+    /// Reads a <see cref="Vector4"/> instance from a <see cref="BinaryPrimitiveReader"/>.
     /// </summary>
     /// <param name="reader">The reader.</param>
     /// <returns>A <see cref="Vector4"/> instance.</returns>
-    public static Vector4 Read(ref BinaryReader reader)
+    public static Vector4 Read(ref BinaryPrimitiveReader reader)
     {
         float x = reader.ReadSingleLE();
         float y = reader.ReadSingleLE();
@@ -33,13 +33,13 @@ public record struct Vector4(float X, float Y, float Z, float W)
     }
 
     /// <summary>
-    /// Writes this <see cref="Vector4"/> instance to a <see cref="BinaryWriter"/>.
+    /// Writes this <see cref="Vector4"/> instance to a <see cref="BinaryPrimitiveWriter"/>.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <exception cref="InvalidBufferSizeException">
     /// Thrown if the writer does not have enough remaining space.
     /// </exception>
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         if (writer.RemainingLength < Size)
             throw new InvalidBufferSizeException(Size, writer.RemainingLength);

@@ -16,11 +16,11 @@ public record struct FloatRange(float Min, float Max)
     public const int Size = sizeof(float) * 2;
 
     /// <summary>
-    /// Reads a <see cref="FloatRange"/> instance from a <see cref="BinaryReader"/>.
+    /// Reads a <see cref="FloatRange"/> instance from a <see cref="BinaryPrimitiveReader"/>.
     /// </summary>
     /// <param name="reader">The reader.</param>
     /// <returns>The deserialized <see cref="FloatRange"/>.</returns>
-    public static FloatRange Read(ref BinaryReader reader)
+    public static FloatRange Read(ref BinaryPrimitiveReader reader)
     {
         float min = reader.ReadSingleLE();
         float max = reader.ReadSingleLE();
@@ -29,13 +29,13 @@ public record struct FloatRange(float Min, float Max)
     }
 
     /// <summary>
-    /// Writes this <see cref="FloatRange"/> to a <see cref="BinaryWriter"/>.
+    /// Writes this <see cref="FloatRange"/> to a <see cref="BinaryPrimitiveWriter"/>.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <exception cref="InvalidBufferSizeException">
     /// Thrown if the writer does not have enough remaining space.
     /// </exception>
-    public void Write(ref BinaryWriter writer)
+    public void Write(ref BinaryPrimitiveWriter writer)
     {
         if (Size > writer.RemainingLength)
             throw new InvalidBufferSizeException(Size, writer.RemainingLength);
