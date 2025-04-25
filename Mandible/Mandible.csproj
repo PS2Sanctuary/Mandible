@@ -8,7 +8,7 @@
 
   <!-- NuGet-related properties -->
   <PropertyGroup>
-    <Version>1.7.0</Version>
+    <Version>1.7.1</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
     <PackageReleaseNotes>
       - Migrate from built-in binary utilities to BinaryPrimitiveHelpers.
