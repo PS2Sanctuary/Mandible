@@ -35,6 +35,29 @@ struct FallbackItem
     DigestStringProperty Host;
 };
 
+struct File
+{
+    //short UnknownValue1;
+    short UnknownValue2;
+    DigestStringProperty Name;
+    int UnknownValue3;
+    int UnknownValue4;
+    int UnknownValue5;
+    int Crc;
+    short UnknownValue6;
+    int Timestamp;
+    byte UnknownValue7;
+    int UnknownValue8; // Another timestamp?
+    byte Sha[20];
+};
+
+struct Folder
+{
+    byte FileCount;
+    byte DownloadPriority; // Maybe? Could be part of the file structure
+    File Files[FileCount];
+};
+
 struct Digest
 {
     short UnknownValue1; // Magic value?
@@ -53,3 +76,5 @@ struct Digest
 };
 
 Digest main @ 0x00;
+Folder folder @ 0x18B;
+Folder folder2 @ 0x1E0;
