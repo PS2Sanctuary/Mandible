@@ -52,7 +52,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
         CancellationToken ct = default
     )
     {
-        byte[] compressed = Array.Empty<byte>();
+        byte[] compressed = [];
         bool compress = !raw && zip is Asset2ZipDefinition.Zipped or Asset2ZipDefinition.ZippedAlternate;
 
         if (compress)

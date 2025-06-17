@@ -23,6 +23,7 @@ public class Program
         app.Add<DownloadCommands>("download");
         app.Add<IndexCommands>("index");
         app.Add<NamelistCommands>("namelist");
+        app.Add<PackCommands>("pack");
         app.Add<UnpackCommands>("unpack");
 
         app.Run(args);
