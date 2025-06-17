@@ -3,8 +3,6 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-Mandible/Pack2/Crc32AssetHashProvider.cs
-
 # User-specific files
 *.rsuser
 *.suo

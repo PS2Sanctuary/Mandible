@@ -20,7 +20,6 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
     private readonly IDataWriterService _writer;
     private readonly List<Asset2Header> _assetMap;
     private readonly ZngDeflater _deflater;
-    private readonly IAssetHashProvider _hashProvider;
 
     private long _currentOffset;
 
@@ -34,14 +33,12 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
     /// Initializes a new instance of the <see cref="Pack2Writer"/> class.
     /// </summary>
     /// <param name="writer">The data writer to use.</param>
-    /// <param name="crcProvider">The CRC provider, used to calculated hashes of any written asset data.</param>
-    public Pack2Writer(IDataWriterService writer, IAssetHashProvider? crcProvider = null)
+    public Pack2Writer(IDataWriterService writer)
     {
         _writer = writer;
         _assetMap = new List<Asset2Header>();
         _currentOffset = DATA_START_OFFSET;
         _deflater = new ZngDeflater(CompressionLevel.BestCompression);
-        _hashProvider = crcProvider ?? DefaultHashProvider.Shared;
     }
 
     /// <inheritdoc />
@@ -89,7 +86,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
             0
         );
 
-        uint crc = dataHashOverride ?? _hashProvider.CalculateDataHash(header, assetData.Span);
+        uint crc = dataHashOverride ?? AssetHashCrc32.CalculateDataHash(header, assetData.Span);
         header = header with { DataHash = crc };
 
         _assetMap.Add(header);
@@ -142,13 +139,5 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
     {
         _currentOffset += 0x100;
         _currentOffset = (long)((ulong)_currentOffset & 0xFFFFFFFFFFFFFF00);
-    }
-
-    private class DefaultHashProvider : IAssetHashProvider
-    {
-        public static readonly DefaultHashProvider Shared = new();
-
-        public uint CalculateDataHash(Asset2Header header, ReadOnlySpan<byte> data)
-            => 0;
     }
 }
