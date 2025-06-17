@@ -9,7 +9,7 @@
 
   <!-- NuGet-related properties -->
   <PropertyGroup>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
     <PackageReleaseNotes>
       - Add pack2 asset hash calculation.
