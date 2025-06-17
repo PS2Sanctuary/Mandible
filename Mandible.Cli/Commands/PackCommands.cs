@@ -1,10 +1,16 @@
+using CommunityToolkit.HighPerformance.Buffers;
 using ConsoleAppFramework;
 using Mandible.Pack2;
 using Mandible.Services;
+using Microsoft.Win32.SafeHandles;
 using Spectre.Console;
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using ZlibNGSharpMinimal;
+using ZlibNGSharpMinimal.Deflate;
+using ZlibNGSharpMinimal.Exceptions;
 
 namespace Mandible.Cli.Commands;
 
@@ -22,12 +28,14 @@ public class PackCommands
     /// </summary>
     /// <param name="inputDirectory">The directory containing files to pack.</param>
     /// <param name="outputPath">The path to write the generated pack2 file to.</param>
+    /// <param name="verbose">-v, Enable verbose output.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("create-pack-2")]
     public async Task CreatePack2
     (
         [Argument] string inputDirectory,
         [Argument] string outputPath,
+        bool verbose = true,
         CancellationToken ct = default
     )
     {
@@ -37,7 +45,85 @@ public class PackCommands
                 return;
         }
 
+        if (!Directory.Exists(inputDirectory))
+        {
+            _console.MarkupLine("[red]The input directory does not exist[/]");
+            return;
+        }
+
         using RandomAccessDataWriterService ioWriter = new(outputPath, FileMode.Create);
         await using Pack2Writer writer = new(ioWriter);
+        string[] filesToPack = Directory.GetFiles(inputDirectory);
+
+        await _console.Progress()
+            .StartAsync(async ctx =>
+            {
+                ProgressTask exportTask = ctx.AddTask("Exporting pack assets...");
+                exportTask.MaxValue = filesToPack.Length;
+
+                await WriteFilesToPack2(exportTask, verbose, filesToPack, writer, ct);
+            });
+
+        _console.MarkupLine("[green]Packing complete![/]");
+    }
+
+    private async Task WriteFilesToPack2
+    (
+        ProgressTask taskCtx,
+        bool verboseOutput,
+        string[] files,
+        Pack2Writer writer,
+        CancellationToken ct
+    )
+    {
+        using ZngDeflater deflater = new(CompressionLevel.BestCompression);
+
+        foreach (string file in files)
+        {
+            using MemoryOwner<byte> assetData = LoadFileData(file);
+            using MemoryOwner<byte> deflatedBuffer = MemoryOwner<byte>.Allocate(assetData.Length);
+
+            int deflatedLength = int.MaxValue;
+            try
+            {
+                deflatedLength = (int)deflater.Deflate(assetData.Span, deflatedBuffer.Span);
+            }
+            catch (ZngCompressionException zce) when (zce.ErrorCode is CompressionResult.OK)
+            {
+                // This is fine, almost certainly the buffer deflated to a larger size
+            }
+
+            deflater.Reset();
+
+            Memory<byte> bufferToWrite = assetData.Length <= deflatedLength
+                ? assetData.Memory
+                : deflatedBuffer.Memory[..deflatedLength];
+            bool isCompressed = deflatedLength < assetData.Length;
+
+            await writer.WriteAssetAsync
+            (
+                Path.GetFileName(file),
+                bufferToWrite,
+                isCompressed ? Asset2ZipDefinition.Zipped : Asset2ZipDefinition.Unzipped,
+                null,
+                true,
+                ct
+            );
+
+            if (verboseOutput)
+                _console.WriteLine($"Packed {file}");
+            taskCtx.Increment(1);
+        }
+    }
+
+    private static MemoryOwner<byte> LoadFileData(string filePath)
+    {
+        using SafeFileHandle handle = File.OpenHandle(filePath);
+
+        long fileLen = RandomAccess.GetLength(handle);
+        MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate((int)fileLen);
+        RandomAccess.Read(handle, buffer.Span, 0);
+
+        return buffer;
     }
 }
