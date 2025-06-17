@@ -8,11 +8,10 @@
 
   <!-- NuGet-related properties -->
   <PropertyGroup>
-    <Version>1.7.1</Version>
+    <Version>2.0.0</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
     <PackageReleaseNotes>
-      - Migrate from built-in binary utilities to BinaryPrimitiveHelpers.
-      - Update dependencies.
+      - Add pack2 asset hash calculation.
     </PackageReleaseNotes>
 
     <PackageId>carlst99.Mandible</PackageId>
