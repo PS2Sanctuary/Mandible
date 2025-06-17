@@ -1,4 +1,4 @@
-﻿using CommandDotNet;
+﻿using ConsoleAppFramework;
 using Mandible.Abstractions.Manifest;
 using Mandible.Cli.Objects;
 using Mandible.Cli.Util;
@@ -13,7 +13,9 @@ using System.Threading.Tasks;
 
 namespace Mandible.Cli.Commands;
 
-[Command("download", Description = "Downloads PlanetSide 2 assets from the DBG CDN.")]
+/// <summary>
+/// Downloads PlanetSide 2 assets from the DBG CDN.
+/// </summary>
 public class DownloadCommands
 {
     private static readonly Dictionary<PS2Environment, string> ManifestUrls = new()
@@ -23,43 +25,50 @@ public class DownloadCommands
     };
 
     private readonly IAnsiConsole _console;
-    private readonly CancellationToken _ct;
     private readonly IManifestService _manifestService;
 
     public DownloadCommands
     (
         IAnsiConsole console,
-        IManifestService manifestService,
-        CancellationToken ct
+        IManifestService manifestService
     )
     {
         _console = console;
         _manifestService = manifestService;
-        _ct = ct;
     }
 
-    [Command("packs", Description = "Downloads every asset pack (*.pack2).")]
+    /// <summary>
+    /// Downloads every asset pack (*.pack2).
+    /// </summary>
+    /// <param name="outputDirectory">The directory to download the packets into.</param>
+    /// <param name="environment">-e, The environment from which to select assets.</param>
+    /// <param name="force">-f, Force overwrite of existing pack files.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
+    [Command("packs")]
     public async Task ExtractAsync
     (
-        [Operand(Description = "The directory to download the packets into.")]
-        string outputDirectory,
-
-        [Option('e', Description = "The environment from which to select assets.")]
+        [Argument] string outputDirectory,
         PS2Environment environment = PS2Environment.Live,
-
-        [Option('f', Description = "Force overwrite of existing pack files.")]
-        bool force = false
+        bool force = false,
+        CancellationToken ct = default
     )
     {
         if (!CommandUtils.CheckOutputDirectory(_console, outputDirectory))
             return;
 
-        Digest digest = await _manifestService.GetDigestAsync(ManifestUrls[environment], _ct);
+        Digest digest = await _manifestService.GetDigestAsync(ManifestUrls[environment], ct);
         foreach (Folder folder in digest.Folders)
-            await DownloadFolder(digest, folder, outputDirectory, force);
+            await DownloadFolder(digest, folder, outputDirectory, force, ct);
     }
 
-    private async Task DownloadFolder(Digest digest, Folder folder, string outputDirectory, bool force)
+    private async Task DownloadFolder
+    (
+        Digest digest,
+        Folder folder,
+        string outputDirectory,
+        bool force,
+        CancellationToken ct
+    )
     {
         foreach (ManifestFile file in folder.Files)
         {
@@ -73,7 +82,7 @@ public class DownloadCommands
                 if (file.Sha is not null)
                 {
                     await using FileStream inputFs = new(outputPath, FileMode.Open);
-                    byte[] sha1 = await SHA1.HashDataAsync(inputFs, _ct);
+                    byte[] sha1 = await SHA1.HashDataAsync(inputFs, ct);
 
                     if (Convert.ToHexString(sha1).Equals(file.Sha, StringComparison.OrdinalIgnoreCase))
                     {
@@ -88,12 +97,12 @@ public class DownloadCommands
 
             AnsiConsole.WriteLine($"Downloading {file.Name}...");
 
-            await using Stream s = await _manifestService.GetFileDataAsync(digest, file, _ct);
+            await using Stream s = await _manifestService.GetFileDataAsync(digest, file, ct);
             await using FileStream fs = new(outputPath, FileMode.Create);
-            await s.CopyToAsync(fs, _ct);
+            await s.CopyToAsync(fs, ct);
         }
 
         foreach (Folder child in folder.Children)
-            await DownloadFolder(digest, child, outputDirectory, force);
+            await DownloadFolder(digest, child, outputDirectory, force, ct);
     }
 }

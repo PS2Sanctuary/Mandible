@@ -1,47 +1,30 @@
-﻿using CommandDotNet;
-using CommandDotNet.IoC.MicrosoftDependencyInjection;
-using CommandDotNet.Spectre;
+﻿using ConsoleAppFramework;
 using Mandible.Abstractions.Manifest;
 using Mandible.Cli.Commands;
 using Mandible.Manifest;
 using Microsoft.Extensions.DependencyInjection;
-using System;
+using Spectre.Console;
 using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace Mandible.Cli;
 
 public class Program
 {
-    //[Subcommand]
-    public DownloadCommands? DownloadCommands { get; set; }
-
-    [Subcommand]
-    public IndexCommands? IndexCommands { get; set; }
-
-    [Subcommand]
-    public NamelistCommands? NamelistCommands { get; set; }
-
-    [Subcommand]
-    public UnpackCommands? UnpackCommands { get; set; }
-
-    public static async Task<int> Main(string[] args)
+    public static void Main(string[] args)
     {
-        try
-        {
-            ServiceCollection services = new();
-            services.AddTransient<HttpClient>();
-            services.AddSingleton<IManifestService, ManifestService>();
+        ConsoleApp.ConsoleAppBuilder app = ConsoleApp.Create()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<IAnsiConsole>(AnsiConsole.Console);
+                services.AddTransient<HttpClient>();
+                services.AddSingleton<IManifestService, ManifestService>();
+            });
 
-            return await new AppRunner<Program>()
-                .UseDefaultMiddleware()
-                .UseSpectreAnsiConsole()
-                //.UseMicrosoftDependencyInjection(services.BuildServiceProvider())
-                .RunAsync(args);
-        }
-        catch (OperationCanceledException)
-        {
-            return 0;
-        }
+        app.Add<DownloadCommands>("download");
+        app.Add<IndexCommands>("index");
+        app.Add<NamelistCommands>("namelist");
+        app.Add<UnpackCommands>("unpack");
+
+        app.Run(args);
     }
 }

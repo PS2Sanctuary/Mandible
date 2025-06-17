@@ -1,4 +1,4 @@
-﻿using CommandDotNet;
+﻿using ConsoleAppFramework;
 using Mandible.Cli.Objects;
 using Mandible.Cli.Util;
 using Mandible.Pack;
@@ -15,29 +15,32 @@ using System.Threading.Tasks;
 
 namespace Mandible.Cli.Commands;
 
-[Command("index", Description = "Builds JSON-structured indexes of the given pack/pack2 file/s.")]
+/// <summary>
+/// Builds JSON-structured indexes of the given pack/pack2 file/s.
+/// </summary>
 public class IndexCommands
 {
     private readonly IAnsiConsole _console;
-    private readonly CancellationToken _ct;
 
-    public IndexCommands(IAnsiConsole console, CancellationToken ct)
+    public IndexCommands(IAnsiConsole console)
     {
         _console = console;
-        _ct = ct;
     }
 
-    [DefaultCommand]
+    /// <summary>
+    /// Builds JSON-structured indexes of the given pack/pack2 file/s.
+    /// </summary>
+    /// <param name="inputPath">A path to the pack/pack2 file to index, or a directory containing multiple.</param>
+    /// <param name="outputDirectory">The directory to output the index files to.</param>
+    /// <param name="namelistPath">-n|--namelist, A path to a namelist file.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
+    [Command("")]
     public async Task ExecuteAsync
     (
-        [Operand(Description = "A path to the pack/pack2 file to index, or a directory containing multiple.")]
-        string inputPath,
-
-        [Operand(Description = "The directory to output the index files to.")]
-        string outputDirectory,
-
-        [Option('n', Description = "A path to a namelist file.")]
-        string? namelistPath
+        [Argument] string inputPath,
+        [Argument] string outputDirectory,
+        string? namelistPath,
+        CancellationToken ct = default
     )
     {
         if (!CommandUtils.TryFindPacksFromPath(_console, inputPath, out List<string> packFiles, out List<string> pack2Files))
@@ -54,24 +57,24 @@ public class IndexCommands
 
         Namelist? namelist = null;
         if (namelistPath is not null)
-            namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct);
+            namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, ct);
 
         if (packFiles.Count > 0)
         {
-            List<PackIndex> packIndexes = await BuildIndexAsync(packFiles);
-            await SaveIndexes(packIndexes, "pack", outputDirectory);
+            List<PackIndex> packIndexes = await BuildIndexAsync(packFiles, ct);
+            await SaveIndexes(packIndexes, "pack", outputDirectory, ct);
         }
 
         if (pack2Files.Count > 0)
         {
-            List<PackIndex> pack2Indexes = await BuildIndex2Async(pack2Files, namelist);
-            await SaveIndexes(pack2Indexes, "pack2", outputDirectory);
+            List<PackIndex> pack2Indexes = await BuildIndex2Async(pack2Files, namelist, ct);
+            await SaveIndexes(pack2Indexes, "pack2", outputDirectory, ct);
         }
 
         _console.Markup("[green]Indexing Complete![/]");
     }
 
-    private async Task<List<PackIndex>> BuildIndexAsync(IReadOnlyList<string> packFiles)
+    private async Task<List<PackIndex>> BuildIndexAsync(IReadOnlyList<string> packFiles, CancellationToken ct)
         => await _console.Progress()
             .StartAsync
             (
@@ -87,7 +90,7 @@ public class IndexCommands
                         using RandomAccessDataReaderService dataReader = new(file);
                         PackReader reader = new(dataReader);
 
-                        IReadOnlyList<AssetHeader> assetHeaders = await reader.ReadAssetHeadersAsync(_ct);
+                        IReadOnlyList<AssetHeader> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
 
                         IEnumerable<PackIndex.IndexAsset> assets = assetHeaders
                             .Select(s => PackIndex.IndexAsset.FromAssetHeader(s))
@@ -111,54 +114,58 @@ public class IndexCommands
                 }
             );
 
-    private async Task<List<PackIndex>> BuildIndex2Async(IReadOnlyList<string> pack2Files, Namelist? namelist)
-        => await _console.Progress()
-            .StartAsync
-            (
-                async ctx =>
+    private async Task<List<PackIndex>> BuildIndex2Async
+    (
+        IReadOnlyList<string> pack2Files,
+        Namelist? namelist,
+        CancellationToken ct
+    )
+    {
+        return await _console.Progress()
+            .StartAsync(async ctx =>
+            {
+                ProgressTask indexTask = ctx.AddTask("Building pack2 indexes...");
+                namelist ??= new Namelist();
+
+                List<PackIndex> packIndexes = [];
+                double increment = indexTask.MaxValue / pack2Files.Count;
+
+                foreach (string file in pack2Files)
                 {
-                    ProgressTask indexTask = ctx.AddTask("Building pack2 indexes...");
-                    if (namelist is null)
-                        namelist = new Namelist();
+                    using RandomAccessDataReaderService dataReader = new(file);
+                    using Pack2Reader reader = new(dataReader);
 
-                    List<PackIndex> packIndexes = new();
-                    double increment = indexTask.MaxValue / pack2Files.Count;
+                    Pack2Header header = await reader.ReadHeaderAsync(ct);
+                    IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
 
-                    foreach (string file in pack2Files)
-                    {
-                        using RandomAccessDataReaderService dataReader = new(file);
-                        using Pack2Reader reader = new(dataReader);
+                    IEnumerable<PackIndex.IndexAsset> assets = assetHeaders
+                        .Select(s => PackIndex.IndexAsset.FromAsset2Header(s, namelist))
+                        .OrderBy(a => a.Name);
 
-                        Pack2Header header = await reader.ReadHeaderAsync(_ct).ConfigureAwait(false);
-                        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(_ct).ConfigureAwait(false);
-
-                        IEnumerable<PackIndex.IndexAsset> assets = assetHeaders
-                            .Select(s => PackIndex.IndexAsset.FromAsset2Header(s, namelist))
-                            .OrderBy(a => a.Name);
-
-                        packIndexes.Add
+                    packIndexes.Add
+                    (
+                        new PackIndex
                         (
-                            new PackIndex
-                            (
-                                Path.GetFullPath(file),
-                                header.AssetCount,
-                                header.Length,
-                                assets.ToList()
-                            )
-                        );
+                            Path.GetFullPath(file),
+                            header.AssetCount,
+                            header.Length,
+                            assets.ToList()
+                        )
+                    );
 
-                        indexTask.Increment(increment);
-                    }
-
-                    return packIndexes;
+                    indexTask.Increment(increment);
                 }
-            );
+
+                return packIndexes;
+            });
+    }
 
     private async Task SaveIndexes
     (
         IReadOnlyCollection<PackIndex> indexes,
         string suffix,
-        string outputDirectory
+        string outputDirectory,
+        CancellationToken ct
     )
     {
         await _console.Progress()
@@ -181,7 +188,7 @@ public class IndexCommands
                         metadataStream,
                         metadata,
                         CliJsonContext.Default.IndexMetadata,
-                        _ct
+                        ct
                     );
                     saveTask.Increment(increment);
 
@@ -199,7 +206,7 @@ public class IndexCommands
                             index2Stream,
                             index2,
                             CliJsonContext.Default.PackIndex,
-                            _ct
+                            ct
                         );
                         saveTask.Increment(increment);
                     }

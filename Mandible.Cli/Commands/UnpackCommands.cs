@@ -1,4 +1,4 @@
-﻿using CommandDotNet;
+﻿using ConsoleAppFramework;
 using Mandible.Cli.Util;
 using Mandible.Pack;
 using Mandible.Pack2;
@@ -12,29 +12,35 @@ using System.Threading.Tasks;
 
 namespace Mandible.Cli.Commands;
 
-[Command("unpack", Description = "Unpacks pack/pack2 file/s")]
+/// <summary>
+/// Unpacks pack/pack2 file/s.
+/// </summary>
 public class UnpackCommands
 {
     private readonly IAnsiConsole _console;
-    private readonly CancellationToken _ct;
 
-    public UnpackCommands(IAnsiConsole console, CancellationToken ct)
+    public UnpackCommands(IAnsiConsole console)
     {
         _console = console;
-        _ct = ct;
     }
 
-    [DefaultCommand]
+    /// <summary>
+    /// Unpacks pack/pack2 file/s.
+    /// </summary>
+    /// <param name="inputPath">A path to a single pack/pack2 file, or a directory containing multiple.</param>
+    /// <param name="outputDirectory">
+    /// The directory to output the packed content to. Contents will be nested in directories matching the name of the
+    /// pack they originated from.
+    /// </param>
+    /// <param name="namelistPath">-n|--namelist, A path to a namelist file</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
+    [Command("")]
     public async Task ExecuteAsync
     (
-        [Operand(Description = "A path to a single pack/pack2 file, or a directory containing multiple.")]
-        string inputPath,
-
-        [Operand(Description = "The directory to output the packed content to. Contents will be nested in directories matching the name of the pack they originated from.")]
-        string outputDirectory,
-
-        [Option('n', Description = "A path to a namelist file.")]
-        string? namelistPath
+        [Argument] string inputPath,
+        [Argument] string outputDirectory,
+        string? namelistPath,
+        CancellationToken ct = default
     )
     {
         bool packsDiscovered = CommandUtils.TryFindPacksFromPath
@@ -53,13 +59,13 @@ public class UnpackCommands
 
         Namelist? namelist = null;
         if (namelistPath is not null)
-            namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, _ct).ConfigureAwait(false);
+            namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, ct);
 
         if (packFiles.Count > 0)
-            await ExportPackAssetsAsync(packFiles, outputDirectory);
+            await ExportPackAssetsAsync(packFiles, outputDirectory, ct);
 
         if (pack2Files.Count > 0)
-            await ExportPack2AssetsAsync(pack2Files, outputDirectory, namelist).ConfigureAwait(false);
+            await ExportPack2AssetsAsync(pack2Files, outputDirectory, namelist, ct);
 
         _console.Markup("[green]Unpacking Complete![/]");
     }
@@ -67,37 +73,38 @@ public class UnpackCommands
     private async Task ExportPackAssetsAsync
     (
         IReadOnlyList<string> packFiles,
-        string outputPath
+        string outputPath,
+        CancellationToken ct
     )
-        => await _console.Progress()
-            .StartAsync
-            (
-                async ctx =>
+    {
+        await _console.Progress()
+            .StartAsync(async ctx =>
+            {
+                ProgressTask exportTask = ctx.AddTask("Exporting pack assets...");
+                double increment = exportTask.MaxValue / packFiles.Count;
+
+                foreach (string file in packFiles)
                 {
-                    ProgressTask exportTask = ctx.AddTask("Exporting pack assets...");
-                    double increment = exportTask.MaxValue / packFiles.Count;
+                    using RandomAccessDataReaderService dataReader = new(file);
+                    PackReader reader = new(dataReader);
+                    string myOutputPath = Path.Combine(outputPath, Path.GetFileNameWithoutExtension(file));
 
-                    foreach (string file in packFiles)
-                    {
-                        using RandomAccessDataReaderService dataReader = new(file);
-                        PackReader reader = new(dataReader);
-                        string myOutputPath = Path.Combine(outputPath, Path.GetFileNameWithoutExtension(file));
+                    if (!Directory.Exists(myOutputPath))
+                        Directory.CreateDirectory(myOutputPath);
 
-                        if (!Directory.Exists(myOutputPath))
-                            Directory.CreateDirectory(myOutputPath);
+                    await reader.ExportAllAsync(myOutputPath, ct);
 
-                        await reader.ExportAllAsync(myOutputPath, _ct).ConfigureAwait(false);
-
-                        exportTask.Increment(increment);
-                    }
+                    exportTask.Increment(increment);
                 }
-            );
+            });
+    }
 
     private async Task ExportPack2AssetsAsync
     (
         List<string> pack2Files,
         string outputPath,
-        Namelist? namelist
+        Namelist? namelist,
+        CancellationToken ct
     )
         => await _console.Progress()
             .StartAsync
@@ -116,7 +123,7 @@ public class UnpackCommands
                         if (!Directory.Exists(myOutputPath))
                             Directory.CreateDirectory(myOutputPath);
 
-                        await reader.ExportAllAsync(myOutputPath, namelist, _ct);
+                        await reader.ExportAllAsync(myOutputPath, namelist, ct);
 
                         exportTask.Increment(increment);
                     }
