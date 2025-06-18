@@ -21,7 +21,8 @@ public record IndexMetadata
     (
         string Name,
         long Hash,
-        uint AssetCount
+        uint AssetCount,
+        ulong PackLength
     )
     {
         public static PackMetadata FromIndex(PackIndex index)
@@ -36,7 +37,7 @@ public record IndexMetadata
                     hash = (hash * 23) + pia.DataHash;
             }
 
-            return new PackMetadata(path, hash, index.AssetCount);
+            return new PackMetadata(path, hash, index.AssetCount, index.Length);
         }
     }
 
