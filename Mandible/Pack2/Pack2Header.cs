@@ -26,7 +26,7 @@ public record Pack2Header
     /// <summary>
     /// Gets the magic identifier of a pack2 file.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MAGIC_BYTES = new[] { (byte)'P', (byte)'A', (byte)'K' };
+    public static readonly ReadOnlyMemory<byte> MAGIC_BYTES = "PAK"u8.ToArray();
 
     /// <summary>
     /// Gets the size of a <see cref="Pack2Header"/> as stored within a pack.
