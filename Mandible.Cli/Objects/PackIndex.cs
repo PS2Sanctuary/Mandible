@@ -33,7 +33,7 @@ public record PackIndex
     )
     {
         public static IndexAsset FromAssetHeader(AssetHeader header)
-            => new IndexAsset(header.Name, header.Checksum);
+            => new(header.Name, header.Checksum);
 
         public static IndexAsset FromAsset2Header(Asset2Header header, Namelist namelist)
         {
