@@ -2,6 +2,7 @@ using CommunityToolkit.HighPerformance.Buffers;
 using ConsoleAppFramework;
 using Mandible.Pack2;
 using Mandible.Services;
+using Mandible.Util;
 using Microsoft.Win32.SafeHandles;
 using Spectre.Console;
 using System;
@@ -76,17 +77,25 @@ public class PackCommands
         CancellationToken ct
     )
     {
+        const int deflatePreferredTolerance = 1024;
         using ZngDeflater deflater = new(CompressionLevel.BestCompression);
+
+        // Sort the filenames in ascending order of name hash
+        Array.Sort
+        (
+            files,
+            (x1, x2) => PackCrc64.Calculate(Path.GetFileName(x1)).CompareTo(PackCrc64.Calculate(Path.GetFileName(x2)))
+        );
 
         foreach (string file in files)
         {
             using MemoryOwner<byte> assetData = LoadFileData(file);
             using MemoryOwner<byte> deflatedBuffer = MemoryOwner<byte>.Allocate(assetData.Length);
 
-            // GFX files are never compressed
+            // These file types are never compressed
             bool mayCompress = Path.GetExtension(file).ToLower() is not (".cnk4" or ".cnk5" or ".def" or ".gfx");
 
-            int deflatedLength = int.MaxValue;
+            int deflatedLength = int.MaxValue - deflatePreferredTolerance;
             try
             {
                 if (mayCompress)
@@ -94,15 +103,18 @@ public class PackCommands
             }
             catch (ZngCompressionException zce) when (zce.ErrorCode is CompressionResult.OK)
             {
-                // This is fine, almost certainly the buffer deflated to a larger size
+                // This is fine, almost certainly the buffer deflated to a larger size so no point in compressing
             }
             deflater.Reset();
 
-            // If the asset's length is less than 1KiB larger than the compressed length, leave uncompressed
-            Memory<byte> bufferToWrite = assetData.Length <= deflatedLength + 1024
-                ? assetData.Memory
-                : deflatedBuffer.Memory[..deflatedLength];
-            bool isCompressed = deflatedLength < assetData.Length;
+            Memory<byte> bufferToWrite = assetData.Memory;
+            bool isCompressed = false;
+            // Only use the deflated buffer if its length is smaller than the uncompressed length by more than the tolerance
+            if (mayCompress && deflatedLength + deflatePreferredTolerance < assetData.Length)
+            {
+                bufferToWrite = deflatedBuffer.Memory[..deflatedLength];
+                isCompressed = true;
+            }
 
             await writer.WriteAssetAsync
             (

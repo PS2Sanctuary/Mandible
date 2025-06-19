@@ -20,7 +20,7 @@ Next, the [asset data](#asset-data) is written. The asset data blocks also conta
 that this data is in **big endian** format.
 
 Finally, an *asset map* is written, which contains numerous sequential [asset headers](#asset-header) that hold information about
-the stored asset data.
+the stored asset data. Note that asset headers must be stored in ascending order of the *asset name hash*.
 
 #### Pack Header
 
