@@ -9,10 +9,10 @@
 
   <!-- NuGet-related properties -->
   <PropertyGroup>
-    <Version>2.0.1</Version>
+    <Version>3.0.0</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
     <PackageReleaseNotes>
-      - Add pack2 asset hash calculation.
+      - Remove async variant of Namelist#Append.
     </PackageReleaseNotes>
 
     <PackageId>carlst99.Mandible</PackageId>
