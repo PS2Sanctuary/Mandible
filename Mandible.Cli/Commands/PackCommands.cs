@@ -83,19 +83,23 @@ public class PackCommands
             using MemoryOwner<byte> assetData = LoadFileData(file);
             using MemoryOwner<byte> deflatedBuffer = MemoryOwner<byte>.Allocate(assetData.Length);
 
+            // GFX files are never compressed
+            bool mayCompress = Path.GetExtension(file).ToLower() is not (".cnk4" or ".cnk5" or ".def" or ".gfx");
+
             int deflatedLength = int.MaxValue;
             try
             {
-                deflatedLength = (int)deflater.Deflate(assetData.Span, deflatedBuffer.Span);
+                if (mayCompress)
+                    deflatedLength = (int)deflater.Deflate(assetData.Span, deflatedBuffer.Span);
             }
             catch (ZngCompressionException zce) when (zce.ErrorCode is CompressionResult.OK)
             {
                 // This is fine, almost certainly the buffer deflated to a larger size
             }
-
             deflater.Reset();
 
-            Memory<byte> bufferToWrite = assetData.Length <= deflatedLength
+            // If the asset's length is less than 1KiB larger than the compressed length, leave uncompressed
+            Memory<byte> bufferToWrite = assetData.Length <= deflatedLength + 1024
                 ? assetData.Memory
                 : deflatedBuffer.Memory[..deflatedLength];
             bool isCompressed = deflatedLength < assetData.Length;
