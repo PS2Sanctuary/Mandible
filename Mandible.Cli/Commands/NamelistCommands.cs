@@ -57,6 +57,7 @@ public class NamelistCommands
                 async _ =>
                 {
                     Namelist extractedNamelist = await NameExtractor.ExtractAsync(pack2Directory, deepSearch, ct);
+                    extractedNamelist.ToUpperCaseNames();
 
                     await using FileStream nlOut = new(output, FileMode.Create);
                     await extractedNamelist.WriteAsync(nlOut, ct);
