@@ -29,16 +29,18 @@ public record PackIndex
     public record IndexAsset
     (
         string Name,
-        uint DataHash
+        ulong? NameHash,
+        uint DataHash,
+        Asset2ZipDefinition? ZipStatus
     )
     {
         public static IndexAsset FromAssetHeader(AssetHeader header)
-            => new(header.Name, header.Checksum);
+            => new(header.Name, null, header.Checksum, null);
 
         public static IndexAsset FromAsset2Header(Asset2Header header, Namelist namelist)
         {
             namelist.TryGet(header.NameHash, out string? name);
-            return new IndexAsset(name ?? header.NameHash.ToString(), header.DataHash);
+            return new IndexAsset(name ?? string.Empty, header.NameHash, header.DataHash, header.ZipStatus);
         }
     }
 }
