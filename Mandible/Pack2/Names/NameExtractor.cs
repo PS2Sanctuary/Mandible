@@ -31,14 +31,14 @@ public static class NameExtractor
     }.Select(c => (byte)c).ToArray();
 
     private static readonly string[] KnownFileExtensions =
-    {
+    [
         "adr", "agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3",
         "cnk4", "cnk5", "crc", "crt", "cso", "cur", "dat", "db", "dds", "def", "dir", "dll",
         "dma", "dme", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb", "eco", "efb", "exe", "fsb",
         "fxd", "fxo", "gfx", "gnf", "i64", "ini", "jpg", "lst", "lua", "mrn", "pak", "pem",
         "playerstudio", "png", "prsb", "psd", "pssb", "tga", "thm", "tome", "ttf", "txt", "vnfo",
         "wav", "xlsx", "xml", "xrsb", "xssb", "zone"
-    };
+    ];
 
     /// <summary>
     /// Extracts names from pack2 files. Expect this operation to take multiple minutes
@@ -71,9 +71,7 @@ public static class NameExtractor
 
             await ExtractFromEmbeddedNamelistAsync(reader, nl, ct).ConfigureAwait(false);
 
-            if (deepExtract)
-                await ExtractFromAssetsAsync(reader, nl, ct).ConfigureAwait(false);
-            else if (Path.GetFileNameWithoutExtension(packPath) == "data_x64_0")
+            if (deepExtract || Path.GetFileNameWithoutExtension(packPath) == "data_x64_0")
                 await ExtractFromAssetsAsync(reader, nl, ct).ConfigureAwait(false);
         }
 
@@ -106,7 +104,7 @@ public static class NameExtractor
                 continue;
 
             List<string> names = ExtractNamesFromTextData(buffer.Memory);
-            await namelist.Append(names, ct).ConfigureAwait(false);
+            namelist.Append(names, ct);
 
             if (asset.NameHash == PackCrc64.Calculate("ObjectTerrainData.xml"))
                 await GuessWorldNamesAsync(buffer.Memory, namelist, ct).ConfigureAwait(false);
@@ -116,7 +114,7 @@ public static class NameExtractor
     private static List<string> ExtractNamesFromTextData(ReadOnlyMemory<byte> data)
     {
         byte[][] fileExtensions = KnownFileExtensions.Select(s => Encoding.ASCII.GetBytes('.' + s)).ToArray();
-        List<string> names = new();
+        List<string> names = [];
         ReadOnlySequence<byte> sequence = new(data);
         SequenceReader<byte> reader = new(sequence);
 
@@ -160,7 +158,7 @@ public static class NameExtractor
 
     private static async Task GuessWorldNamesAsync(ReadOnlyMemory<byte> objectTerrainDataXmlBuffer, Namelist namelist, CancellationToken ct)
     {
-        List<string> names = new();
+        List<string> names = [];
 
         void AddName(string name)
         {
@@ -241,9 +239,15 @@ public static class NameExtractor
         // Manually append this, the algorithm excludes it because it is referred to as 'VR_Training'.
         AddName("VR");
 
-        await namelist.Append(names, ct).ConfigureAwait(false);
+        namelist.Append(names, ct);
     }
 
+    /// <summary>
+    /// Iterates through the first 8000 bytes of a file looking for a 0-byte. This should not be present in a
+    /// text-only file.
+    /// </summary>
+    /// <param name="data">The file data to check.</param>
+    /// <returns><c>True</c> if the file is like to contain binary data.</returns>
     private static bool IsBinaryFile(ReadOnlySpan<byte> data)
     {
         for (int i = 0; i < data.Length && i < 8000; i++)

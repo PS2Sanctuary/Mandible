@@ -64,7 +64,7 @@ public class Namelist
     /// </summary>
     /// <param name="hash">The CRC-64 hash of the name.</param>
     /// <param name="name">The name, or null if it doesn't exist in this <see cref="Namelist"/></param>
-    /// <returns>A value indicating whether or not the name could be retrieved.</returns>
+    /// <returns>A value indicating whether the name could be retrieved.</returns>
     public bool TryGet(ulong hash, [NotNullWhen(true)] out string? name)
         => _hashedNamePairs.TryGetValue(hash, out name);
 
@@ -75,10 +75,7 @@ public class Namelist
     public void Append(Namelist namelist)
     {
         foreach (KeyValuePair<ulong, string> element in namelist.Map)
-        {
-            if (!_hashedNamePairs.ContainsKey(element.Key))
-                _hashedNamePairs.Add(element.Key, element.Value);
-        }
+            _hashedNamePairs[element.Key] = element.Value;
     }
 
     /// <summary>
@@ -87,12 +84,7 @@ public class Namelist
     /// <param name="hash">The CRC-64 hash of the name.</param>
     /// <param name="name">The name.</param>
     public void Append(ulong hash, string name)
-    {
-        if (_hashedNamePairs.ContainsKey(hash))
-            return;
-
-        _hashedNamePairs.Add(hash, name);
-    }
+        => _hashedNamePairs[hash] = name;
 
     /// <summary>
     /// Appends a name to the namelist.
@@ -105,27 +97,19 @@ public class Namelist
     }
 
     /// <summary>
-    /// Appends a list of names to the namelist.
+    /// Appends names to the namelist.
     /// </summary>
     /// <remarks>Extremely long lists could take some time to hash and append.</remarks>
-    /// <param name="names"></param>
-    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    /// <exception cref="TaskCanceledException">Thrown if the operation is canceled.</exception>
-    public async Task Append(IEnumerable<string> names, CancellationToken ct = default)
-       => await Task.Run
-           (
-               () =>
-               {
-                   foreach (string name in names)
-                   {
-                       if (ct.IsCancellationRequested)
-                           throw new TaskCanceledException();
-
-                       Append(name);
-                   }
-               },
-               ct
-           ).ConfigureAwait(false);
+    /// <param name="names">The names to append</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
+    public void Append(IEnumerable<string> names, CancellationToken ct = default)
+    {
+        foreach (string name in names)
+        {
+            ct.ThrowIfCancellationRequested();
+            Append(name);
+        }
+    }
 
     /// <summary>
     /// Appends a stream of names to the namelist.
@@ -141,23 +125,17 @@ public class Namelist
     /// <exception cref="TaskCanceledException"></exception>
     public async Task Append(Stream stream, int endPosition = -1, CancellationToken ct = default)
     {
-        using StreamReader sr = new(stream, null, true, -1, true);
-        List<string> names = new();
+        using StreamReader sr = new(stream, leaveOpen: true);
 
         while (!sr.EndOfStream && (stream.Position < endPosition || endPosition < 0))
         {
             if (ct.IsCancellationRequested)
                 throw new TaskCanceledException();
 
-            string? name = await sr.ReadLineAsync().ConfigureAwait(false);
-            if (name is null)
-                continue;
-
-            names.Add(name);
+            string? name = await sr.ReadLineAsync(ct).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(name))
+                Append(name);
         }
-
-        await Append(names, ct).ConfigureAwait(false);
-        names.Clear();
     }
 
     /// <summary>
@@ -210,5 +188,15 @@ public class Namelist
 
             await sw.WriteLineAsync(name).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// Replaces every name in the list with its upper-case variant. This is consistent with how name hashes are
+    /// calculated.
+    /// </summary>
+    public void ToUpperCaseNames()
+    {
+        foreach ((ulong hash, string name) in _hashedNamePairs)
+            _hashedNamePairs[hash] = name.ToUpper();
     }
 }
