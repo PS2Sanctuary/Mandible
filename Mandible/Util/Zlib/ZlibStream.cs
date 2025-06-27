@@ -37,5 +37,5 @@ internal unsafe struct ZlibStream
     /// <summary>
     /// The remaining free space at <see cref="NextOut"/>.
     /// </summary>
-    public uint availOut;
+    public uint AvailableOut;
 }

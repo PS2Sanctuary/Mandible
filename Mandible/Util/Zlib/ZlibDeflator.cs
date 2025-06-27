@@ -22,8 +22,10 @@ public sealed unsafe class ZlibDeflator : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="ZlibDeflator"/> class.
     /// </summary>
+    /// <param name="level">The compression level to use.</param>
+    /// <param name="includeZlibHeader">Whether to write the zlib header to the output.</param>
     /// <exception cref="ZlibException"></exception>
-    public ZlibDeflator(ZlibCompressionLevel level, bool includeZlibHeader = true)
+    public ZlibDeflator(ZlibCompressionLevel level, bool includeZlibHeader)
     {
         _selectedLevel = level;
         _selectedWindowBits = includeZlibHeader
@@ -72,22 +74,22 @@ public sealed unsafe class ZlibDeflator : IDisposable
                 _stream.AvailableIn = (uint)input.Length;
 
                 _stream.NextOut = nextOut;
-                _stream.availOut = (uint)output.Length;
+                _stream.AvailableOut = (uint)output.Length;
 
                 fixed (ZlibStream* stream = &_stream)
                 {
                     ZlibErrorCode deflateResult = ZlibInterop.Deflate(stream, flushMethod);
                     if (deflateResult is not ZlibErrorCode.StreamEnd)
-                        GenerateCompressionError(deflateResult, "Failed to inflate");
+                        GenerateCompressionError(deflateResult, "Failed to deflate");
                 }
             }
         }
 
-        return (ulong)input.Length - _stream.availOut;
+        return (ulong)input.Length - _stream.AvailableOut;
     }
 
     /// <summary>
-    /// Resets the internal state of the inflater.
+    /// Resets the internal state of the deflator.
     /// </summary>
     /// <exception cref="ZlibException"></exception>
     public void Reset()
@@ -97,7 +99,7 @@ public sealed unsafe class ZlibDeflator : IDisposable
         _stream.NextIn = null;
         _stream.AvailableIn = 0;
         _stream.NextOut = null;
-        _stream.availOut = 0;
+        _stream.AvailableOut = 0;
 
         fixed (ZlibStream* stream = &_stream)
         {

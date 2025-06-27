@@ -2,13 +2,13 @@
 using Mandible.Abstractions.Pack2;
 using Mandible.Abstractions.Services;
 using Mandible.Exceptions;
+using Mandible.Util.Zlib;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using ZlibNGSharpMinimal.Inflate;
 
 namespace Mandible.Pack2;
 
@@ -26,9 +26,9 @@ public class Pack2Reader : IPack2Reader, IDisposable
     protected readonly IDataReaderService _dataReader;
 
     /// <summary>
-    /// Gets the <see cref="ZngInflater"/> that this <see cref="Pack2Reader"/> was initialized with.
+    /// Gets the <see cref="ZlibInflater"/> that this <see cref="Pack2Reader"/> was initialized with.
     /// </summary>
-    protected readonly ZngInflater _inflater;
+    protected readonly ZlibInflater _inflater;
 
     /// <summary>
     /// Gets a value indicating whether the underlying data source has been validated.
@@ -47,8 +47,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     public Pack2Reader(IDataReaderService dataReader)
     {
         _dataReader = dataReader;
-
-        _inflater = new ZngInflater();
+        _inflater = new ZlibInflater(zlibHeaderPresent: true);
     }
 
     /// <inheritdoc />
@@ -68,7 +67,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
         await ValidateAsync(ct).ConfigureAwait(false);
 
         Pack2Header header = await ReadHeaderAsync(ct).ConfigureAwait(false);
-        List<Asset2Header> assetHeaders = new();
+        List<Asset2Header> assetHeaders = [];
 
         int bufferSize = (int)header.AssetCount * Asset2Header.Size;
         using MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate(bufferSize);

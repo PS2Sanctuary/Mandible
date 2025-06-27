@@ -43,7 +43,6 @@
   <ItemGroup>
     <PackageReference Include="carlst99.BinaryPrimitiveHelpers" Version="1.0.0" />
     <PackageReference Include="carlst99.MemoryReaders" Version="1.0.0" />
-    <PackageReference Include="carlst99.ZlibNGSharp" Version="1.2.0" />
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.6" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
