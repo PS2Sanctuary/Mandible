@@ -10,8 +10,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Mandible.Util.Zlib;
-using ZlibNGSharpMinimal;
-using ZlibNGSharpMinimal.Exceptions;
+using System.Buffers.Binary;
 
 namespace Mandible.Cli.Commands;
 
@@ -78,7 +77,7 @@ public class PackCommands
     )
     {
         const int deflatePreferredTolerance = 1024;
-        using ZlibDeflator deflator = new(ZlibCompressionLevel.BestCompression, includeZlibHeader: true);
+        using ZlibDeflator deflator = new(ZlibCompressionLevel.BestCompression, true);
 
         // Sort the filenames in ascending order of name hash
         Array.Sort
@@ -90,31 +89,39 @@ public class PackCommands
         foreach (string file in files)
         {
             using MemoryOwner<byte> assetData = LoadFileData(file);
-            // +2 to Add size of the zlib header
-            using MemoryOwner<byte> deflatedBuffer = MemoryOwner<byte>.Allocate(assetData.Length + 2);
+            MemoryOwner<byte>? deflatedBuffer = null;
 
             // These file types are never compressed
             bool mayCompress = Path.GetExtension(file).ToLower() is not (".cnk4" or ".cnk5" or ".def" or ".gfx")
                 && assetData.Length > 0;
 
             int deflatedLength = int.MaxValue - deflatePreferredTolerance;
-            try
+            if (mayCompress)
             {
-                if (mayCompress)
-                    deflatedLength = (int)deflator.Deflate(assetData.Span, deflatedBuffer.Span);
+                try
+                {
+                    // Add space for the compression indicator, uncompressed length and zlib asset header
+                    deflatedBuffer = MemoryOwner<byte>.Allocate
+                    (
+                        assetData.Length + sizeof(uint) * 2 + ZlibConstants.HeaderLength
+                    );
+                    BinaryPrimitives.WriteUInt32BigEndian(deflatedBuffer.Span, Pack2Writer.COMPRESSED_ASSET_MAGIC);
+                    BinaryPrimitives.WriteUInt32BigEndian(deflatedBuffer.Span[4..], (uint)assetData.Length);
+                    deflatedLength = deflator.Deflate(assetData.Span, deflatedBuffer.Span[8..]) + sizeof(uint) * 2;
+                }
+                catch (ZlibException zce) when (zce.ErrorCode is ZlibErrorCode.Ok)
+                {
+                    // This is fine, almost certainly the buffer deflated to a larger size so no point in compressing
+                }
+                deflator.Reset();
             }
-            catch (ZngCompressionException zce) when (zce.ErrorCode is CompressionResult.OK)
-            {
-                // This is fine, almost certainly the buffer deflated to a larger size so no point in compressing
-            }
-            deflator.Reset();
 
             Memory<byte> bufferToWrite = assetData.Memory;
             bool isCompressed = false;
             // Only use the deflated buffer if its length is smaller than the uncompressed length by more than the tolerance
             if (mayCompress && deflatedLength + deflatePreferredTolerance < assetData.Length)
             {
-                bufferToWrite = deflatedBuffer.Memory[..deflatedLength];
+                bufferToWrite = deflatedBuffer!.Memory[..deflatedLength];
                 isCompressed = true;
             }
 
@@ -127,6 +134,8 @@ public class PackCommands
                 true,
                 ct
             );
+
+            deflatedBuffer?.Dispose();
 
             if (verboseOutput)
                 _console.WriteLine($"Packed {file}");

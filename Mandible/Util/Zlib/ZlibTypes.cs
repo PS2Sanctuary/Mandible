@@ -5,6 +5,11 @@ namespace Mandible.Util.Zlib;
 public static class ZlibConstants
 {
     /// <summary>
+    /// The length in bytes of the zlib header.
+    /// </summary>
+    public const int HeaderLength = 2;
+
+    /// <summary>
     /// <p><strong>From the ZLib manual:</strong></p>
     /// <p>ZLib's <code>windowBits</code> parameter is the base two logarithm of the window size (the size of the
     /// history buffer). It should be in the range 8..15 for this version of the library. Larger values of this

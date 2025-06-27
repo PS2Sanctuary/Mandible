@@ -10,6 +10,7 @@ namespace Mandible.Util.Zlib;
 public sealed unsafe class ZlibDeflator : IDisposable
 {
     private readonly ZlibCompressionLevel _selectedLevel;
+    private readonly bool _includeZlibHeader;
     private readonly int _selectedWindowBits;
 
     private ZlibStream _stream;
@@ -28,6 +29,7 @@ public sealed unsafe class ZlibDeflator : IDisposable
     public ZlibDeflator(ZlibCompressionLevel level, bool includeZlibHeader)
     {
         _selectedLevel = level;
+        _includeZlibHeader = includeZlibHeader;
         _selectedWindowBits = includeZlibHeader
             ? ZlibConstants.ZLib_DefaultWindowBits
             : ZlibConstants.Deflate_DefaultWindowBits;
@@ -57,7 +59,7 @@ public sealed unsafe class ZlibDeflator : IDisposable
     /// <param name="flushMethod">The flush method to use.</param>
     /// <returns>The number of deflated bytes that were produced.</returns>
     /// <exception cref="ZlibException"></exception>
-    public ulong Deflate
+    public int Deflate
     (
         ReadOnlySpan<byte> input,
         Span<byte> output,
@@ -85,7 +87,7 @@ public sealed unsafe class ZlibDeflator : IDisposable
             }
         }
 
-        return (ulong)input.Length - _stream.AvailableOut;
+        return input.Length - (int)_stream.AvailableOut + (_includeZlibHeader ? ZlibConstants.HeaderLength : 0);
     }
 
     /// <summary>

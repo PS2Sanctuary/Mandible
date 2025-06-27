@@ -15,7 +15,8 @@ namespace Mandible.Pack2;
 public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
 {
     private const int DATA_START_OFFSET = 0x200;
-    private const uint COMPRESSED_ASSET_MAGIC = 0xA1B2C3D4;
+
+    public const uint COMPRESSED_ASSET_MAGIC = 0xA1B2C3D4;
 
     private readonly IDataWriterService _writer;
     private readonly List<Asset2Header> _assetMap;
@@ -38,7 +39,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
         _writer = writer;
         _assetMap = new List<Asset2Header>();
         _currentOffset = DATA_START_OFFSET;
-        _deflator = new ZlibDeflator(ZlibCompressionLevel.BestCompression);
+        _deflator = new ZlibDeflator(ZlibCompressionLevel.BestCompression, true);
     }
 
     /// <inheritdoc />
@@ -61,7 +62,8 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
         {
             int offset = 0;
 
-            compressed = ArrayPool<byte>.Shared.Rent(assetData.Length + sizeof(uint) + sizeof(uint));
+            // Add space for the compression indicator, uncompressed length and zlib asset header
+            compressed = ArrayPool<byte>.Shared.Rent(assetData.Length + sizeof(uint) * 2 + ZlibConstants.HeaderLength);
 
             BinaryPrimitives.WriteUInt32BigEndian(compressed.AsSpan(offset), COMPRESSED_ASSET_MAGIC);
             offset += sizeof(uint);
@@ -69,14 +71,14 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
             BinaryPrimitives.WriteUInt32BigEndian(compressed.AsSpan(offset), (uint)assetData.Length);
             offset += sizeof(uint);
 
-            ulong deflatedLength = _deflator.Deflate
+            int deflatedLength = _deflator.Deflate
             (
                 assetData.Span,
                 compressed.AsSpan(offset)
             );
             _deflator.Reset();
 
-            assetData = compressed.AsMemory(0, offset + (int)deflatedLength);
+            assetData = compressed.AsMemory(0, offset + deflatedLength);
         }
 
         Asset2Header header = new
