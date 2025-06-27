@@ -9,8 +9,8 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Mandible.Util.Zlib;
 using ZlibNGSharpMinimal;
-using ZlibNGSharpMinimal.Deflate;
 using ZlibNGSharpMinimal.Exceptions;
 
 namespace Mandible.Cli.Commands;
@@ -78,7 +78,7 @@ public class PackCommands
     )
     {
         const int deflatePreferredTolerance = 1024;
-        using ZngDeflater deflater = new(CompressionLevel.BestCompression);
+        using ZngDeflator deflator = new(ZlibCompressionLevel.BestCompression, includeZlibHeader: true);
 
         // Sort the filenames in ascending order of name hash
         Array.Sort
@@ -90,7 +90,8 @@ public class PackCommands
         foreach (string file in files)
         {
             using MemoryOwner<byte> assetData = LoadFileData(file);
-            using MemoryOwner<byte> deflatedBuffer = MemoryOwner<byte>.Allocate(assetData.Length);
+            // +2 to Add size of the zlib header
+            using MemoryOwner<byte> deflatedBuffer = MemoryOwner<byte>.Allocate(assetData.Length + 2);
 
             // These file types are never compressed
             bool mayCompress = Path.GetExtension(file).ToLower() is not (".cnk4" or ".cnk5" or ".def" or ".gfx")
@@ -100,13 +101,13 @@ public class PackCommands
             try
             {
                 if (mayCompress)
-                    deflatedLength = (int)deflater.Deflate(assetData.Span, deflatedBuffer.Span);
+                    deflatedLength = (int)deflator.Deflate(assetData.Span, deflatedBuffer.Span);
             }
             catch (ZngCompressionException zce) when (zce.ErrorCode is CompressionResult.OK)
             {
                 // This is fine, almost certainly the buffer deflated to a larger size so no point in compressing
             }
-            deflater.Reset();
+            deflator.Reset();
 
             Memory<byte> bufferToWrite = assetData.Memory;
             bool isCompressed = false;

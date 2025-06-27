@@ -1,5 +1,6 @@
 using Mandible.Abstractions.Pack2;
 using Mandible.Abstractions.Services;
+using Mandible.Util.Zlib;
 using System;
 using System.Buffers;
 using System.Buffers.Binary;
@@ -7,7 +8,6 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using ZlibNGSharpMinimal.Deflate;
 
 namespace Mandible.Pack2;
 
@@ -19,7 +19,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
 
     private readonly IDataWriterService _writer;
     private readonly List<Asset2Header> _assetMap;
-    private readonly ZngDeflater _deflater;
+    private readonly ZngDeflator _deflator;
 
     private long _currentOffset;
 
@@ -38,7 +38,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
         _writer = writer;
         _assetMap = new List<Asset2Header>();
         _currentOffset = DATA_START_OFFSET;
-        _deflater = new ZngDeflater(CompressionLevel.BestCompression);
+        _deflator = new ZngDeflator(ZlibCompressionLevel.BestCompression);
     }
 
     /// <inheritdoc />
@@ -69,12 +69,12 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
             BinaryPrimitives.WriteUInt32BigEndian(compressed.AsSpan(offset), (uint)assetData.Length);
             offset += sizeof(uint);
 
-            ulong deflatedLength = _deflater.Deflate
+            ulong deflatedLength = _deflator.Deflate
             (
                 assetData.Span,
                 compressed.AsSpan(offset)
             );
-            _deflater.Reset();
+            _deflator.Reset();
 
             assetData = compressed.AsMemory(0, offset + (int)deflatedLength);
         }
@@ -130,7 +130,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await CloseAsync().ConfigureAwait(false);
-        _deflater.Dispose();
+        _deflator.Dispose();
     }
 
     /// <summary>
