@@ -78,7 +78,7 @@ public class PackCommands
     )
     {
         const int deflatePreferredTolerance = 1024;
-        using ZngDeflator deflator = new(ZlibCompressionLevel.BestCompression, includeZlibHeader: true);
+        using ZlibDeflator deflator = new(ZlibCompressionLevel.BestCompression, includeZlibHeader: true);
 
         // Sort the filenames in ascending order of name hash
         Array.Sort

@@ -19,7 +19,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
 
     private readonly IDataWriterService _writer;
     private readonly List<Asset2Header> _assetMap;
-    private readonly ZngDeflator _deflator;
+    private readonly ZlibDeflator _deflator;
 
     private long _currentOffset;
 
@@ -38,7 +38,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
         _writer = writer;
         _assetMap = new List<Asset2Header>();
         _currentOffset = DATA_START_OFFSET;
-        _deflator = new ZngDeflator(ZlibCompressionLevel.BestCompression);
+        _deflator = new ZlibDeflator(ZlibCompressionLevel.BestCompression);
     }
 
     /// <inheritdoc />

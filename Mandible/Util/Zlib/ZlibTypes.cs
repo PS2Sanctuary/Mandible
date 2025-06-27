@@ -1,5 +1,7 @@
 namespace Mandible.Util.Zlib;
 
+// ReSharper disable EnumUnderlyingTypeIsInt
+
 public static class ZlibConstants
 {
     /// <summary>

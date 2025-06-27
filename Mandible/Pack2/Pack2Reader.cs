@@ -214,7 +214,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <summary>
     /// Disposes of managed and unmanaged resources.
     /// </summary>
-    /// <param name="disposeManaged">A value indicating whether or not to dispose of managed resources.</param>
+    /// <param name="disposeManaged">A value indicating whether to dispose of managed resources.</param>
     protected virtual void Dispose(bool disposeManaged)
     {
         if (IsDisposed)

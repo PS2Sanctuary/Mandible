@@ -1,13 +1,13 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using ZlibNGSharpMinimal.Exceptions;
 
 namespace Mandible.Util.Zlib;
 
 /// <summary>
-/// Represents an interface to zlib-ng's deflation algorithm.
+/// A wrapper around the zlib deflate API.
 /// </summary>
-public sealed unsafe class ZngDeflator : IDisposable
+public sealed unsafe class ZlibDeflator : IDisposable
 {
     private readonly ZlibCompressionLevel _selectedLevel;
     private readonly int _selectedWindowBits;
@@ -15,15 +15,15 @@ public sealed unsafe class ZngDeflator : IDisposable
     private ZlibStream _stream;
 
     /// <summary>
-    /// Gets or sets a value indicating whether this <see cref="ZngDeflator"/> instance has been disposed.
+    /// Gets or sets a value indicating whether this <see cref="ZlibDeflator"/> instance has been disposed.
     /// </summary>
     public bool IsDisposed { get; private set; }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ZngDeflator"/> class.
+    /// Initializes a new instance of the <see cref="ZlibDeflator"/> class.
     /// </summary>
-    /// <exception cref="ZngCompressionException"></exception>
-    public ZngDeflator(ZlibCompressionLevel level, bool includeZlibHeader = true)
+    /// <exception cref="ZlibException"></exception>
+    public ZlibDeflator(ZlibCompressionLevel level, bool includeZlibHeader = true)
     {
         _selectedLevel = level;
         _selectedWindowBits = includeZlibHeader
@@ -54,7 +54,7 @@ public sealed unsafe class ZngDeflator : IDisposable
     /// <param name="output">The output buffer.</param>
     /// <param name="flushMethod">The flush method to use.</param>
     /// <returns>The number of deflated bytes that were produced.</returns>
-    /// <exception cref="ZngCompressionException"></exception>
+    /// <exception cref="ZlibException"></exception>
     public ulong Deflate
     (
         ReadOnlySpan<byte> input,
@@ -62,7 +62,7 @@ public sealed unsafe class ZngDeflator : IDisposable
         ZlibFlushCode flushMethod = ZlibFlushCode.Finish
     )
     {
-        Checks();
+        CheckNotDisposed();
 
         fixed (byte* nextIn = input)
         {
@@ -89,10 +89,10 @@ public sealed unsafe class ZngDeflator : IDisposable
     /// <summary>
     /// Resets the internal state of the inflater.
     /// </summary>
-    /// <exception cref="ZngCompressionException"></exception>
+    /// <exception cref="ZlibException"></exception>
     public void Reset()
     {
-        Checks();
+        CheckNotDisposed();
 
         _stream.NextIn = null;
         _stream.AvailableIn = 0;
@@ -115,8 +115,24 @@ public sealed unsafe class ZngDeflator : IDisposable
                 ZlibCompressionStrategy.DefaultStrategy
             );
             if (errC is not ZlibErrorCode.Ok)
-                GenerateCompressionError(errC, "Failed to re-init deflater");
+                GenerateCompressionError(errC, "Failed to re-init the deflator");
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void CheckNotDisposed()
+    {
+        if (IsDisposed)
+            throw new ObjectDisposedException(nameof(ZlibDeflator));
+    }
+
+    private void GenerateCompressionError(ZlibErrorCode result, string genericMessage)
+    {
+        string? msg = _stream.ErrorMessage != IntPtr.Zero
+                ? Marshal.PtrToStringAnsi(_stream.ErrorMessage)
+                : genericMessage;
+
+        throw new ZlibException(result, msg);
     }
 
     /// <inheritdoc />
@@ -132,23 +148,7 @@ public sealed unsafe class ZngDeflator : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private void Checks()
-    {
-        if (IsDisposed)
-            throw new ObjectDisposedException(nameof(ZngDeflator));
-    }
-
-    private void GenerateCompressionError(ZlibErrorCode result, string genericMessage)
-    {
-        string? msg = _stream.ErrorMessage != IntPtr.Zero
-                ? Marshal.PtrToStringAnsi(_stream.ErrorMessage)
-                : genericMessage;
-
-        ZlibNGSharpMinimal.CompressionResult res = (ZlibNGSharpMinimal.CompressionResult)result;
-        throw new ZngCompressionException(res, msg);
-    }
-
-    ~ZngDeflator()
+    ~ZlibDeflator()
     {
         Dispose();
     }
