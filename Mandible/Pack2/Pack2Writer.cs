@@ -53,7 +53,9 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
     )
     {
         byte[] compressed = [];
-        bool compress = !raw && zip is Asset2ZipDefinition.Zipped or Asset2ZipDefinition.ZippedAlternate;
+        bool compress = !raw
+            && zip is Asset2ZipDefinition.Zipped or Asset2ZipDefinition.ZippedAlternate
+            && assetData.Length > 0;
 
         if (compress)
         {

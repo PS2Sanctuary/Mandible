@@ -93,7 +93,8 @@ public class PackCommands
             using MemoryOwner<byte> deflatedBuffer = MemoryOwner<byte>.Allocate(assetData.Length);
 
             // These file types are never compressed
-            bool mayCompress = Path.GetExtension(file).ToLower() is not (".cnk4" or ".cnk5" or ".def" or ".gfx");
+            bool mayCompress = Path.GetExtension(file).ToLower() is not (".cnk4" or ".cnk5" or ".def" or ".gfx")
+                && assetData.Length > 0;
 
             int deflatedLength = int.MaxValue - deflatePreferredTolerance;
             try
