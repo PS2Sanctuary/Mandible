@@ -87,11 +87,8 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
             (ulong)_currentOffset,
             (ulong)assetData.Length,
             zip,
-            0
+            dataHashOverride ?? AssetHashCrc32.CalculateDataHash(assetNameHash, assetData.Span)
         );
-
-        uint crc = dataHashOverride ?? AssetHashCrc32.CalculateDataHash(header, assetData.Span);
-        header = header with { DataHash = crc };
 
         _assetMap.Add(header);
         await _writer.WriteAsync(assetData, _currentOffset, ct).ConfigureAwait(false);

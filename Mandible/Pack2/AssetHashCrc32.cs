@@ -11,12 +11,12 @@ public static class AssetHashCrc32
     /// <summary>
     /// Calculates a hash of the given asset's data.
     /// </summary>
-    /// <param name="header">The asset header.</param>
+    /// <param name="assetNameHash">The asset's name hash.</param>
     /// <param name="data">The asset data.</param>
     /// <returns>The CRC32 hash value.</returns>
-    public static uint CalculateDataHash(Asset2Header header, ReadOnlySpan<byte> data)
+    public static uint CalculateDataHash(ulong assetNameHash, ReadOnlySpan<byte> data)
     {
-        uint seed = Hash(BitConverter.GetBytes(header.NameHash), 0);
+        uint seed = Hash(BitConverter.GetBytes(assetNameHash), 0);
         return Hash(data, seed);
     }
 
