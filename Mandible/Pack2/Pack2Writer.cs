@@ -1,8 +1,8 @@
+using CommunityToolkit.HighPerformance.Buffers;
 using Mandible.Abstractions.Pack2;
 using Mandible.Abstractions.Services;
 using Mandible.Util.Zlib;
 using System;
-using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -43,6 +43,10 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// If specifying the asset data should be zipped, this method assumes that the compressed data will not be larger
+    /// that the uncompressed data length.
+    /// </remarks>
     public async ValueTask WriteAssetAsync
     (
         ulong assetNameHash,
@@ -53,7 +57,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
         CancellationToken ct = default
     )
     {
-        byte[] compressed = [];
+        MemoryOwner<byte>? compressed = null;
         bool compress = !raw
             && zip is Asset2ZipDefinition.Zipped or Asset2ZipDefinition.ZippedAlternate
             && assetData.Length > 0;
@@ -63,22 +67,22 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
             int offset = 0;
 
             // Add space for the compression indicator, uncompressed length and zlib asset header
-            compressed = ArrayPool<byte>.Shared.Rent(assetData.Length + sizeof(uint) * 2 + ZlibConstants.HeaderLength);
+            compressed = MemoryOwner<byte>.Allocate(assetData.Length + sizeof(uint) * 2 + ZlibConstants.HeaderLength);
 
-            BinaryPrimitives.WriteUInt32BigEndian(compressed.AsSpan(offset), COMPRESSED_ASSET_MAGIC);
+            BinaryPrimitives.WriteUInt32BigEndian(compressed.Span[offset..], COMPRESSED_ASSET_MAGIC);
             offset += sizeof(uint);
 
-            BinaryPrimitives.WriteUInt32BigEndian(compressed.AsSpan(offset), (uint)assetData.Length);
+            BinaryPrimitives.WriteUInt32BigEndian(compressed.Span[offset..], (uint)assetData.Length);
             offset += sizeof(uint);
 
             int deflatedLength = _deflator.Deflate
             (
                 assetData.Span,
-                compressed.AsSpan(offset)
+                compressed.Span[offset..]
             );
             _deflator.Reset();
 
-            assetData = compressed.AsMemory(0, offset + deflatedLength);
+            assetData = compressed.Memory[..(offset + deflatedLength)];
         }
 
         Asset2Header header = new
@@ -96,8 +100,7 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
         _currentOffset += assetData.Length;
         IncrementOffsetToNextBoundary();
 
-        if (compress)
-            ArrayPool<byte>.Shared.Return(compressed);
+        compressed?.Dispose();
     }
 
     /// <inheritdoc />
