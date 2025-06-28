@@ -76,7 +76,7 @@ public class PackCommands
         CancellationToken ct
     )
     {
-        const int deflatePreferredTolerance = 1024;
+        const int deflatePreferredTolerance = 128;
         using ZlibDeflator deflator = new(ZlibCompressionLevel.BestCompression, true);
 
         // Sort the filenames in ascending order of name hash
