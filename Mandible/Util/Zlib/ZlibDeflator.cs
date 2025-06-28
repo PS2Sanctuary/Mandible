@@ -54,10 +54,10 @@ public sealed unsafe class ZlibDeflator : IDisposable
     /// <summary>
     /// Deflates a buffer.
     /// </summary>
-    /// <param name="input">The buffer.</param>
-    /// <param name="output">The output buffer.</param>
+    /// <param name="input">The input buffer.</param>
+    /// <param name="output">The buffer to output the deflated bytes to.</param>
     /// <param name="flushMethod">The flush method to use.</param>
-    /// <returns>The number of deflated bytes that were produced.</returns>
+    /// <returns>The number of bytes that were written to the <paramref name="output"/>.</returns>
     /// <exception cref="ZlibException"></exception>
     public int Deflate
     (
@@ -152,6 +152,9 @@ public sealed unsafe class ZlibDeflator : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// Disposes of the <see cref="ZlibDeflator"/> when the class is deconstructed.
+    /// </summary>
     ~ZlibDeflator()
     {
         Dispose();

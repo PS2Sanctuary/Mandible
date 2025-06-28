@@ -2,6 +2,9 @@ namespace Mandible.Util.Zlib;
 
 // ReSharper disable EnumUnderlyingTypeIsInt
 
+/// <summary>
+/// Contains constant values used to configure zlib.
+/// </summary>
 public static class ZlibConstants
 {
     /// <summary>
@@ -40,60 +43,130 @@ public static class ZlibConstants
     /// <p>See also: How to choose a compression level (in comments to <code>CompressionLevel</code>.)</p>
     /// </summary>
     public const int Deflate_DefaultMemLevel = 8;
-
-    public const int Deflate_NoCompressionMemLevel = 7;
 }
 
+/// <summary>
+/// Enumerates the possible flush methods that can be used with a deflate operation.
+/// </summary>
 public enum ZlibFlushCode : int
 {
+    /// <summary>
+    /// Allows the algorithm to decide how much data to accumulate before producing output.
+    /// This maximizes the compression level that is achieved.
+    /// </summary>
     NoFlush = 0,
+
+    /// <summary>
+    /// All pending output is flushed to the output buffer and aligned on a byte boundary.
+    /// </summary>
     SyncFlush = 2,
+
+    /// <summary>
+    /// Indicates that the input buffer contains the entire sequence to be deflated, allowing optimisations to be applied.
+    /// </summary>
     Finish = 4,
+
+    /// <summary>
+    /// If flush is set to Z_BLOCK, a deflate block is completed and emitted, as for Z_SYNC_FLUSH, but the output is not
+    /// aligned on a byte boundary, and up to seven bits of the current block are held to be written as the next byte
+    /// after the next deflate block is completed.  In this case, the decompressor may not be provided enough bits at
+    /// this point in order to complete decompression of the data provided so far to the compressor.  It may need to
+    /// wait for the next block to be emitted.  This is for advanced applications that need to control the emission of
+    /// deflate blocks.
+    /// </summary>
     Block = 5
 }
 
+/// <summary>
+/// Enumerates the possible error codes of a zlib operation.
+/// </summary>
 public enum ZlibErrorCode : int
 {
+    /// <summary>
+    /// Deflate/Inflate: Progress has been made. Supply more input, or more output space.
+    /// Otherwise: The operation completed successfully.
+    /// </summary>
     Ok = 0,
+
+    /// <summary>
+    /// All input has been consumed and all output produced successfully.
+    /// </summary>
     StreamEnd = 1,
+
+    /// <summary>
+    /// The <see cref="ZlibStream"/> structure is inconsistent (e.g. <see cref="ZlibStream.NextIn"/> or
+    /// <see cref="ZlibStream.NextOut"/> are null).
+    /// </summary>
     StreamError = -2,
+
+    /// <summary>
+    /// Inflate: The input stream is corrupt (doesn't conform to the zlib format,
+    /// or incorrect check value, in which case see <see cref="ZlibStream.ErrorMessage"/>).
+    /// </summary>
     DataError = -3,
+
+    /// <summary>
+    /// Not enough memory to complete the operation.
+    /// </summary>
     MemError = -4,
+
+    /// <summary>
+    /// No progress is possible or there is not enough room in the
+    /// output buffer when <c>..FlushMethod.Finish</c> is used.
+    /// This error is not fatal, and inflation can continue with more input and/or more output space.
+    /// </summary>
     BufError = -5,
+
+    /// <summary>
+    /// The version of the underlying library is not the same as what the caller is expecting.
+    /// </summary>
     VersionError = -6
 }
 
 /// <summary>
-/// <p><strong>From the ZLib manual:</strong></p>
-/// <p><code>CompressionStrategy</code> is used to tune the compression algorithm.<br />
-/// Use the value <code>DefaultStrategy</code> for normal data, <code>Filtered</code> for data produced by a filter
-/// (or predictor), <code>HuffmanOnly</code> to force Huffman encoding only (no string match), or <code>Rle</code> to
-/// limit match distances to one (run-length encoding). Filtered data consists mostly of small values with a somewhat
-/// random distribution. In this case, the compression algorithm is tuned to compress them better. The effect of
-/// <code>Filtered</code> is to force more Huffman coding and less string matching; it is somewhat intermediate between
-/// <code>DefaultStrategy</code> and <code>HuffmanOnly</code>. <code>Rle</code> is designed to be almost as fast as
-/// <code>HuffmanOnly</code>, but give better compression for PNG image data. The strategy parameter only affects the
-/// compression ratio but not the correctness of the compressed output even if it is not set appropriately.
-/// <code>Fixed</code> prevents the use of dynamic Huffman codes, allowing for a simpler decoder for special applications.</p>
-///
-/// <p>We have investigated compression scenarios for a bunch of different frequently occurring compression data and
-/// found that in all cases we investigated so far, <code>DefaultStrategy</code> provided best results</p>.
-/// <p>See also: How to choose a compression level (in comments to <code>CompressionLevel</code>).</p>
+/// Used to tune the compression algorithm.
 /// </summary>
 public enum ZlibCompressionStrategy : int
 {
+    /// <summary>
+    /// For normal data.
+    /// </summary>
     DefaultStrategy = 0,
+
+    /// <summary>
+    /// For data produced by a filter (or predictor). Filtered data consists mostly of small values with a somewhat
+    /// random distribution. In this case, the compression algorithm is tuned to compress them better. The effect of
+    /// <see cref="Filtered"/> is to force more Huffman coding and less string matching; it is somewhat intermediate
+    /// between <see cref="DefaultStrategy"/> and <see cref="HuffmanOnly"/>.
+    /// </summary>
     Filtered = 1,
+
+    /// <summary>
+    /// Force Huffman encoding only (no string match).
+    /// </summary>
     HuffmanOnly = 2,
+
+    /// <summary>
+    /// Limit match distances to one (run-length encoding). RLE is designed to be almost as fast as
+    /// <see cref="HuffmanOnly"/>, but give better compression for PNG image data. The strategy parameter only affects
+    /// the compression ratio but not the correctness of the compressed output even if it is not set appropriately.
+    /// </summary>
     RunLengthEncoding = 3,
+
+    /// <summary>
+    /// Prevents the use of dynamic Huffman codes, allowing for a simpler decoder for special applications.
+    /// </summary>
     Fixed = 4
 }
 
 /// <summary>
-/// In version 1.2.3, ZLib provides on the <code>Deflated</code>-<code>CompressionMethod</code>.
+/// The compression method to use.
 /// </summary>
 public enum ZlibCompressionMethod : int
 {
+    /// <summary>
+    /// Use the deflated algorithm.
+    /// </summary>
     Deflated = 8
 }
 
@@ -142,8 +215,23 @@ public enum ZlibCompressionMethod : int
 /// </remarks>
 public enum ZlibCompressionLevel : int
 {
+    /// <summary>
+    /// No compression is used.
+    /// </summary>
     NoCompression = 0,
+
+    /// <summary>
+    /// Optimized for time taken to compress the input.
+    /// </summary>
     BestSpeed = 1,
+
+    /// <summary>
+    /// A default compromise between speed and compression.
+    /// </summary>
     DefaultCompression = -1,
+
+    /// <summary>
+    /// Optimized for size of the output.
+    /// </summary>
     BestCompression = 9
 }

@@ -16,6 +16,9 @@ public sealed class Pack2Writer : IPack2Writer, IAsyncDisposable
 {
     private const int DATA_START_OFFSET = 0x200;
 
+    /// <summary>
+    /// Gets the magic data used to indicate that an asset has been compressed.
+    /// </summary>
     public const uint COMPRESSED_ASSET_MAGIC = 0xA1B2C3D4;
 
     private readonly IDataWriterService _writer;

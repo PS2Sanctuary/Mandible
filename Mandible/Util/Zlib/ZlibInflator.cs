@@ -37,6 +37,13 @@ public sealed unsafe class ZlibInflater : IDisposable
         }
     }
 
+    /// <summary>
+    /// Inflates a buffer.
+    /// </summary>
+    /// <param name="input">The input buffer containing deflated data.</param>
+    /// <param name="output">The buffer to write the inflated data to.</param>
+    /// <returns>The number of bytes that were written to the <paramref name="output"/>.</returns>
+    /// <exception cref="ZlibException"></exception>
     public ulong Inflate(ReadOnlySpan<byte> input, ReadOnlySpan<byte> output)
     {
         fixed (byte* nextIn = input)
@@ -114,7 +121,9 @@ public sealed unsafe class ZlibInflater : IDisposable
         IsDisposed = true;
         GC.SuppressFinalize(this);
     }
-
+    /// <summary>
+    /// Disposes of the <see cref="ZlibInflater"/> when the class is deconstructed.
+    /// </summary>
     ~ZlibInflater()
     {
         Dispose();
