@@ -89,7 +89,7 @@ public sealed unsafe class ZlibInflater : IDisposable
 
             errC = ZlibInterop.InflateInit2_(stream, _selectedWindowBits);
             if (errC is not ZlibErrorCode.Ok)
-                GenerateCompressionError(errC, "Failed to re-init the deflator");
+                GenerateCompressionError(errC, "Failed to re-init the inflater");
         }
     }
 
@@ -97,7 +97,7 @@ public sealed unsafe class ZlibInflater : IDisposable
     private void CheckNotDisposed()
     {
         if (IsDisposed)
-            throw new ObjectDisposedException(nameof(ZlibDeflator));
+            throw new ObjectDisposedException(nameof(ZlibInflater));
     }
 
     private void GenerateCompressionError(ZlibErrorCode result, string genericMessage)
