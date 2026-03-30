@@ -1,4 +1,6 @@
+using BinaryPrimitiveHelpers;
 using Mandible.Dma;
+using Mandible.Fsb;
 using Mandible.Zone;
 using MemoryReaders;
 using System;
@@ -26,24 +28,25 @@ public static class AssetNameScraper
         [
             "CDTA"u8.ToArray(),
             "CFX"u8.ToArray(),
-            "CNK"u8.ToArray(),
-            "DDS"u8.ToArray(),
+            "CNK"u8.ToArray(), // Terrain chunk data
+            "DDS"u8.ToArray(), // Image data
             "DSKE"u8.ToArray(),
             "DXBC"u8.ToArray(),
-            "FSB"u8.ToArray(),
             "GNF"u8.ToArray(),
             "INDR"u8.ToArray(),
             "RIFF"u8.ToArray(),
-            "VNFO"u8.ToArray(),
-            [0x89, (byte)'P', (byte)'N', (byte)'G'],
-            [0xff, 0xd8, 0xff] // JPG
+            "VNFO"u8.ToArray(), // Occlusion / culling data ?
+            [0x89, .."PNG"u8],
+            [0xff, 0xd8, 0xff], // JPG
+            [0x14, 0x00, 0x00, 0xD6] // tome files. occlusion / culling data ?
         ];
 
         DEDICATED_ASSET_HANDLERS =
         [
-            ("DMAT"u8.ToArray(), ScrapeDMAT),
-            ("DMOD"u8.ToArray(), ScrapeDMOD),
-            ("ZONE"u8.ToArray(), ScrapeZONE)
+            ("DMAT"u8.ToArray(), ScrapeDmat),
+            ("DMOD"u8.ToArray(), ScrapeDmod),
+            ("FSB5"u8.ToArray(), ScrapeFsb),
+            ("ZONE"u8.ToArray(), ScrapeZone)
         ];
 
         string[] knownFileExtensions =
@@ -74,11 +77,11 @@ public static class AssetNameScraper
         List<string> names = [];
         ScrapeInternal(data, names);
         int finalCount = names.Count;
-        
+
         for (int i = 0; i < finalCount; i++)
         {
             string name = names[i];
-            
+
             if (name.EndsWith(".efb", StringComparison.OrdinalIgnoreCase))
                 names.Add(Path.ChangeExtension(name, "dx11efb"));
             else if (name.EndsWith(".xrsb", StringComparison.OrdinalIgnoreCase))
@@ -168,13 +171,13 @@ public static class AssetNameScraper
         }
     }
 
-    private static void ScrapeDMAT(ReadOnlySpan<byte> dmatData, ICollection<string> namesOutput)
+    private static void ScrapeDmat(ReadOnlySpan<byte> dmatData, ICollection<string> namesOutput)
     {
         foreach (string element in Dmat.Read(dmatData, out _).TextureFileNames)
             namesOutput.Add(element);
     }
 
-    private static void ScrapeDMOD(ReadOnlySpan<byte> dmodData, ICollection<string> namesOutput)
+    private static void ScrapeDmod(ReadOnlySpan<byte> dmodData, ICollection<string> namesOutput)
     {
         SpanReader<byte> reader = new(dmodData);
         bool advanced = reader.TryAdvanceTo(new[] { (byte)'D', (byte)'M', (byte)'A', (byte)'T' }, false);
@@ -186,7 +189,35 @@ public static class AssetNameScraper
             namesOutput.Add(element);
     }
 
-    private static void ScrapeZONE(ReadOnlySpan<byte> zoneData, ICollection<string> namesOutput)
+    private static void ScrapeFsb(ReadOnlySpan<byte> fsbData, ICollection<string> namesOutput)
+    {
+        BinaryPrimitiveReader reader = new(fsbData);
+        Fsb5Header header = Fsb5Header.Read(ref reader);
+
+        if (header.NumSamples > 1)
+        {
+            throw new InvalidDataException
+            (
+                "FSB5 file with multiple samples encountered. Mandible does not understand how names are packed in " +
+                "this case. Please create a bug report and share the FSB file"
+            );
+        }
+
+        // Skip past the sample headers
+        reader.Seek(header.SampleHeaderLen);
+
+        if (reader.ReadInt32LE() != 4)
+            throw new InvalidDataException("Unexpected: the name buffer does not start with 0x4");
+
+        ReadOnlySpan<byte> nameBuffer = reader.ReadBytes(header.NameLen - sizeof(int));
+        int zeroIndex = nameBuffer.IndexOf((byte)0);
+        if (zeroIndex != -1)
+            nameBuffer = nameBuffer[..zeroIndex];
+
+        namesOutput.Add(Encoding.ASCII.GetString(nameBuffer) + ".fsb");
+    }
+
+    private static void ScrapeZone(ReadOnlySpan<byte> zoneData, ICollection<string> namesOutput)
     {
         Zone.Zone zone = Zone.Zone.Read(zoneData, out _);
 
