@@ -164,7 +164,16 @@ public static class AssetNameScraper
 
                 // Only include names that aren't just an extension
                 if (read && fullName.IndexOf((byte)'.') != 0)
-                    namesOutput.Add(Encoding.UTF8.GetString(fullName));
+                {
+                    string name = Encoding.UTF8.GetString(fullName);
+                    namesOutput.Add(name);
+
+                    // It's possible common for this scrape to capture leading characters (e.g. braces or quotes) that
+                    // aren't likely to be part of the filename. Hence, remove any non-letter or digit characters
+                    // and add the name as a variant
+                    if (!char.IsLetterOrDigit(name[0]))
+                        namesOutput.Add(name[1..]);
+                }
             }
         }
     }
