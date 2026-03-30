@@ -109,7 +109,7 @@ public class Zone : IBufferWritable
         BinaryPrimitiveReader reader = new(buffer);
 
         if (buffer.IndexOf(MAGIC.Span) != 0)
-            throw new UnrecognisedMagicException(buffer[..MAGIC.Length].ToArray(), MAGIC.ToArray());
+            throw new UnrecognisedMagicException(MAGIC.ToArray(), buffer[..MAGIC.Length].ToArray());
         reader.Seek(MAGIC.Length);
 
         ZoneVersion version = (ZoneVersion)reader.ReadUInt32LE();
