@@ -17,7 +17,6 @@ public static class AssetNameScraper
     private delegate void DedicatedAssetHandler(ReadOnlySpan<byte> assetData, ICollection<string> namesOutput);
 
     private static readonly IReadOnlyList<byte[]> UNSCRAPEABLE_FILE_MAGICS;
-    private static readonly IReadOnlyList<byte[]> SCRAPEABLE_BINARY_FILE_MAGICS;
     private static readonly IReadOnlyList<(byte[] Magic, DedicatedAssetHandler Handler)> DEDICATED_ASSET_HANDLERS;
     private static readonly IReadOnlyList<byte[]> KNOWN_FILE_EXTENSIONS;
 
@@ -38,15 +37,6 @@ public static class AssetNameScraper
             "VNFO"u8.ToArray(),
             [0x89, (byte)'P', (byte)'N', (byte)'G'],
             [0xff, 0xd8, 0xff] // JPG
-        ];
-
-        SCRAPEABLE_BINARY_FILE_MAGICS =
-        [
-            "CHKF"u8.ToArray(), // Player Studio format
-            "DMAT"u8.ToArray(),
-            "DMOD"u8.ToArray(),
-            "ZONE"u8.ToArray(),
-            "*TEXTUREPART"u8.ToArray() // .eco
         ];
 
         DEDICATED_ASSET_HANDLERS =
@@ -125,17 +115,6 @@ public static class AssetNameScraper
             && assetData[8..].IndexOf("FXD"u8) == 0;
         if (isFxd)
             return true;
-
-        foreach (byte[] value in SCRAPEABLE_BINARY_FILE_MAGICS)
-        {
-            if (reader.IsNext(value))
-                return true;
-        }
-
-        // Simple check for binary files
-        int maxCheckLength = Math.Min(2048, assetData.Length);
-        return maxCheckLength > 0
-            && assetData[..maxCheckLength].IndexOf((byte)0) == -1;
     }
 
     private static void ScrapeInternal(ReadOnlySpan<byte> data, List<string> namesOutput)
