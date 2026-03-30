@@ -163,18 +163,49 @@ public static class AssetNameScraper
                 bool read = reader.TryReadExact(out ReadOnlySpan<byte> fullName, endIndex - startIndex);
 
                 // Only include names that aren't just an extension
-                if (read && fullName.IndexOf((byte)'.') != 0)
-                {
-                    string name = Encoding.UTF8.GetString(fullName);
-                    namesOutput.Add(name);
+                if (!read || fullName.IndexOf((byte)'.') == 0)
+                    continue;
 
-                    // It's possible common for this scrape to capture leading characters (e.g. braces or quotes) that
-                    // aren't likely to be part of the filename. Hence, remove any non-letter or digit characters
-                    // and add the name as a variant
-                    if (!char.IsLetterOrDigit(name[0]))
-                        namesOutput.Add(name[1..]);
-                }
+                string name = Encoding.UTF8.GetString(fullName);
+                namesOutput.Add(name);
+
+                // It's possible common for this scrape to capture leading characters (e.g. braces or quotes) that
+                // aren't likely to be part of the filename. Hence, remove any non-letter or digit characters
+                // and add the name as a variant
+                if (!char.IsLetterOrDigit(name[0]))
+                    namesOutput.Add(name[1..]);
+
+                // Some datasheet text files contain names with substitutions
+                // E.g. ClientItemDefinitions.txt is particularly egregious with this
+                if (name.Contains('<'))
+                    PerformSubstitutions(name, namesOutput);
             }
+        }
+    }
+
+    private static void PerformSubstitutions(string name, List<string> namesOutput)
+    {
+        const string genderKey = "<gender>";
+        const string factionKey = "<Faction>";
+        const string actorKey = "<Actor>";
+
+        if (name.Contains(genderKey, StringComparison.OrdinalIgnoreCase))
+        {
+            namesOutput.Add(name.Replace(genderKey, "FEMALE"));
+            namesOutput.Add(name.Replace(genderKey, "MALE"));
+        }
+
+        if (name.Contains(factionKey, StringComparison.OrdinalIgnoreCase))
+        {
+            namesOutput.Add(name.Replace(factionKey, "NC"));
+            namesOutput.Add(name.Replace(factionKey, "NSO"));
+            namesOutput.Add(name.Replace(factionKey, "TR"));
+            namesOutput.Add(name.Replace(factionKey, "VS"));
+        }
+
+        if (name.Contains(actorKey, StringComparison.OrdinalIgnoreCase))
+        {
+            // TODO: Fill in actor values
         }
     }
 
@@ -258,6 +289,7 @@ public static class AssetNameScraper
             (byte)'-' or (byte)'_' => true,
             (byte)'(' or (byte)')' => true,
             (byte)'[' or (byte)']' => true,
+            (byte)'<' or (byte)'>' => true, // Almost always used when substitutions into the name are required
             (byte)'\'' => true,
             (byte)'.' => true, // Periods in name (e.g. my.file.txt)
             _ => false
