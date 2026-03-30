@@ -112,6 +112,14 @@ public static class AssetNameScraper
     {
         SpanReader<byte> reader = new(assetData);
 
+        foreach (byte[] value in UNSCRAPEABLE_FILE_MAGICS)
+        {
+            if (reader.IsNext(value))
+                return false;
+        }
+
+        return true;
+
         // FXD files have an offset header, gotta check for them individually
         bool isFxd = assetData.Length > 11
             && assetData[8..].IndexOf("FXD"u8) == 0;
@@ -122,12 +130,6 @@ public static class AssetNameScraper
         {
             if (reader.IsNext(value))
                 return true;
-        }
-
-        foreach (byte[] value in UNSCRAPEABLE_FILE_MAGICS)
-        {
-            if (reader.IsNext(value))
-                return false;
         }
 
         // Simple check for binary files
@@ -170,7 +172,7 @@ public static class AssetNameScraper
                 reader.Rewind(extName.Length + 2); // Rewind to the first letter of the name
 
                 // Rewind until we encounter an invalid character, or reach the start of the file
-                while (reader.TryPeek(out byte currentChar) && IsValidLetter(currentChar) && reader.Consumed != 0)
+                while (reader.TryPeek(out byte currentChar) && IsValidFileNameChar(currentChar) && reader.Consumed != 0)
                     reader.Rewind(1);
 
                 if (reader.Consumed != 0)
@@ -225,14 +227,14 @@ public static class AssetNameScraper
             namesOutput.Add(obj.ActorFile);
     }
 
-    private static bool IsValidLetter(byte value)
+    private static bool IsValidFileNameChar(byte value)
         => value switch
         {
             >= (byte)'0' and <= (byte)'9' => true,
             >= (byte)'A' and <= (byte)'Z' => true,
             >= (byte)'a' and <= (byte)'z' => true,
-            (byte)'-' => true,
-            (byte)'_' => true,
+            (byte)'-' or (byte)'_' => true,
+            (byte)'(' or (byte)')' => true,
             _ => false
         };
 }
