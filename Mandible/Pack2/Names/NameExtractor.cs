@@ -97,39 +97,6 @@ public static class NameExtractor
     {
         List<string> names = [];
 
-        void AddName(string name)
-        {
-            // World area file
-            names.Add(name + "Areas.xml");
-            names.Add(name + ".zone");
-            names.Add(name + ".vnfo");
-
-            // World tile info files
-            for (int i = 0; i < 4; i++)
-                names.Add($"{name}_TileInfo_LOD{i}.txt");
-
-            // World chunk files
-            for (int i = 0; i < 6; i++)
-            {
-                int increment = (i - 1) < 0
-                    ? 4
-                    : 4 * (int)Math.Pow(2, i - 1);
-
-                for (int x = -64; x < 64; x += increment)
-                {
-                    for (int y = -64; y < 64; y += increment)
-                        names.Add($"{name}_{x}_{y}.cnk{i}");
-                }
-            }
-
-            // World tome files
-            for (int x = -4; x < 4; x++)
-            {
-                for (int y = -4; y < 4; y++)
-                    names.Add($"{name}_{x}_{y}.tome");
-            }
-        }
-
         XmlReaderSettings xmlSettings = new()
         {
             Async = true,
@@ -173,9 +140,48 @@ public static class NameExtractor
             AddName(dataName);
         }
 
-        // Manually append this, the algorithm excludes it because it is referred to as 'VR_Training'.
+        // Manually append, the algorithm excludes it because it is referred to as 'VR_Training'.
         AddName("VR");
 
+        // These worlds aren't always present in the terrain data list
+        AddName("Desolation");
+        AddName("OutfitWars");
+
         namelist.Append(names, ct);
+
+        return;
+
+        void AddName(string name)
+        {
+            // World area file
+            names.Add(name + "Areas.xml");
+            names.Add(name + ".zone");
+            names.Add(name + ".vnfo");
+
+            // World tile info files
+            for (int i = 0; i < 4; i++)
+                names.Add($"{name}_TileInfo_LOD{i}.txt");
+
+            // World chunk files
+            for (int i = 0; i < 6; i++)
+            {
+                int increment = (i - 1) < 0
+                    ? 4
+                    : 4 * (int)Math.Pow(2, i - 1);
+
+                for (int x = -64; x < 64; x += increment)
+                {
+                    for (int y = -64; y < 64; y += increment)
+                        names.Add($"{name}_{x}_{y}.cnk{i}");
+                }
+            }
+
+            // World tome files
+            for (int x = -4; x < 4; x++)
+            {
+                for (int y = -4; y < 4; y++)
+                    names.Add($"{name}_{x}_{y}.tome");
+            }
+        }
     }
 }
