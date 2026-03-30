@@ -1,6 +1,7 @@
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 using BinaryPrimitiveHelpers;
+using Mandible.Common;
 using Mandible.Exceptions;
 using System;
 
@@ -91,7 +92,7 @@ public class Fsb5Header
     /// <summary>
     /// Gets the magic identifier of a zone file.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MAGIC = "FSB5"u8.ToArray();
+    public static readonly ReadOnlyMemory<byte> MAGIC = FileIdentifiers.Magics[FileType.FmodSoundBank5];
 
     /// <summary>
     /// The version of the FSB5 header.

@@ -1,6 +1,8 @@
 using BinaryPrimitiveHelpers;
 using Mandible.Abstractions;
+using Mandible.Common;
 using Mandible.Exceptions;
+using Mandible.Util;
 using System;
 using System.Collections.Generic;
 
@@ -14,7 +16,7 @@ public class Zone : IBufferWritable
     /// <summary>
     /// Gets the magic identifier of a zone file.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MAGIC = "ZONE"u8.ToArray();
+    public static readonly ReadOnlyMemory<byte> MAGIC = FileIdentifiers.Magics[FileType.Zone];
 
     /// <summary>
     /// Gets or sets the version of the zone asset.

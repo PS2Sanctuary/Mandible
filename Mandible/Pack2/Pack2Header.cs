@@ -1,4 +1,5 @@
-﻿using Mandible.Exceptions;
+﻿using Mandible.Common;
+using Mandible.Exceptions;
 using System;
 using System.Buffers.Binary;
 
@@ -26,7 +27,7 @@ public record Pack2Header
     /// <summary>
     /// Gets the magic identifier of a pack2 file.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MAGIC_BYTES = "PAK"u8.ToArray();
+    public static readonly ReadOnlyMemory<byte> MAGIC_BYTES = FileIdentifiers.Magics[FileType.Pack2];
 
     /// <summary>
     /// Gets the size of a <see cref="Pack2Header"/> as stored within a pack.

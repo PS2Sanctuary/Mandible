@@ -1,5 +1,6 @@
 using BinaryPrimitiveHelpers;
 using Mandible.Abstractions;
+using Mandible.Common;
 using Mandible.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ public record Dmat
     IReadOnlyList<Material> Materials
 ) : IBufferWritable
 {
-    private static readonly ReadOnlyMemory<byte> MAGIC = "DMAT"u8.ToArray();
+    private static readonly ReadOnlyMemory<byte> MAGIC = FileIdentifiers.Magics[FileType.MaterialInfo];
 
     /// <summary>
     /// Gets the DMAT version supported by this class.

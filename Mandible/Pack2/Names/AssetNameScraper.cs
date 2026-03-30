@@ -1,4 +1,5 @@
 using BinaryPrimitiveHelpers;
+using Mandible.Common;
 using Mandible.Dma;
 using Mandible.Fsb;
 using Mandible.Zone;
@@ -18,35 +19,35 @@ public static class AssetNameScraper
 {
     private delegate void DedicatedAssetHandler(ReadOnlySpan<byte> assetData, ICollection<string> namesOutput);
 
-    private static readonly IReadOnlyList<byte[]> UNSCRAPEABLE_FILE_MAGICS;
-    private static readonly IReadOnlyList<(byte[] Magic, DedicatedAssetHandler Handler)> DEDICATED_ASSET_HANDLERS;
+    private static readonly IReadOnlyList<ReadOnlyMemory<byte>> UNSCRAPEABLE_FILE_MAGICS;
+    private static readonly IReadOnlyList<(ReadOnlyMemory<byte> Magic, DedicatedAssetHandler Handler)> DEDICATED_ASSET_HANDLERS;
     private static readonly IReadOnlyList<byte[]> KNOWN_FILE_EXTENSIONS;
 
     static AssetNameScraper()
     {
         UNSCRAPEABLE_FILE_MAGICS =
         [
-            "CDTA"u8.ToArray(),
-            "CFX"u8.ToArray(),
-            "CNK"u8.ToArray(), // Terrain chunk data
-            "DDS"u8.ToArray(), // Image data
+            FileIdentifiers.Magics[FileType.CData],
+            FileIdentifiers.Magics[FileType.Gfx],
+            FileIdentifiers.Magics[FileType.TerrainChunkGeneric],
+            FileIdentifiers.Magics[FileType.DdsImage],
             "DSKE"u8.ToArray(),
             "DXBC"u8.ToArray(),
             "GNF"u8.ToArray(),
             "INDR"u8.ToArray(),
-            "RIFF"u8.ToArray(),
-            "VNFO"u8.ToArray(), // Occlusion / culling data ?
-            [0x89, .."PNG"u8],
-            [0xff, 0xd8, 0xff], // JPG
-            [0x14, 0x00, 0x00, 0xD6] // tome files. occlusion / culling data ?
+            FileIdentifiers.Magics[FileType.Jpeg],
+            FileIdentifiers.Magics[FileType.Png],
+            FileIdentifiers.Magics[FileType.Riff],
+            FileIdentifiers.Magics[FileType.Tome],
+            FileIdentifiers.Magics[FileType.Vnfo]
         ];
 
         DEDICATED_ASSET_HANDLERS =
         [
-            ("DMAT"u8.ToArray(), ScrapeDmat),
-            ("DMOD"u8.ToArray(), ScrapeDmod),
-            ("FSB5"u8.ToArray(), ScrapeFsb),
-            ("ZONE"u8.ToArray(), ScrapeZone)
+            (FileIdentifiers.Magics[FileType.MaterialInfo], ScrapeDmat),
+            (FileIdentifiers.Magics[FileType.ModelInfo], ScrapeDmod),
+            (FileIdentifiers.Magics[FileType.FmodSoundBank5], ScrapeFsb),
+            (FileIdentifiers.Magics[FileType.Zone], ScrapeZone)
         ];
 
         string[] knownFileExtensions =
@@ -105,9 +106,9 @@ public static class AssetNameScraper
     {
         SpanReader<byte> reader = new(assetData);
 
-        foreach (byte[] value in UNSCRAPEABLE_FILE_MAGICS)
+        foreach (ReadOnlyMemory<byte> value in UNSCRAPEABLE_FILE_MAGICS)
         {
-            if (reader.IsNext(value))
+            if (reader.IsNext(value.Span))
                 return false;
         }
 
@@ -124,9 +125,9 @@ public static class AssetNameScraper
     {
         SpanReader<byte> reader = new(data);
 
-        foreach ((byte[] magic, DedicatedAssetHandler handler) in DEDICATED_ASSET_HANDLERS)
+        foreach ((ReadOnlyMemory<byte> magic, DedicatedAssetHandler handler) in DEDICATED_ASSET_HANDLERS)
         {
-            if (!reader.IsNext(magic))
+            if (!reader.IsNext(magic.Span))
                 continue;
 
             try
