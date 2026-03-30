@@ -165,8 +165,6 @@ public static class AssetNameScraper
                 // Only include names that aren't just an extension
                 if (read && fullName.IndexOf((byte)'.') != 0)
                     namesOutput.Add(Encoding.UTF8.GetString(fullName));
-
-                reader.Advance(endIndex - startIndex);
             }
         }
     }
@@ -237,6 +235,11 @@ public static class AssetNameScraper
             namesOutput.Add(obj.ActorFile);
     }
 
+    /// <summary>
+    /// We use a strict validation check to help limit false matches when parsing binary files.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     private static bool IsValidFileNameChar(byte value)
         => value switch
         {
@@ -245,6 +248,9 @@ public static class AssetNameScraper
             >= (byte)'a' and <= (byte)'z' => true,
             (byte)'-' or (byte)'_' => true,
             (byte)'(' or (byte)')' => true,
+            (byte)'[' or (byte)']' => true,
+            (byte)'\'' => true,
+            (byte)'.' => true, // Periods in name (e.g. my.file.txt)
             _ => false
         };
 }
