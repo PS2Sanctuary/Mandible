@@ -9,6 +9,7 @@ Mandible currently supports the following formats (R = read, W = write):
 
 - `.dma/DMAT` (R/W)
 - Locale data (R/W)
+- Manifest XML files (R)
 - `.pack` (R)
 - `.pack2/PAK` (R/W)
 - `.zone/ZONE` (R/W)
@@ -27,6 +28,7 @@ A command-line tool is also distributed with Mandible, which offers commands to:
 - Create `pack2` files.
 - Generate namelists from `pack2` files.
 - Generate an index of assets within pack files.
+- Download asset packs from the Daybreak Manifest CDN.
 
 **This package is unofficial and is not affiliated with the developers of the ForgeLight engine or its derived games in
 any way.**
