@@ -18,7 +18,7 @@ public class Program
             .Enrich.FromLogContext()
             .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
-        
+
         ConsoleApp.ConsoleAppBuilder app = ConsoleApp.Create()
             .ConfigureLogging(x =>
             {
