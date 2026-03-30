@@ -13,12 +13,12 @@ namespace Mandible.Fsb;
 public enum FmodMode : uint
 {
     /// <summary>
-    /// No mode flags.
+    /// Default for all modes listed below. FMOD_LOOP_OFF, FMOD_2D, FMOD_3D_WORLDRELATIVE, FMOD_3D_INVERSEROLLOFF
     /// </summary>
     FMOD_DEFAULT = 0x00000000,
 
     /// <summary>
-    /// For non looping samples.
+    /// For non looping sounds. (DEFAULT).  Overrides FMOD_LOOP_NORMAL / FMOD_LOOP_BIDI.
     /// </summary>
     FMOD_LOOP_OFF = 0x00000001,
 
@@ -28,11 +28,25 @@ public enum FmodMode : uint
     FMOD_LOOP_NORMAL = 0x00000002,
 
     /// <summary>
-    /// For bidirectional looping samples. (no effect if in hardware).
+    /// For bidirectional looping sounds. (only works on software mixed static sounds).
     /// </summary>
     FMOD_LOOP_BIDI = 0x00000004,
+
+    /// <summary>
+    /// Ignores any 3d processing. (DEFAULT).
+    /// </summary>
     FMOD_2D = 0x00000008,
+
+    /// <summary>
+    /// Makes the sound positionable in 3D.  Overrides FMOD_2D.
+    /// </summary>
     FMOD_3D = 0x00000010,
+
+    /// <summary>
+    /// Decompress at runtime, streaming from the source provided (ie from disk).  Overrides FMOD_CREATESAMPLE and
+    /// FMOD_CREATECOMPRESSEDSAMPLE. Note a stream can only be played once at a time due to a stream only having 1
+    /// stream buffer and file handle.  Open multiple streams to have them play concurrently.
+    /// </summary>
     FMOD_CREATESTREAM = 0x00000080,
     FMOD_CREATESAMPLE = 0x00000100,
     FMOD_CREATECOMPRESSEDSAMPLE = 0x00000200,
