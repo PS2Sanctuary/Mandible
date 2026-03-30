@@ -23,41 +23,41 @@ public static class AssetNameScraper
 
     static AssetNameScraper()
     {
-        UNSCRAPEABLE_FILE_MAGICS = new[]
-        {
-            Encoding.ASCII.GetBytes("CDTA"),
-            Encoding.ASCII.GetBytes("CFX"),
-            Encoding.ASCII.GetBytes("CNK"),
-            Encoding.ASCII.GetBytes("DDS"),
-            Encoding.ASCII.GetBytes("DSKE"),
-            Encoding.ASCII.GetBytes("DXBC"),
-            Encoding.ASCII.GetBytes("FSB"),
-            Encoding.ASCII.GetBytes("GNF"),
-            Encoding.ASCII.GetBytes("INDR"),
-            Encoding.ASCII.GetBytes("RIFF"),
-            Encoding.ASCII.GetBytes("VNFO"),
-            new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G' },
-            new byte[] { 0xff, 0xd8, 0xff } // JPG
-        };
+        UNSCRAPEABLE_FILE_MAGICS =
+        [
+            "CDTA"u8.ToArray(),
+            "CFX"u8.ToArray(),
+            "CNK"u8.ToArray(),
+            "DDS"u8.ToArray(),
+            "DSKE"u8.ToArray(),
+            "DXBC"u8.ToArray(),
+            "FSB"u8.ToArray(),
+            "GNF"u8.ToArray(),
+            "INDR"u8.ToArray(),
+            "RIFF"u8.ToArray(),
+            "VNFO"u8.ToArray(),
+            [0x89, (byte)'P', (byte)'N', (byte)'G'],
+            [0xff, 0xd8, 0xff] // JPG
+        ];
 
         SCRAPEABLE_BINARY_FILE_MAGICS = new[]
         {
-            Encoding.ASCII.GetBytes("CHKF"), // Player Studio format
-            Encoding.ASCII.GetBytes("DMAT"),
-            Encoding.ASCII.GetBytes("DMOD"),
-            Encoding.ASCII.GetBytes("ZONE"),
-            Encoding.ASCII.GetBytes("*TEXTUREPART") // .eco
+            "CHKF"u8.ToArray(), // Player Studio format
+            "DMAT"u8.ToArray(),
+            "DMOD"u8.ToArray(),
+            "ZONE"u8.ToArray(),
+            "*TEXTUREPART"u8.ToArray() // .eco
         };
 
         DEDICATED_ASSET_HANDLERS = new (byte[], DedicatedAssetHandler)[]
         {
-            (Encoding.ASCII.GetBytes("DMAT"), ScrapeDMAT),
-            (Encoding.ASCII.GetBytes("DMOD"), ScrapeDMOD),
-            (Encoding.ASCII.GetBytes("ZONE"), ScrapeZONE)
+            ("DMAT"u8.ToArray(), ScrapeDMAT),
+            ("DMOD"u8.ToArray(), ScrapeDMOD),
+            ("ZONE"u8.ToArray(), ScrapeZONE)
         };
 
         string[] knownFileExtensions =
-        {
+        [
             "adr", "agr", "Agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3",
             "cnk4", "cnk5", "crc", "crt", "cso", "cur", "Cur", "dat", "Dat", "db", "dds", "DDS", "def", "Def",
             "dir", "Dir", "dll", "DLL", "dma", "dme", "DME", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb",
@@ -65,7 +65,7 @@ public static class AssetNameScraper
             "lst", "lua", "mrn", "pak", "pem", "playerstudio", "PlayerStudio", "png", "prsb", "psd", "pssb",
             "tga", "TGA", "thm", "tome", "ttf", "txt", "vnfo", "wav", "xlsx", "xml", "xrsb", "xssb", "zone",
             "Zone"
-        };
+        ];
 
         KNOWN_FILE_EXTENSIONS = knownFileExtensions.Select(ext => Encoding.ASCII.GetBytes(ext))
             .ToList();
@@ -79,9 +79,9 @@ public static class AssetNameScraper
     public static IReadOnlyList<string> ScrapeFromAssetData(ReadOnlySpan<byte> data)
     {
         if (!IsScrapeAbleAsset(data))
-            return Array.Empty<string>();
+            return [];
 
-        List<string> names = new();
+        List<string> names = [];
         ScrapeInternal(data, names);
 
         foreach (string name in names)
@@ -122,7 +122,7 @@ public static class AssetNameScraper
 
         // FXD files have an offset header, gotta check for them individually
         bool isFxd = assetData.Length > 11
-            && assetData[8..].IndexOf(Encoding.UTF8.GetBytes("FXD")) == 0;
+            && assetData[8..].IndexOf("FXD"u8) == 0;
         if (isFxd)
             return true;
 
@@ -144,7 +144,7 @@ public static class AssetNameScraper
             && assetData[..maxCheckLength].IndexOf((byte)0) == -1;
     }
 
-    private static void ScrapeInternal(ReadOnlySpan<byte> data, ICollection<string> namesOutput)
+    private static void ScrapeInternal(ReadOnlySpan<byte> data, List<string> namesOutput)
     {
         SpanReader<byte> reader = new(data);
 
