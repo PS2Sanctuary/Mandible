@@ -1,5 +1,6 @@
 ﻿using ConsoleAppFramework;
 using Spectre.Console;
+using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -77,13 +78,113 @@ public class ZoneFileCommands
                 return;
         }
 
+        await ExportAsJsonInternal(zoneFilePath, outputPath, ct);
+        
+        _console.MarkupLine($"Zone file exported to [cyan]{outputPath}[/]");
+        _console.MarkupLine("[green]Export complete![/]");
+    }
+
+    /// <summary>
+    /// Loads a JSON representation of a Zone file and writes it to the binary format.
+    /// </summary>
+    /// <param name="inputJsonPath">A path to the input JSON file.</param>
+    /// <param name="outputZonePath">A path to the output zone file.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
+    [Command("write")]
+    public async Task WriteFromJson
+    (
+        [Argument] string inputJsonPath,
+        [Argument] string outputZonePath,
+        CancellationToken ct = default
+    )
+    {
+        if (!File.Exists(inputJsonPath))
+        {
+            _console.MarkupLine("[red]The input JSON file does not exist.[/]");
+            return;
+        }
+
+        if (File.Exists(outputZonePath))
+        {
+            if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
+                return;
+        }
+        
+        await WriteFromJsonInternal(inputJsonPath, outputZonePath, ct);
+        
+        _console.MarkupLine($"Zone file written to [cyan]{outputZonePath}[/]");
+        _console.MarkupLine("[green]Complete![/]");
+    }
+
+    /// <summary>
+    /// Loads a binary zone file, exports to JSON, and attempts to re-write to the binary format. Returns whether the
+    /// written output is identical. This provides a means of round-trip testing the tool's understanding of the zone
+    /// file format.
+    /// </summary>
+    /// <param name="zoneFilePath">A path to the binary zone file.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
+    [Command("test")]
+    public async Task RoundTripTest
+    (
+        [Argument] string zoneFilePath,
+        CancellationToken ct = default
+    )
+    {
+        string tempJson = Path.GetTempFileName();
+        string tempZone = Path.GetTempFileName();
+
+        try
+        {
+            await ExportAsJsonInternal(zoneFilePath, tempJson, ct);
+            await WriteFromJsonInternal(tempJson, tempZone, ct);
+            
+            byte[] expected = await File.ReadAllBytesAsync(zoneFilePath, ct);
+            byte[] actual = await File.ReadAllBytesAsync(tempZone, ct);
+
+            if (expected.SequenceEqual(actual))
+                _console.MarkupLine("[green]Success! The round-trip output matches the input zone file[/]");
+            else
+                _console.MarkupLine("[red]Failure! The round-trip output does not match the input zone file[/]");
+        }
+        finally
+        {
+            File.Delete(tempJson);
+            File.Delete(tempZone);
+        }
+    }
+
+    private static async Task ExportAsJsonInternal
+    (
+        [Argument] string zoneFilePath,
+        [Argument] string outputPath,
+        CancellationToken ct = default
+    )
+    {
         byte[] data = await File.ReadAllBytesAsync(zoneFilePath, ct);
         Zone.Zone zone = Zone.Zone.Read(data, out _);
 
         await using FileStream fs = new(outputPath, FileMode.Create, FileAccess.Write);
         await JsonSerializer.SerializeAsync(fs, zone, AppJsonContext.Default.Zone, ct);
-        
-        _console.MarkupLine($"Zone file exported to [cyan]{outputPath}[/]");
-        _console.MarkupLine("[green]Export complete![/]");
+    }
+
+    private async Task WriteFromJsonInternal
+    (
+        [Argument] string inputJsonPath,
+        [Argument] string outputZonePath,
+        CancellationToken ct = default
+    )
+    {
+        await using FileStream fs = new(inputJsonPath, FileMode.Open, FileAccess.Read,  FileShare.ReadWrite);
+        Zone.Zone? zone = await JsonSerializer.DeserializeAsync<Zone.Zone>(fs, AppJsonContext.Default.Zone, ct);
+
+        if (zone is null)
+        {
+            _console.MarkupLine("[red]Failed to load Zone data from the JSON file.[/]");
+            return;
+        }
+
+        byte[] buffer = new byte[zone.GetRequiredBufferSize()];
+        zone.Write(buffer);
+        await File.WriteAllBytesAsync(outputZonePath, buffer, ct);
     }
 }
