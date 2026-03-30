@@ -1,13 +1,10 @@
 ﻿using CommunityToolkit.HighPerformance.Buffers;
-using Mandible.Abstractions.Pack2;
 using Mandible.Services;
 using Mandible.Util;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -23,22 +20,6 @@ public static class NameExtractor
     /// Gets the CRC-64 hash of the namelist file name ( {NAMELIST} ).
     /// </summary>
     private static readonly ulong NamelistFileNameHash = PackCrc64.Calculate("{NAMELIST}");
-
-    private static readonly byte[] IllegalNameCharacters = new[]
-    {
-        '!', '"', '#', '$', '%', '&', '*', '+', ',', '/', ':', ';', '=', '>', '?',
-        '@', '\\', '^', '`', '|', '~', '\t', '\r', '\n', ' '
-    }.Select(c => (byte)c).ToArray();
-
-    private static readonly string[] KnownFileExtensions =
-    [
-        "adr", "agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3",
-        "cnk4", "cnk5", "crc", "crt", "cso", "cur", "dat", "db", "dds", "def", "dir", "dll",
-        "dma", "dme", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb", "eco", "efb", "exe", "fsb",
-        "fxd", "fxo", "gfx", "gnf", "i64", "ini", "jpg", "lst", "lua", "mrn", "pak", "pem",
-        "playerstudio", "png", "prsb", "psd", "pssb", "tga", "thm", "tome", "ttf", "txt", "vnfo",
-        "wav", "xlsx", "xml", "xrsb", "xssb", "zone"
-    ];
 
     /// <summary>
     /// Extracts names from pack2 files. Expect this operation to take multiple minutes
@@ -78,7 +59,7 @@ public static class NameExtractor
         return nl;
     }
 
-    private static async Task ExtractFromEmbeddedNamelistAsync(IPack2Reader reader, Namelist namelist, CancellationToken ct)
+    private static async Task ExtractFromEmbeddedNamelistAsync(Pack2Reader reader, Namelist namelist, CancellationToken ct)
     {
         IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
 
@@ -90,7 +71,7 @@ public static class NameExtractor
         namelist.Append(buffer.Span);
     }
 
-    private static async Task ExtractFromAssetsAsync(IPack2Reader reader, Namelist namelist, CancellationToken ct)
+    private static async Task ExtractFromAssetsAsync(Pack2Reader reader, Namelist namelist, CancellationToken ct)
     {
         IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
 
@@ -99,11 +80,7 @@ public static class NameExtractor
             ct.ThrowIfCancellationRequested();
             using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(asset, false, ct).ConfigureAwait(false);
 
-            //IReadOnlyList<string> names = AssetNameScraper.ScrapeFromAssetData(buffer.Span);
-            if (IsBinaryFile(buffer.Span))
-                continue;
-
-            List<string> names = ExtractNamesFromTextData(buffer.Memory);
+            IReadOnlyList<string> names = AssetNameScraper.ScrapeFromAssetData(buffer.Span);
             namelist.Append(names, ct);
 
             if (asset.NameHash == PackCrc64.Calculate("ObjectTerrainData.xml"))
@@ -111,52 +88,12 @@ public static class NameExtractor
         }
     }
 
-    private static List<string> ExtractNamesFromTextData(ReadOnlyMemory<byte> data)
-    {
-        byte[][] fileExtensions = KnownFileExtensions.Select(s => Encoding.ASCII.GetBytes('.' + s)).ToArray();
-        List<string> names = [];
-        ReadOnlySequence<byte> sequence = new(data);
-        SequenceReader<byte> reader = new(sequence);
-
-        while (reader.TryAdvanceTo((byte)'.'))
-        {
-            for (int i = 0; i < fileExtensions.Length; i++)
-            {
-                byte[] extension = fileExtensions[i];
-
-                if (!reader.IsNext(extension.AsSpan()[1..]))
-                    continue;
-
-                // Find the start of the name
-                byte currentChar;
-                bool doNotAdvance = false;
-                do
-                {
-                    reader.Rewind(1);
-                    reader.TryPeek(out currentChar);
-
-                    if (reader.Consumed == 0)
-                        doNotAdvance = true;
-                } while (!IllegalNameCharacters.Contains(currentChar) && !doNotAdvance);
-
-                if (!doNotAdvance)
-                    reader.Advance(1);
-
-                reader.TryReadTo(out ReadOnlySpan<byte> nameBytes, extension);
-                if (nameBytes.Length == 0)
-                    continue;
-
-                string name = Encoding.ASCII.GetString(nameBytes) + '.' + KnownFileExtensions[i];
-                names.Add(name);
-
-                break;
-            }
-        }
-
-        return names;
-    }
-
-    private static async Task GuessWorldNamesAsync(ReadOnlyMemory<byte> objectTerrainDataXmlBuffer, Namelist namelist, CancellationToken ct)
+    private static async Task GuessWorldNamesAsync
+    (
+        ReadOnlyMemory<byte> objectTerrainDataXmlBuffer,
+        Namelist namelist,
+        CancellationToken ct
+    )
     {
         List<string> names = [];
 
@@ -240,22 +177,5 @@ public static class NameExtractor
         AddName("VR");
 
         namelist.Append(names, ct);
-    }
-
-    /// <summary>
-    /// Iterates through the first 8000 bytes of a file looking for a 0-byte. This should not be present in a
-    /// text-only file.
-    /// </summary>
-    /// <param name="data">The file data to check.</param>
-    /// <returns><c>True</c> if the file is like to contain binary data.</returns>
-    private static bool IsBinaryFile(ReadOnlySpan<byte> data)
-    {
-        for (int i = 0; i < data.Length && i < 8000; i++)
-        {
-            if (data[i] == 0)
-                return true;
-        }
-
-        return false;
     }
 }
