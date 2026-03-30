@@ -29,6 +29,7 @@ A command-line tool is also distributed with Mandible, which offers commands to:
 - Generate namelists from `pack2` files.
 - Generate an index of assets within pack files.
 - Download asset packs from the Daybreak Manifest CDN.
+- Export and write binary ZONE files to/from JSON.
 
 **This package is unofficial and is not affiliated with the developers of the ForgeLight engine or its derived games in
 any way.**
