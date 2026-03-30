@@ -4,9 +4,9 @@ using Mandible.Cli.Commands;
 using Mandible.Manifest;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Serilog;
 using Spectre.Console;
 using System.Net.Http;
+using ZLogger;
 
 namespace Mandible.Cli;
 
@@ -14,16 +14,19 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        Log.Logger = new LoggerConfiguration()
-            .Enrich.FromLogContext()
-            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
-            .CreateLogger();
-
         ConsoleApp.ConsoleAppBuilder app = ConsoleApp.Create()
             .ConfigureLogging(x =>
             {
                 x.ClearProviders();
-                x.AddSerilog();
+                x.AddZLoggerConsole(opts => opts.UsePlainTextFormatter(formatter =>
+                {
+                    formatter.SetPrefixFormatter
+                    (
+                        $"[{0:datetime} {1:short}] [{2}|{3}] ",
+                        (in MessageTemplate template, in LogInfo info)
+                            => template.Format(info.Timestamp, info.LogLevel, info.Category, info.MemberName)
+                    );
+                }));
             })
             .ConfigureServices(services =>
             {
