@@ -83,28 +83,20 @@ public static class AssetNameScraper
 
         List<string> names = [];
         ScrapeInternal(data, names);
-
-        foreach (string name in names)
+        int finalCount = names.Count;
+        
+        for (int i = 0; i < finalCount; i++)
         {
-            if (name.EndsWith(".efb"))
-            {
+            string name = names[i];
+            
+            if (name.EndsWith(".efb", StringComparison.OrdinalIgnoreCase))
                 names.Add(Path.ChangeExtension(name, "dx11efb"));
-            }
-            else if (name.EndsWith(".xrsb"))
-            {
+            else if (name.EndsWith(".xrsb", StringComparison.OrdinalIgnoreCase))
                 names.Add(Path.ChangeExtension(name, "dx11rsb"));
-            }
-            else if (name.EndsWith("xssb"))
-            {
+            else if (name.EndsWith("xssb", StringComparison.OrdinalIgnoreCase))
                 names.Add(Path.ChangeExtension(name, "dx11ssb"));
-            }
-            else if (name.EndsWith(".mrn") && !name.Contains("X64"))
-            {
-                string fileName = Path.GetFileNameWithoutExtension(name);
-                names.Add($"{fileName}X64.mrn");
-            }
-
-            names.Add(name);
+            else if (name.EndsWith(".mrn", StringComparison.OrdinalIgnoreCase) && !name.Contains("X64", StringComparison.OrdinalIgnoreCase))
+                names.Add($"{Path.GetFileNameWithoutExtension(name)}X64.mrn");
         }
 
         return names;
