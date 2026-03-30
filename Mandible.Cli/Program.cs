@@ -37,6 +37,7 @@ public class Program
         app.Add<NamelistCommands>("namelist");
         app.Add<PackCommands>("pack");
         app.Add<UnpackCommands>("unpack");
+        app.Add<ZoneFileCommands>("zone");
 
         app.Run(args);
     }
