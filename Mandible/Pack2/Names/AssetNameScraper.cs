@@ -40,21 +40,21 @@ public static class AssetNameScraper
             [0xff, 0xd8, 0xff] // JPG
         ];
 
-        SCRAPEABLE_BINARY_FILE_MAGICS = new[]
-        {
+        SCRAPEABLE_BINARY_FILE_MAGICS =
+        [
             "CHKF"u8.ToArray(), // Player Studio format
             "DMAT"u8.ToArray(),
             "DMOD"u8.ToArray(),
             "ZONE"u8.ToArray(),
             "*TEXTUREPART"u8.ToArray() // .eco
-        };
+        ];
 
-        DEDICATED_ASSET_HANDLERS = new (byte[], DedicatedAssetHandler)[]
-        {
+        DEDICATED_ASSET_HANDLERS =
+        [
             ("DMAT"u8.ToArray(), ScrapeDMAT),
             ("DMOD"u8.ToArray(), ScrapeDMOD),
             ("ZONE"u8.ToArray(), ScrapeZONE)
-        };
+        ];
 
         string[] knownFileExtensions =
         [
@@ -68,7 +68,7 @@ public static class AssetNameScraper
         ];
 
         KNOWN_FILE_EXTENSIONS = knownFileExtensions.Select(ext => Encoding.ASCII.GetBytes(ext))
-            .ToList();
+            .ToArray();
     }
 
     /// <summary>
