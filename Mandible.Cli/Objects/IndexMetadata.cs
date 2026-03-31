@@ -14,6 +14,8 @@ namespace Mandible.Cli.Objects;
 public record IndexMetadata
 (
     DateTimeOffset GenerationTime,
+    long TotalAssetCount,
+    int TotalUnnamedAssetCount,
     IReadOnlyList<PackMetadata> Packs
 )
 {
@@ -22,6 +24,7 @@ public record IndexMetadata
         string Name,
         long Hash,
         uint AssetCount,
+        int UnnamedAssetCount,
         ulong PackLength
     )
     {
@@ -29,6 +32,7 @@ public record IndexMetadata
         {
             string path = Path.GetFileName(index.Path);
 
+            // Hashing the index gives us an easy way to diff changes between indexing 
             long hash = 17;
             unchecked
             {
@@ -37,16 +41,22 @@ public record IndexMetadata
                     hash = (hash * 23) + pia.DataHash;
             }
 
-            return new PackMetadata(path, hash, index.AssetCount, index.Length);
+            return new PackMetadata(path, hash, index.AssetCount, index.UnnamedAssetCount, index.Length);
         }
     }
 
     public static IndexMetadata FromIndexList(IEnumerable<PackIndex> indexes)
-        => new
+    {
+        PackMetadata[] packMetas = indexes.Select(PackMetadata.FromIndex)
+            .OrderBy(i => i.Name)
+            .ToArray();
+        
+        return new IndexMetadata
         (
             DateTimeOffset.UtcNow,
-            indexes.Select(PackMetadata.FromIndex)
-                .OrderBy(i => i.Name)
-                .ToList()
+            packMetas.Sum(x => x.AssetCount),
+            packMetas.Sum(x => x.UnnamedAssetCount),
+            packMetas
         );
+    }
 }

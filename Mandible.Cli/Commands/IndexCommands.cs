@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 namespace Mandible.Cli.Commands;
 
 /// <summary>
-/// Builds JSON-structured indexes of the given pack/pack2 file/s.
+/// Builds indexes of the given pack/pack2 file/s.
 /// </summary>
 public class IndexCommands
 {
@@ -92,9 +92,10 @@ public class IndexCommands
 
                         IReadOnlyList<AssetHeader> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
 
-                        IEnumerable<PackIndex.IndexAsset> assets = assetHeaders
+                        PackIndex.IndexAsset[] assets = assetHeaders
                             .Select(PackIndex.IndexAsset.FromAssetHeader)
-                            .OrderBy(a => a.Name);
+                            .OrderBy(a => a.Name)
+                            .ToArray();
 
                         packIndexes.Add
                         (
@@ -102,8 +103,9 @@ public class IndexCommands
                             (
                                 Path.GetFullPath(file),
                                 (uint)assetHeaders.Count,
+                                assets.Count(x => string.IsNullOrEmpty(x.Name)),
                                 (ulong)dataReader.GetLength(),
-                                assets.ToList()
+                                assets
                             )
                         );
 
@@ -138,9 +140,10 @@ public class IndexCommands
                     Pack2Header header = await reader.ReadHeaderAsync(ct);
                     IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
 
-                    IEnumerable<PackIndex.IndexAsset> assets = assetHeaders
+                    PackIndex.IndexAsset[] assets = assetHeaders
                         .Select(s => PackIndex.IndexAsset.FromAsset2Header(s, namelist))
-                        .OrderBy(a => a.Name);
+                        .OrderBy(a => a.Name)
+                        .ToArray();
 
                     packIndexes.Add
                     (
@@ -148,8 +151,9 @@ public class IndexCommands
                         (
                             Path.GetFullPath(file),
                             header.AssetCount,
+                            assets.Count(x => string.IsNullOrEmpty(x.Name)),
                             header.Length,
-                            assets.ToList()
+                            assets
                         )
                     );
 

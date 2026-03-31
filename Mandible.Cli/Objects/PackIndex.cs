@@ -17,6 +17,7 @@ public record PackIndex
 (
     string Path,
     uint AssetCount,
+    int UnnamedAssetCount,
     ulong Length,
     IReadOnlyList<IndexAsset> Assets
 )
