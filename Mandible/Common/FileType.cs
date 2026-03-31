@@ -16,9 +16,9 @@ public enum FileType
     ActorDefinition,
     
     /// <summary>
-    /// Unknown.
+    /// Collision data (cdt / CDTA).
     /// </summary>
-    CData,
+    CollisionData,
     
     /// <summary>
     /// DDS image data.
@@ -26,7 +26,12 @@ public enum FileType
     DdsImage,
     
     /// <summary>
-    /// An FMOD sound bank file, version 5.
+    /// Executable and linkable format.
+    /// </summary>
+    Elf,
+    
+    /// <summary>
+    /// An FMOD sound bank file, version 5 (FSB).
     /// </summary>
     FmodSoundBank5,
     

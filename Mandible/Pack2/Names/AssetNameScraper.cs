@@ -27,7 +27,7 @@ public static class AssetNameScraper
     {
         UNSCRAPEABLE_FILE_MAGICS =
         [
-            FileIdentifiers.Magics[FileType.CData],
+            FileIdentifiers.Magics[FileType.CollisionData],
             FileIdentifiers.Magics[FileType.Gfx],
             FileIdentifiers.Magics[FileType.TerrainChunkGeneric],
             FileIdentifiers.Magics[FileType.DdsImage],

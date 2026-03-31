@@ -14,8 +14,9 @@ public static class FileIdentifiers
     public static IReadOnlyDictionary<FileType, ReadOnlyMemory<byte>> Magics { get; } = new Dictionary<FileType, ReadOnlyMemory<byte>>
     {
         { FileType.ActorDefinition, "<ActorRuntime>"u8.ToArray() },
-        { FileType.CData, "CDTA"u8.ToArray() },
+        { FileType.CollisionData, "CDTA"u8.ToArray() },
         { FileType.DdsImage, "DDS"u8.ToArray() },
+        { FileType.Elf, new byte[] { 0x7F, (byte)'E', (byte)'L', (byte)'F' } },
         { FileType.FmodSoundBank5, "FSB5"u8.ToArray() },
         { FileType.Gfx, "CFX"u8.ToArray() },
         { FileType.Jpeg, new byte[] { 0xff, 0xd8, 0xff } },
@@ -40,8 +41,9 @@ public static class FileIdentifiers
     public static IReadOnlyDictionary<FileType, string> Extensions { get; } = new Dictionary<FileType, string>
     {
         { FileType.ActorDefinition, "adr" },
-        { FileType.CData, "CDT" },
+        { FileType.CollisionData, "CDT" },
         { FileType.DdsImage, "dds" },
+        { FileType.Elf, "elf" },
         { FileType.FmodSoundBank5, "fsb" },
         { FileType.Gfx, "Gfx" },
         { FileType.Jpeg, "jpg" },
