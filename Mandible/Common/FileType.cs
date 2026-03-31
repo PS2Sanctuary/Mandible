@@ -61,6 +61,16 @@ public enum FileType
     ModelInfo,
 
     /// <summary>
+    /// Morpheme animation data (MRN).
+    /// </summary>
+    MorphemeAnimation,
+
+    /// <summary>
+    /// Morpheme animation data, 64-bit (MRN).
+    /// </summary>
+    MorphemeAnimation64Bit,
+
+    /// <summary>
     /// Forgelight asset pack, version 1.
     /// </summary>
     Pack1,

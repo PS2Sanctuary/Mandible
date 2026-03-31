@@ -23,6 +23,10 @@ public static class FileIdentifiers
         { FileType.Jpeg, new byte[] { 0xff, 0xd8, 0xff } },
         { FileType.MaterialInfo, "DMAT"u8.ToArray() },
         { FileType.ModelInfo, "DMOD"u8.ToArray() },
+        // This likely isn't a proper magic. But it works for MRN files used in PlanetSide 2
+        { FileType.MorphemeAnimation, new byte[] { 0x18, 0, 0, 0, 0x06, 0, 0, 0, 0x0F, 0, 0, 0, 0, 0, 0, 0 } },
+        // This likely isn't a proper magic. But it works for 64-bit MRN files used in PlanetSide 2
+        { FileType.MorphemeAnimation64Bit, new byte[] { 0x1A, 0, 0, 0, 0x0A, 0, 0, 0, 0x10, 0, 0, 0, 0, 0, 0, 0 } },
         { FileType.Pack2, "PAK"u8.ToArray() },
         { FileType.Png, new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G' } },
         { FileType.Riff, "RIFF"u8.ToArray() },
@@ -52,6 +56,8 @@ public static class FileIdentifiers
         { FileType.Jpeg, "jpg" },
         { FileType.MaterialInfo, "dma" },
         { FileType.ModelInfo, "dme" },
+        { FileType.MorphemeAnimation, "mrn" },
+        { FileType.MorphemeAnimation64Bit, "mrn" },
         { FileType.Pack1, "pack" },
         { FileType.Pack2, "pack2" },
         { FileType.Png, "png" },
