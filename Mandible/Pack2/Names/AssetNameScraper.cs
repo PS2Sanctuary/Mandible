@@ -17,7 +17,7 @@ namespace Mandible.Pack2.Names;
 /// </summary>
 public static class AssetNameScraper
 {
-    private delegate void DedicatedAssetHandler(ReadOnlySpan<byte> assetData, ICollection<string> namesOutput);
+    private delegate void DedicatedAssetHandler(ReadOnlySpan<byte> assetData, List<string> namesOutput);
 
     private static readonly IReadOnlyList<ReadOnlyMemory<byte>> UNSCRAPEABLE_FILE_MAGICS;
     private static readonly IReadOnlyList<(ReadOnlyMemory<byte> Magic, DedicatedAssetHandler Handler)> DEDICATED_ASSET_HANDLERS;
@@ -44,6 +44,7 @@ public static class AssetNameScraper
 
         DEDICATED_ASSET_HANDLERS =
         [
+            (FileIdentifiers.Magics[FileType.ActorDefinition], ScrapeAdr),
             (FileIdentifiers.Magics[FileType.MaterialInfo], ScrapeDmat),
             (FileIdentifiers.Magics[FileType.ModelInfo], ScrapeDmod),
             (FileIdentifiers.Magics[FileType.FmodSoundBank5], ScrapeFsb),
@@ -83,14 +84,22 @@ public static class AssetNameScraper
         {
             string name = names[i];
 
+            // efb files have DX11 variants
             if (name.EndsWith(".efb", StringComparison.OrdinalIgnoreCase))
                 names.Add(Path.ChangeExtension(name, "dx11efb"));
+            // xrsb files have DX11 variants
             else if (name.EndsWith(".xrsb", StringComparison.OrdinalIgnoreCase))
                 names.Add(Path.ChangeExtension(name, "dx11rsb"));
+            // xssb files have DX11 variants
             else if (name.EndsWith("xssb", StringComparison.OrdinalIgnoreCase))
                 names.Add(Path.ChangeExtension(name, "dx11ssb"));
+            // Morpheme animation files have 64-bit variants
             else if (name.EndsWith(".mrn", StringComparison.OrdinalIgnoreCase) && !name.Contains("X64", StringComparison.OrdinalIgnoreCase))
                 names.Add($"{Path.GetFileNameWithoutExtension(name)}X64.mrn");
+            // Actor files aren't all referenced from other pack files, but generally they will contain a reference
+            // to a collision data file of the same name, so use this to extract the ADR name
+            else if (name.EndsWith(".cdt", StringComparison.OrdinalIgnoreCase))
+                names.Add($"{Path.ChangeExtension(name, "adr")}");
         }
 
         return names;
@@ -123,11 +132,9 @@ public static class AssetNameScraper
 
     private static void ScrapeInternal(ReadOnlySpan<byte> data, List<string> namesOutput)
     {
-        SpanReader<byte> reader = new(data);
-
         foreach ((ReadOnlyMemory<byte> magic, DedicatedAssetHandler handler) in DEDICATED_ASSET_HANDLERS)
         {
-            if (!reader.IsNext(magic.Span))
+            if (data.IndexOf(magic.Span) is not 0)
                 continue;
 
             try
@@ -140,6 +147,13 @@ public static class AssetNameScraper
                 // We'll simply scrape it naively
             }
         }
+
+        ScrapeUnstructuredData(data, namesOutput);
+    }
+
+    private static void ScrapeUnstructuredData(ReadOnlySpan<byte> data, List<string> namesOutput)
+    {
+        SpanReader<byte> reader = new(data);
 
         while (!reader.End)
         {
@@ -210,16 +224,25 @@ public static class AssetNameScraper
         }
     }
 
-    private static void ScrapeDmat(ReadOnlySpan<byte> dmatData, ICollection<string> namesOutput)
+    private static void ScrapeAdr(ReadOnlySpan<byte> adrData, List<string> namesOutput)
+    {
+        // TODO: We can possible do better here by taking the base filename and replacing the dme with adr
+        // after removing any _LODX suffixes
+
+        // Still require an unstructured scrape, there's a heap of names we're ignoring
+        ScrapeUnstructuredData(adrData, namesOutput);
+    }
+
+    private static void ScrapeDmat(ReadOnlySpan<byte> dmatData, List<string> namesOutput)
     {
         foreach (string element in Dmat.Read(dmatData, out _).TextureFileNames)
             namesOutput.Add(element);
     }
 
-    private static void ScrapeDmod(ReadOnlySpan<byte> dmodData, ICollection<string> namesOutput)
+    private static void ScrapeDmod(ReadOnlySpan<byte> dmodData, List<string> namesOutput)
     {
         SpanReader<byte> reader = new(dmodData);
-        bool advanced = reader.TryAdvanceTo(new[] { (byte)'D', (byte)'M', (byte)'A', (byte)'T' }, false);
+        bool advanced = reader.TryAdvanceTo(FileIdentifiers.Magics[FileType.MaterialInfo].Span, false);
 
         if (!advanced)
             return;
@@ -228,7 +251,7 @@ public static class AssetNameScraper
             namesOutput.Add(element);
     }
 
-    private static void ScrapeFsb(ReadOnlySpan<byte> fsbData, ICollection<string> namesOutput)
+    private static void ScrapeFsb(ReadOnlySpan<byte> fsbData, List<string> namesOutput)
     {
         BinaryPrimitiveReader reader = new(fsbData);
         Fsb5Header header = Fsb5Header.Read(ref reader);
@@ -256,7 +279,7 @@ public static class AssetNameScraper
         namesOutput.Add(Encoding.ASCII.GetString(nameBuffer) + ".fsb");
     }
 
-    private static void ScrapeZone(ReadOnlySpan<byte> zoneData, ICollection<string> namesOutput)
+    private static void ScrapeZone(ReadOnlySpan<byte> zoneData, List<string> namesOutput)
     {
         Zone.Zone zone = Zone.Zone.Read(zoneData, out _);
 
