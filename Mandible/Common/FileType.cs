@@ -26,6 +26,11 @@ public enum FileType
     DdsImage,
     
     /// <summary>
+    /// Texture and flora layer information.
+    /// </summary>
+    Eco,
+    
+    /// <summary>
     /// Executable and linkable format.
     /// </summary>
     Elf,
