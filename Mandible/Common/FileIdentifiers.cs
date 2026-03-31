@@ -13,6 +13,7 @@ public static class FileIdentifiers
     /// </summary>
     public static IReadOnlyDictionary<FileType, ReadOnlyMemory<byte>> Magics { get; } = new Dictionary<FileType, ReadOnlyMemory<byte>>
     {
+        { FileType.ActorDefinition, "<ActorRuntime>"u8.ToArray() },
         { FileType.CData, "CDTA"u8.ToArray() },
         { FileType.DdsImage, "DDS"u8.ToArray() },
         { FileType.FmodSoundBank5, "FSB5"u8.ToArray() },
@@ -38,6 +39,7 @@ public static class FileIdentifiers
     /// </summary>
     public static IReadOnlyDictionary<FileType, string> Extensions { get; } = new Dictionary<FileType, string>
     {
+        { FileType.ActorDefinition, "adr" },
         { FileType.CData, "CDT" },
         { FileType.DdsImage, "dds" },
         { FileType.FmodSoundBank5, "fsb" },

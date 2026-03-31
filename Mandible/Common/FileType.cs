@@ -6,6 +6,16 @@
 public enum FileType
 {
     /// <summary>
+    /// Unknown file type.
+    /// </summary>
+    Unknown = 0,
+    
+    /// <summary>
+    /// A Forgelight XML file defining an actor.
+    /// </summary>
+    ActorDefinition,
+    
+    /// <summary>
     /// Unknown.
     /// </summary>
     CData,
