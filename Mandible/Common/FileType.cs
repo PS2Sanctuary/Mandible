@@ -26,7 +26,7 @@ public enum FileType
     DdsImage,
 
     /// <summary>
-    /// Texture and flora layer information.
+    /// Files containing information regarding the automated flora and clutter generation for materials.
     /// </summary>
     Eco,
 
