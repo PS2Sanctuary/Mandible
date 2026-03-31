@@ -32,7 +32,7 @@ public class ZoneFileCommands
 
         byte[] data = File.ReadAllBytes(zoneFilePath);
         Zone.Zone zone = Zone.Zone.Read(data, out _);
-        
+
         _console.WriteLine($"Zone Info: {Path.GetFileName(zoneFilePath)}");
         _console.WriteLine("---");
         _console.WriteLine($"Version: {zone.Version}");
@@ -79,7 +79,7 @@ public class ZoneFileCommands
         }
 
         await ExportAsJsonInternal(zoneFilePath, outputPath, ct);
-        
+
         _console.MarkupLine($"Zone file exported to [cyan]{outputPath}[/]");
         _console.MarkupLine("[green]Export complete![/]");
     }
@@ -109,9 +109,9 @@ public class ZoneFileCommands
             if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
                 return;
         }
-        
+
         await WriteFromJsonInternal(inputJsonPath, outputZonePath, ct);
-        
+
         _console.MarkupLine($"Zone file written to [cyan]{outputZonePath}[/]");
         _console.MarkupLine("[green]Complete![/]");
     }
@@ -137,7 +137,7 @@ public class ZoneFileCommands
         {
             await ExportAsJsonInternal(zoneFilePath, tempJson, ct);
             await WriteFromJsonInternal(tempJson, tempZone, ct);
-            
+
             byte[] expected = await File.ReadAllBytesAsync(zoneFilePath, ct);
             byte[] actual = await File.ReadAllBytesAsync(tempZone, ct);
 

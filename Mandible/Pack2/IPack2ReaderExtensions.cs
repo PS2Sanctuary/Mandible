@@ -44,10 +44,10 @@ public static class IPack2ReaderExtensions
     {
         if (!Directory.Exists(outputPath))
             throw new DirectoryNotFoundException(outputPath);
-        
+
         Debug.Assert
         (
-            !(namelist is null && excludeUnnamed), 
+            !(namelist is null && excludeUnnamed),
             "If excluding unnamed files, a name list must be provided"
         );
 
@@ -102,7 +102,7 @@ public static class IPack2ReaderExtensions
             if (valid)
                 outputPath = Path.ChangeExtension(outputPath, discoveredExt);
         }
-        
+
         using SafeFileHandle outputHandle = File.OpenHandle
         (
             outputPath,

@@ -6,5 +6,5 @@ namespace Mandible.Cli;
 [JsonSerializable(typeof(Zone.Zone))]
 public partial class AppJsonContext : JsonSerializerContext
 {
-    
+
 }

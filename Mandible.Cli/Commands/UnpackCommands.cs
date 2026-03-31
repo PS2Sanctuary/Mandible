@@ -126,8 +126,8 @@ public class UnpackCommands
                         await reader.ExportAllAsync
                         (
                             myOutputPath,
-                            namelist, 
-                            inferFileExtension: true, 
+                            namelist,
+                            inferFileExtension: true,
                             excludeUnnamed: false,
                             ct: ct
                         );
