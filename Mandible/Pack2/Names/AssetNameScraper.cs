@@ -285,6 +285,7 @@ public static class AssetNameScraper
 
         foreach (Eco eco in zone.Ecos)
         {
+            namesOutput.Add(eco.TextureInfo.Name + ".eco");
             namesOutput.Add(eco.TextureInfo.ColorNxMapName);
             namesOutput.Add(eco.TextureInfo.SpecBlendNyMapName);
         }

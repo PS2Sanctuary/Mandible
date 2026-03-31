@@ -38,10 +38,10 @@ public class Eco
     }
 
     /// <summary>
-    /// Reads a <see cref="Eco"/> instance from a <see cref="BinaryPrimitiveReader"/>.
+    /// Reads an <see cref="Eco"/> instance from a <see cref="BinaryPrimitiveReader"/>.
     /// </summary>
     /// <param name="reader">The reader.</param>
-    /// <returns>A <see cref="Eco"/> instance.</returns>
+    /// <returns>An <see cref="Eco"/> instance.</returns>
     public static Eco Read(ref BinaryPrimitiveReader reader)
     {
         uint index = reader.ReadUInt32LE();
