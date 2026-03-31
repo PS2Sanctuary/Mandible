@@ -56,13 +56,16 @@ public class ZoneFileCommands
     /// Exports the contents of a Zone file to JSON.
     /// </summary>
     /// <param name="zoneFilePath">A path to the zone file.</param>
-    /// <param name="outputPath">The file to export the JSON data into.</param>
+    /// <param name="outputPath">
+    /// -o|--output, The file to export the JSON data into. If this parameter is not specified, data will be written to
+    /// stdout.
+    /// </param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("json")]
     public async Task ExportAsJson
     (
         [Argument] string zoneFilePath,
-        [Argument] string outputPath,
+        string? outputPath = null,
         CancellationToken ct = default
     )
     {
@@ -78,10 +81,18 @@ public class ZoneFileCommands
                 return;
         }
 
-        await ExportAsJsonInternal(zoneFilePath, outputPath, ct);
+        bool useStdOut = string.IsNullOrEmpty(outputPath);
 
-        _console.MarkupLine($"Zone file exported to [cyan]{outputPath}[/]");
-        _console.MarkupLine("[green]Export complete![/]");
+        await using Stream outputStream = useStdOut
+            ? Console.OpenStandardOutput()
+            : new FileStream(outputPath!, FileMode.Create, FileAccess.Write);
+        await ExportAsJsonInternal(zoneFilePath, outputStream, ct);
+
+        if (!useStdOut)
+        {
+            _console.MarkupLine($"Zone file exported to [cyan]{outputPath}[/]");
+            _console.MarkupLine("[green]Export complete![/]");
+        }
     }
 
     /// <summary>
@@ -132,10 +143,11 @@ public class ZoneFileCommands
     {
         string tempJson = Path.GetTempFileName();
         string tempZone = Path.GetTempFileName();
+        await using FileStream fs = new(tempZone, FileMode.Create, FileAccess.Write);
 
         try
         {
-            await ExportAsJsonInternal(zoneFilePath, tempJson, ct);
+            await ExportAsJsonInternal(zoneFilePath, fs, ct);
             await WriteFromJsonInternal(tempJson, tempZone, ct);
 
             byte[] expected = await File.ReadAllBytesAsync(zoneFilePath, ct);
@@ -155,16 +167,15 @@ public class ZoneFileCommands
 
     private static async Task ExportAsJsonInternal
     (
-        [Argument] string zoneFilePath,
-        [Argument] string outputPath,
+        string zoneFilePath,
+        Stream output,
         CancellationToken ct = default
     )
     {
         byte[] data = await File.ReadAllBytesAsync(zoneFilePath, ct);
         Zone.Zone zone = Zone.Zone.Read(data, out _);
 
-        await using FileStream fs = new(outputPath, FileMode.Create, FileAccess.Write);
-        await JsonSerializer.SerializeAsync(fs, zone, CliJsonContext.Default.Zone, ct);
+        await JsonSerializer.SerializeAsync(output, zone, CliJsonContext.Default.Zone, ct);
     }
 
     private async Task WriteFromJsonInternal
