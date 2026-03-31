@@ -123,7 +123,14 @@ public class UnpackCommands
                         if (!Directory.Exists(myOutputPath))
                             Directory.CreateDirectory(myOutputPath);
 
-                        await reader.ExportAllAsync(myOutputPath, namelist, ct);
+                        await reader.ExportAllAsync
+                        (
+                            myOutputPath,
+                            namelist, 
+                            inferFileExtension: true, 
+                            excludeUnnamed: false,
+                            ct: ct
+                        );
 
                         exportTask.Increment(increment);
                     }
