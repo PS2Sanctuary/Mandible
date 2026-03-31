@@ -32,6 +32,7 @@ public static class FileIdentifiers
         { FileType.TerrainChunkLod2, "CNK2"u8.ToArray() },
         { FileType.TerrainChunkLod3, "CNK3"u8.ToArray() },
         { FileType.Tome, new byte[] { 0x14, 0x00, 0x00, 0xD6 } },
+        { FileType.TruevisionTga, "TRUEVISION-XFILE.\0"u8.ToArray() },
         { FileType.Vnfo, "VNFO"u8.ToArray() },
         { FileType.Zone, "ZONE"u8.ToArray() }
     };
@@ -59,6 +60,7 @@ public static class FileIdentifiers
         { FileType.TerrainChunkLod2, "cnk2" },
         { FileType.TerrainChunkLod3, "cnk3" },
         { FileType.Tome, "tome" },
+        { FileType.TruevisionTga, "tga" },
         { FileType.Vnfo, "vnfo" },
         { FileType.Zone, "zone" }
     };

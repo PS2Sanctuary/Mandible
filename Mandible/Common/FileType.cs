@@ -115,6 +115,11 @@ public enum FileType
     Tome,
 
     /// <summary>
+    /// Truevision TGA raster image data (often called TARGA).
+    /// </summary>
+    TruevisionTga,
+
+    /// <summary>
     /// Occlusion / culling data?
     /// </summary>
     Vnfo,

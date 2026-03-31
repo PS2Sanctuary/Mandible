@@ -39,6 +39,7 @@ public static class AssetNameScraper
             FileIdentifiers.Magics[FileType.Png],
             FileIdentifiers.Magics[FileType.Riff],
             FileIdentifiers.Magics[FileType.Tome],
+            // TruevisionTga: note explicit check in IsScrapeAbleAsset (magic is at end of file)
             FileIdentifiers.Magics[FileType.Vnfo]
         ];
 
@@ -115,11 +116,16 @@ public static class AssetNameScraper
     {
         SpanReader<byte> reader = new(assetData);
 
+        // Skip any files with a magic value in our unscrapeable list
         foreach (ReadOnlyMemory<byte> value in UNSCRAPEABLE_FILE_MAGICS)
         {
             if (reader.IsNext(value.Span))
                 return false;
         }
+
+        // Skip TGA image data files
+        if (assetData.EndsWith(FileIdentifiers.Magics[FileType.TruevisionTga].Span))
+            return false;
 
         return true;
 
