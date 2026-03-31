@@ -6,7 +6,9 @@ using Mandible.Zone;
 using MemoryReaders;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 
@@ -28,7 +30,6 @@ public static class AssetNameScraper
         UNSCRAPEABLE_FILE_MAGICS =
         [
             FileIdentifiers.Magics[FileType.CollisionData],
-            FileIdentifiers.Magics[FileType.Gfx],
             FileIdentifiers.Magics[FileType.TerrainChunkGeneric],
             FileIdentifiers.Magics[FileType.DdsImage],
             "DSKE"u8.ToArray(),
@@ -46,6 +47,7 @@ public static class AssetNameScraper
         DEDICATED_ASSET_HANDLERS =
         [
             (FileIdentifiers.Magics[FileType.ActorDefinition], ScrapeAdr),
+            (FileIdentifiers.Magics[FileType.Gfx], ScrapeGfx),
             (FileIdentifiers.Magics[FileType.MaterialInfo], ScrapeDmat),
             (FileIdentifiers.Magics[FileType.ModelInfo], ScrapeDmod),
             (FileIdentifiers.Magics[FileType.FmodSoundBank5], ScrapeFsb),
@@ -55,12 +57,12 @@ public static class AssetNameScraper
         string[] knownFileExtensions =
         [
             "adr", "agr", "Agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3",
-            "cnk4", "cnk5", "crc", "crt", "cso", "cur", "Cur", "dat", "Dat", "db", "dds", "DDS", "def", "Def",
+            "cnk4", "cnk5", "crc", "crt", "cso", "cur", "Cur", "db", "dds", "DDS", "def", "Def",
             "dir", "Dir", "dll", "DLL", "dma", "dme", "DME", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb",
             "eco", "efb", "exe", "fsb", "fxd", "fxo", "gfx", "gnf", "i64", "ini", "INI", "Ini", "jpg", "JPG",
             "lst", "lua", "mrn", "pak", "pem", "playerstudio", "PlayerStudio", "png", "prsb", "psd", "pssb",
-            "tga", "TGA", "thm", "tome", "ttf", "txt", "vnfo", "wav", "xlsx", "xml", "xrsb", "xssb", "zone",
-            "Zone"
+            "swf", "tga", "TGA", "thm", "tome", "ttf", "txt", "vnfo", "wav", "xlsx", "xml", "xrsb", "xssb",
+            "zone", "Zone"
         ];
 
         KNOWN_FILE_EXTENSIONS = knownFileExtensions.Select(ext => Encoding.ASCII.GetBytes(ext))
@@ -100,7 +102,10 @@ public static class AssetNameScraper
             // Actor files aren't all referenced from other pack files, but generally they will contain a reference
             // to a collision data file of the same name, so use this to extract the ADR name
             else if (name.EndsWith(".cdt", StringComparison.OrdinalIgnoreCase))
-                names.Add($"{Path.ChangeExtension(name, "adr")}");
+                names.Add(Path.ChangeExtension(name, "adr"));
+            // Forgelight games use SWF files in GFX mode
+            else if (name.EndsWith(".swf", StringComparison.OrdinalIgnoreCase))
+                names.Add(Path.ChangeExtension(name, "gfx"));
         }
 
         return names;
@@ -237,6 +242,34 @@ public static class AssetNameScraper
 
         // Still require an unstructured scrape, there's a heap of names we're ignoring
         ScrapeUnstructuredData(adrData, namesOutput);
+    }
+
+    private static unsafe void ScrapeGfx(ReadOnlySpan<byte> gfxData, List<string> namesOutput)
+    {
+        bool notValid = gfxData.Length < 10 // Eight header bytes + 2 zlib header bytes
+            //|| gfxData[3] is not (12 or 37) // Byte 4 is the version. We only know that we understand 12 and 37
+            || gfxData[8] is not 0x78; // Naive zlib check - ensure another compression alg isn't in use.
+
+        if (notValid)
+        {
+            ScrapeUnstructuredData(gfxData, namesOutput);
+            Debug.Assert(false, "Invalid GFX data encountered");
+            return;
+        }
+
+        // The eighth byte onwards is zlib-compressed data
+        ReadOnlySpan<byte> compressedData = gfxData[8..];
+        using MemoryStream msOut = new(gfxData.Length * 2);
+
+        fixed (byte* ptr = compressedData)
+        {
+            using UnmanagedMemoryStream ums = new(ptr, compressedData.Length);
+            using ZLibStream zs = new(ums, CompressionMode.Decompress);
+            zs.CopyTo(msOut);
+        }
+
+        ReadOnlySpan<byte> decompressed = msOut.GetBuffer().AsSpan(0, (int)msOut.Position);
+        ScrapeUnstructuredData(decompressed, namesOutput);
     }
 
     private static void ScrapeDmat(ReadOnlySpan<byte> dmatData, List<string> namesOutput)
