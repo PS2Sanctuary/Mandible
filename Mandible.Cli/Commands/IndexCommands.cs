@@ -74,7 +74,7 @@ public class IndexCommands
         _console.Markup("[green]Indexing Complete![/]");
     }
 
-    private async Task<List<PackIndex>> BuildIndexAsync(IReadOnlyList<string> packFiles, CancellationToken ct)
+    private async Task<List<PackIndex>> BuildIndexAsync(List<string> packFiles, CancellationToken ct)
         => await _console.Progress()
             .StartAsync
             (
@@ -82,7 +82,7 @@ public class IndexCommands
                 {
                     ProgressTask indexTask = ctx.AddTask("Building pack indexes...");
 
-                    List<PackIndex> packIndexes = new();
+                    List<PackIndex> packIndexes = [];
                     double increment = indexTask.MaxValue / packFiles.Count;
 
                     foreach (string file in packFiles)
@@ -93,7 +93,7 @@ public class IndexCommands
                         IReadOnlyList<AssetHeader> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
 
                         IEnumerable<PackIndex.IndexAsset> assets = assetHeaders
-                            .Select(s => PackIndex.IndexAsset.FromAssetHeader(s))
+                            .Select(PackIndex.IndexAsset.FromAssetHeader)
                             .OrderBy(a => a.Name);
 
                         packIndexes.Add
@@ -116,7 +116,7 @@ public class IndexCommands
 
     private async Task<List<PackIndex>> BuildIndex2Async
     (
-        IReadOnlyList<string> pack2Files,
+        List<string> pack2Files,
         Namelist? namelist,
         CancellationToken ct
     )
@@ -162,7 +162,7 @@ public class IndexCommands
 
     private async Task SaveIndexes
     (
-        IReadOnlyCollection<PackIndex> indexes,
+        List<PackIndex> indexes,
         string suffix,
         string outputDirectory,
         CancellationToken ct

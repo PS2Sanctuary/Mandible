@@ -36,7 +36,13 @@ public static class CommandUtils
     /// <param name="packPaths">A list to append any discovered pack file paths to.</param>
     /// <param name="pack2Paths">A list to append any discovered pack2 file paths to.</param>
     /// <returns>A value indicating whether any pack/pack2 files were found.</returns>
-    public static bool TryFindPacksFromPath(IAnsiConsole console, string path, out List<string> packPaths, out List<string> pack2Paths)
+    public static bool TryFindPacksFromPath
+    (
+        IAnsiConsole console,
+        string path,
+        out List<string> packPaths,
+        out List<string> pack2Paths
+    )
     {
         packPaths = new List<string>();
         pack2Paths = new List<string>();
@@ -65,11 +71,8 @@ public static class CommandUtils
 
         if (Directory.Exists(path))
         {
-            foreach (string pack in Directory.EnumerateFiles(path, "*.pack"))
-                packPaths.Add(pack);
-
-            foreach (string pack in Directory.EnumerateFiles(path, "*.pack2"))
-                pack2Paths.Add(pack);
+            packPaths.AddRange(Directory.EnumerateFiles(path, "*.pack"));
+            pack2Paths.AddRange(Directory.EnumerateFiles(path, "*.pack2"));
 
             if (packPaths.Count == 0 && pack2Paths.Count == 0)
             {
@@ -91,13 +94,18 @@ public static class CommandUtils
     /// <param name="namelistPath">The path to the namelist file.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>The built namelist.</returns>
-    public static async Task<Namelist> BuildNamelistAsync(IAnsiConsole console, string namelistPath, CancellationToken ct)
+    public static async Task<Namelist> BuildNamelistAsync
+    (
+        IAnsiConsole console,
+        string namelistPath,
+        CancellationToken ct
+    )
     {
         Namelist nl = await console.Status()
             .StartAsync
             (
                 "Building namelist",
-                async _ => await Namelist.FromFileAsync(namelistPath, ct).ConfigureAwait(false)
+                async _ => await Namelist.FromFileAsync(namelistPath, ct)
             )
             .ConfigureAwait(false);
 

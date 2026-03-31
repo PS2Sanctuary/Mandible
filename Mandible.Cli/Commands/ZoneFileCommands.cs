@@ -164,7 +164,7 @@ public class ZoneFileCommands
         Zone.Zone zone = Zone.Zone.Read(data, out _);
 
         await using FileStream fs = new(outputPath, FileMode.Create, FileAccess.Write);
-        await JsonSerializer.SerializeAsync(fs, zone, AppJsonContext.Default.Zone, ct);
+        await JsonSerializer.SerializeAsync(fs, zone, CliJsonContext.Default.Zone, ct);
     }
 
     private async Task WriteFromJsonInternal
@@ -175,7 +175,7 @@ public class ZoneFileCommands
     )
     {
         await using FileStream fs = new(inputJsonPath, FileMode.Open, FileAccess.Read,  FileShare.ReadWrite);
-        Zone.Zone? zone = await JsonSerializer.DeserializeAsync<Zone.Zone>(fs, AppJsonContext.Default.Zone, ct);
+        Zone.Zone? zone = await JsonSerializer.DeserializeAsync<Zone.Zone>(fs, CliJsonContext.Default.Zone, ct);
 
         if (zone is null)
         {
