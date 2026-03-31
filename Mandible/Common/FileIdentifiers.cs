@@ -52,7 +52,7 @@ public static class FileIdentifiers
         { FileType.Jpeg, "jpg" },
         { FileType.MaterialInfo, "dma" },
         { FileType.ModelInfo, "dme" },
-        { FileType.Pack1, "pak" },
+        { FileType.Pack1, "pack" },
         { FileType.Pack2, "pack2" },
         { FileType.Png, "png" },
         { FileType.TerrainChunkLod0, "cnk0" },
