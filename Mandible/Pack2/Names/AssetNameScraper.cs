@@ -67,7 +67,7 @@ public static class AssetNameScraper
             "zone", "Zone"
         ];
 
-        KNOWN_FILE_EXTENSIONS = knownFileExtensions.Select(ext => Encoding.ASCII.GetBytes(ext))
+        KNOWN_FILE_EXTENSIONS = knownFileExtensions.Select(ext => Encoding.ASCII.GetBytes("." + ext))
             .ToArray();
     }
 
@@ -164,50 +164,59 @@ public static class AssetNameScraper
         ScrapeUnstructuredData(data, namesOutput);
     }
 
-    private static void ScrapeUnstructuredData(ReadOnlySpan<byte> data, List<string> namesOutput)
+    private static void ScrapeUnstructuredData
+    (
+        ReadOnlySpan<byte> data,
+        List<string> namesOutput
+    )
+    {
+        foreach (byte[] extName in KNOWN_FILE_EXTENSIONS)
+            ScrapeUnstructuredDataForExtension(data, namesOutput, extName, false);
+    }
+
+    private static void ScrapeUnstructuredDataForExtension
+    (
+        ReadOnlySpan<byte> data,
+        List<string> namesOutput,
+        ReadOnlySpan<byte> extName,
+        bool allowDirectorySeparators
+    )
     {
         SpanReader<byte> reader = new(data);
 
-        while (!reader.End)
+        while (reader.TryAdvanceTo(extName, advancePastDelimiter: true))
         {
-            if (!reader.TryAdvanceTo((byte)'.'))
-                break;
+            int endIndex = reader.Consumed;
+            reader.Rewind(extName.Length + 2); // Rewind to the first letter of the name
 
-            foreach (byte[] extName in KNOWN_FILE_EXTENSIONS)
-            {
-                if (!reader.IsNext(extName, true))
-                    continue;
+            // Rewind until we encounter an invalid character, or reach the start of the file
+            while (reader.TryPeek(out byte currentChar)
+                   && IsValidFileNameChar(currentChar, allowDirectorySeparators)
+                   && reader.Consumed != 0)
+                reader.Rewind(1);
 
-                int endIndex = reader.Consumed;
-                reader.Rewind(extName.Length + 2); // Rewind to the first letter of the name
+            if (reader.Consumed != 0)
+                reader.Advance(1); // Advance back past the first invalid character encountered above
+            int startIndex = reader.Consumed;
+            bool read = reader.TryReadExact(out ReadOnlySpan<byte> fullName, endIndex - startIndex);
 
-                // Rewind until we encounter an invalid character, or reach the start of the file
-                while (reader.TryPeek(out byte currentChar) && IsValidFileNameChar(currentChar) && reader.Consumed != 0)
-                    reader.Rewind(1);
+            // Only include names that aren't just an extension
+            if (!read || fullName.IndexOf((byte)'.') == 0)
+                continue;
 
-                if (reader.Consumed != 0)
-                    reader.Advance(1); // Advance back past the first invalid character encountered above
-                int startIndex = reader.Consumed;
-                bool read = reader.TryReadExact(out ReadOnlySpan<byte> fullName, endIndex - startIndex);
+            string name = Encoding.UTF8.GetString(fullName);
+            namesOutput.Add(name);
 
-                // Only include names that aren't just an extension
-                if (!read || fullName.IndexOf((byte)'.') == 0)
-                    continue;
+            // It's possible common for this scrape to capture leading characters (e.g. braces or quotes) that
+            // aren't likely to be part of the filename. Hence, remove any non-letter or digit characters
+            // and add the name as a variant
+            if (!char.IsLetterOrDigit(name[0]))
+                namesOutput.Add(name[1..]);
 
-                string name = Encoding.UTF8.GetString(fullName);
-                namesOutput.Add(name);
-
-                // It's possible common for this scrape to capture leading characters (e.g. braces or quotes) that
-                // aren't likely to be part of the filename. Hence, remove any non-letter or digit characters
-                // and add the name as a variant
-                if (!char.IsLetterOrDigit(name[0]))
-                    namesOutput.Add(name[1..]);
-
-                // Some datasheet text files contain names with substitutions
-                // E.g. ClientItemDefinitions.txt is particularly egregious with this
-                if (name.Contains('<') && name.Contains('>'))
-                    PerformSubstitutions(name, namesOutput);
-            }
+            // Some datasheet text files contain names with substitutions
+            // E.g. ClientItemDefinitions.txt is particularly egregious with this
+            if (name.Contains('<') && name.Contains('>'))
+                PerformSubstitutions(name, namesOutput);
         }
     }
 
@@ -352,9 +361,10 @@ public static class AssetNameScraper
     /// <summary>
     /// We use a strict validation check to help limit false matches when parsing binary files.
     /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    private static bool IsValidFileNameChar(byte value)
+    /// <param name="value">The character to check.</param>
+    /// <param name="allowDirectorySeparators">Whether directory separators should be considered as valid.</param>
+    /// <returns>Whether the value is a valid filename character.</returns>
+    private static bool IsValidFileNameChar(byte value, bool allowDirectorySeparators)
         => value switch
         {
             >= (byte)'0' and <= (byte)'9' => true,
@@ -366,6 +376,7 @@ public static class AssetNameScraper
             (byte)'<' or (byte)'>' => true, // Almost always used when substitutions into the name are required
             (byte)'\'' => true,
             (byte)'.' => true, // Periods in name (e.g. my.file.txt)
+            (byte)'\\' or (byte)'/' when allowDirectorySeparators => true,
             _ => false
         };
 }
