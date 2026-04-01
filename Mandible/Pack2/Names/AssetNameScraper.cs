@@ -23,9 +23,10 @@ public static class AssetNameScraper
     private delegate void DedicatedAssetHandler(ReadOnlySpan<byte> assetData, List<string> namesOutput);
 
     private static readonly SearchValues<char> INVALID_FILE_NAME_CHARS;
+    // Additional magics for unscrapeable file data. Most are handled by inferring the FileType in IsScrapeableAsset
     private static readonly IReadOnlyList<ReadOnlyMemory<byte>> UNSCRAPEABLE_FILE_MAGICS;
-    private static readonly IReadOnlyList<(ReadOnlyMemory<byte> Magic, DedicatedAssetHandler Handler)> DEDICATED_ASSET_HANDLERS;
     private static readonly IReadOnlyList<byte[]> KNOWN_FILE_EXTENSIONS;
+    private static readonly Dictionary<FileType, DedicatedAssetHandler> _dedicatedAssetHandlers;
 
     static AssetNameScraper()
     {
@@ -33,33 +34,23 @@ public static class AssetNameScraper
 
         UNSCRAPEABLE_FILE_MAGICS =
         [
-            FileIdentifiers.Magics[FileType.CollisionData],
-            FileIdentifiers.Magics[FileType.TerrainChunkGeneric],
-            FileIdentifiers.Magics[FileType.DdsImage],
             "DSKE"u8.ToArray(),
             "DXBC"u8.ToArray(),
-            "GNF"u8.ToArray(),
-            "INDR"u8.ToArray(),
-            FileIdentifiers.Magics[FileType.Jpeg],
-            FileIdentifiers.Magics[FileType.Png],
-            FileIdentifiers.Magics[FileType.Riff],
-            FileIdentifiers.Magics[FileType.Tome],
-            // TruevisionTga: note explicit check in IsScrapeAbleAsset (magic is at end of file)
-            FileIdentifiers.Magics[FileType.Vnfo]
+            "GNF"u8.ToArray()
         ];
 
-        DEDICATED_ASSET_HANDLERS =
-        [
-            (FileIdentifiers.Magics[FileType.ActorDefinition], ScrapeAdr),
-            (FileIdentifiers.Magics[FileType.Eco], ScrapeEco),
-            (FileIdentifiers.Magics[FileType.Gfx], ScrapeGfx),
-            (FileIdentifiers.Magics[FileType.MaterialInfo], ScrapeDmat),
-            (FileIdentifiers.Magics[FileType.ModelInfo], ScrapeDmod),
-            (FileIdentifiers.Magics[FileType.MorphemeAnimation], ScrapeMrn),
-            (FileIdentifiers.Magics[FileType.MorphemeAnimation64Bit], ScrapeMrn),
-            (FileIdentifiers.Magics[FileType.FmodSoundBank5], ScrapeFsb),
-            (FileIdentifiers.Magics[FileType.Zone], ScrapeZone)
-        ];
+        _dedicatedAssetHandlers = new Dictionary<FileType, DedicatedAssetHandler>
+        {
+            { FileType.ActorDefinition, ScrapeAdr },
+            { FileType.Eco, ScrapeEco },
+            { FileType.Gfx, ScrapeGfx },
+            { FileType.MaterialInfo, ScrapeDmat },
+            { FileType.ModelInfo, ScrapeDmod },
+            { FileType.MorphemeAnimation, ScrapeMrn },
+            { FileType.MorphemeAnimation64Bit, ScrapeMrn },
+            { FileType.FmodSoundBank5, ScrapeFsb },
+            { FileType.Zone, ScrapeZone }
+        };
 
         string[] knownFileExtensions =
         [
@@ -71,7 +62,6 @@ public static class AssetNameScraper
             "swf", "tga", "TGA", "thm", "tome", "ttf", "txt", "vnfo", "wav", "xlsx", "xml", "xrsb", "xssb",
             "zone", "Zone"
         ];
-
         KNOWN_FILE_EXTENSIONS = knownFileExtensions.Select(ext => Encoding.ASCII.GetBytes("." + ext))
             .ToArray();
     }
@@ -83,11 +73,13 @@ public static class AssetNameScraper
     /// <returns>The scraped names.</returns>
     public static IReadOnlyList<string> ScrapeFromAssetData(ReadOnlySpan<byte> data)
     {
-        if (!IsScrapeAbleAsset(data))
+        FileType type = FileIdentifiers.InferFileType(data);
+
+        if (!IsScrapeableAsset(type, data))
             return [];
 
         List<string> names = [];
-        ScrapeInternal(data, names);
+        ScrapeInternal(type, data, names);
         int finalCount = names.Count;
 
         // Post-process to clean up the scraped names and apply patterns
@@ -136,43 +128,39 @@ public static class AssetNameScraper
         return names;
     }
 
-    /// <summary>
-    /// Performs a crude check to determine whether the <paramref name="assetData"/>
-    /// is likely to contain scrape-able names.
-    /// </summary>
-    /// <param name="assetData"></param>
-    /// <returns></returns>
-    public static bool IsScrapeAbleAsset(ReadOnlySpan<byte> assetData)
+    private static bool IsScrapeableAsset(FileType type, ReadOnlySpan<byte> assetData)
     {
-        SpanReader<byte> reader = new(assetData);
+        bool failsTypeCheck = type is FileType.CollisionData
+            or FileType.TerrainChunkLod0
+            or FileType.TerrainChunkLod1
+            or FileType.TerrainChunkLod2
+            or FileType.TerrainChunkLod3
+            or FileType.DdsImage
+            or FileType.Indr
+            or FileType.Jpeg
+            or FileType.Png
+            or FileType.Riff
+            or FileType.Tome
+            or FileType.TruevisionTga
+            or FileType.Vnfo;
+
+        if (failsTypeCheck)
+            return false;
 
         // Skip any files with a magic value in our unscrapeable list
         foreach (ReadOnlyMemory<byte> value in UNSCRAPEABLE_FILE_MAGICS)
         {
-            if (reader.IsNext(value.Span))
+            if (assetData.StartsWith(value.Span))
                 return false;
         }
 
-        // Skip TGA image data files
-        if (assetData.EndsWith(FileIdentifiers.Magics[FileType.TruevisionTga].Span))
-            return false;
-
         return true;
-
-        // FXD files have an offset header, gotta check for them individually
-        bool isFxd = assetData.Length > 11
-            && assetData[8..].IndexOf("FXD"u8) == 0;
-        if (isFxd)
-            return true;
     }
 
-    private static void ScrapeInternal(ReadOnlySpan<byte> data, List<string> namesOutput)
+    private static void ScrapeInternal(FileType type, ReadOnlySpan<byte> data, List<string> namesOutput)
     {
-        foreach ((ReadOnlyMemory<byte> magic, DedicatedAssetHandler handler) in DEDICATED_ASSET_HANDLERS)
+        if (_dedicatedAssetHandlers.TryGetValue(type, out DedicatedAssetHandler? handler))
         {
-            if (data.IndexOf(magic.Span) is not 0)
-                continue;
-
             try
             {
                 handler(data, namesOutput);
