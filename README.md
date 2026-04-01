@@ -132,3 +132,9 @@ not exist as actual files.
 When extracting a namelist, it is useful to note that some game distributions will include a namelist file
 (`{NAMELIST}`, no file extension) in the packs themselves. For example, PlanetSide 2's test distribution. If you can
 extract your names from these sets of packs, you will likely get a much more complete namelist.
+
+## Acknowledgements
+
+- The [psemu](https://github.com/psemu) team and ForgeLight Tools community for their contributions towards deciphering
+the asset file formats.
+- RiderAnton / ryanjsims for their work in deciphering the MRN file format.
