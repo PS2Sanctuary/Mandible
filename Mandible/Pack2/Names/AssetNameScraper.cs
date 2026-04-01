@@ -5,6 +5,7 @@ using Mandible.Fsb;
 using Mandible.Zone;
 using MemoryReaders;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -21,12 +22,15 @@ public static class AssetNameScraper
 {
     private delegate void DedicatedAssetHandler(ReadOnlySpan<byte> assetData, List<string> namesOutput);
 
+    private static readonly SearchValues<char> INVALID_FILE_NAME_CHARS;
     private static readonly IReadOnlyList<ReadOnlyMemory<byte>> UNSCRAPEABLE_FILE_MAGICS;
     private static readonly IReadOnlyList<(ReadOnlyMemory<byte> Magic, DedicatedAssetHandler Handler)> DEDICATED_ASSET_HANDLERS;
     private static readonly IReadOnlyList<byte[]> KNOWN_FILE_EXTENSIONS;
 
     static AssetNameScraper()
     {
+        INVALID_FILE_NAME_CHARS = SearchValues.Create(Path.GetInvalidFileNameChars());
+
         UNSCRAPEABLE_FILE_MAGICS =
         [
             FileIdentifiers.Magics[FileType.CollisionData],
@@ -86,9 +90,27 @@ public static class AssetNameScraper
         ScrapeInternal(data, names);
         int finalCount = names.Count;
 
+        // Post-process to clean up the scraped names and apply patterns
         for (int i = 0; i < finalCount; i++)
         {
             string name = names[i];
+
+            // Remove directory info
+            if (name.Contains('\\') || name.Contains('/'))
+                names[i] = name = Path.GetFileName(name);
+
+            // Remove invalid file name characters
+            if (name.AsSpan().ContainsAny(INVALID_FILE_NAME_CHARS))
+            {
+                char[] newName = ArrayPool<char>.Shared.Rent(name.Length);
+                int nameIndex = 0;
+                foreach (char element in name)
+                {
+                    if (!INVALID_FILE_NAME_CHARS.Contains(element))
+                        newName[nameIndex++] = element;
+                }
+                names[i] = name = new string(newName, 0, nameIndex);
+            }
 
             // efb files have DX11 variants
             if (name.EndsWith(".efb", StringComparison.OrdinalIgnoreCase))
@@ -206,18 +228,20 @@ public static class AssetNameScraper
                 continue;
 
             string name = Encoding.UTF8.GetString(fullName);
-            namesOutput.Add(name);
+
+            // Some datasheet text files contain names with substitutions. Ignore the original as '<' and '>' are
+            // invalid in paths.
+            // E.g. ClientItemDefinitions.txt is particularly egregious with this
+            if (name.Contains('<') && name.Contains('>'))
+                PerformSubstitutions(name, namesOutput);
+            else
+                namesOutput.Add(name);
 
             // It's possible common for this scrape to capture leading characters (e.g. braces or quotes) that
             // aren't likely to be part of the filename. Hence, remove any non-letter or digit characters
             // and add the name as a variant
             if (!char.IsLetterOrDigit(name[0]))
                 namesOutput.Add(name[1..]);
-
-            // Some datasheet text files contain names with substitutions
-            // E.g. ClientItemDefinitions.txt is particularly egregious with this
-            if (name.Contains('<') && name.Contains('>'))
-                PerformSubstitutions(name, namesOutput);
         }
     }
 
