@@ -205,7 +205,7 @@ public static class AssetNameScraper
 
                 // Some datasheet text files contain names with substitutions
                 // E.g. ClientItemDefinitions.txt is particularly egregious with this
-                if (name.Contains('<'))
+                if (name.Contains('<') && name.Contains('>'))
                     PerformSubstitutions(name, namesOutput);
             }
         }
