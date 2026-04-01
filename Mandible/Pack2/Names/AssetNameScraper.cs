@@ -47,6 +47,7 @@ public static class AssetNameScraper
         DEDICATED_ASSET_HANDLERS =
         [
             (FileIdentifiers.Magics[FileType.ActorDefinition], ScrapeAdr),
+            (FileIdentifiers.Magics[FileType.Eco], ScrapeEco),
             (FileIdentifiers.Magics[FileType.Gfx], ScrapeGfx),
             (FileIdentifiers.Magics[FileType.MaterialInfo], ScrapeDmat),
             (FileIdentifiers.Magics[FileType.ModelInfo], ScrapeDmod),
@@ -253,6 +254,43 @@ public static class AssetNameScraper
 
         // Still require an unstructured scrape, there's a heap of names we're ignoring
         ScrapeUnstructuredData(adrData, namesOutput);
+    }
+
+    private static void ScrapeEco(ReadOnlySpan<byte> ecoData, List<string> namesOutput)
+    {
+        SpanReader<byte> reader = new(ecoData);
+
+        do
+        {
+            // Skip any tabs before nested properties
+            while (reader.TryPeek(out byte value) && value is (byte)'\t')
+                reader.Advance(1);
+
+            // Note the specific tab here, to prevent issues with property names that have the same starting prefix
+            // (notably ClumpMask).
+            bool takeDirectName = reader.IsNext("*SOURCE_COLOR_BLEND_MAP\t"u8, advancePast: true)
+                || reader.IsNext("*SOURCE_NORMAL_MAP\t"u8, advancePast: true)
+                || reader.IsNext("*SOURCE_SPEC_MAP\t"u8, advancePast: true)
+                || reader.IsNext("*RENDER_COLOR_NX_MAP\t"u8, advancePast: true)
+                || reader.IsNext("*RENDER_SPEC_BLEND_NY_MAP\t"u8, advancePast: true)
+                || reader.IsNext("*CLUMPMASK\t"u8, advancePast: true);
+            bool takeEcoName = reader.IsNext("*TEXTURELAYER\t"u8, advancePast: true);
+
+            ReadOnlySpan<byte> nameBytes = ReadOnlySpan<byte>.Empty;
+            if (takeDirectName || takeEcoName)
+                reader.TryReadTo(out nameBytes, (byte)'\r', advancePastDelimiter: false);
+            else
+                continue;
+
+            string name = Encoding.UTF8.GetString(nameBytes);
+            name = name.Trim('"'); // ClumpMask is quoted
+
+            if (takeDirectName)
+                namesOutput.Add(name);
+            else if (takeEcoName)
+                namesOutput.Add(name + ".eco");
+        }
+        while (reader.TryAdvanceTo("\r\n"u8, advancePastDelimiter: true));
     }
 
     private static unsafe void ScrapeGfx(ReadOnlySpan<byte> gfxData, List<string> namesOutput)
