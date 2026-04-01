@@ -39,11 +39,21 @@ public enum FileType
     /// An FMOD sound bank file, version 5 (FSB).
     /// </summary>
     FmodSoundBank5,
+    
+    /// <summary>
+    /// Unknown.
+    /// </summary>
+    Fxd,
 
     /// <summary>
     /// Adobe Shockwave files (SWF) which have had their image data stripped.
     /// </summary>
     Gfx,
+    
+    /// <summary>
+    /// Unknown.
+    /// </summary>
+    Indr,
 
     /// <summary>
     /// JPEG image data.
@@ -86,7 +96,7 @@ public enum FileType
     Png,
 
     /// <summary>
-    /// Resource interchange file format.
+    /// Resource interchange file format. Generally used as a container for audio or video data.
     /// </summary>
     Riff,
 
