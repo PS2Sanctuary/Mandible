@@ -2,29 +2,29 @@
 
 *These notes are built off [Rhett's technical breakdown](https://github.com/RhettVX/forgelight-toolbox/blob/master/docs/rhett-pack2-notes.txt).*
 
-**Extension**: `.pack2`\
-**Endianness**: Mixed: Headers and maps are in *little* endian, while data is in *big* endian
+Pack2 files store asset data for games that run on the ForgeLight engine. This format supersedes the
+[Pack](PackFormat.md) format, and includes better support for detecting modified game files. Furthermore, some data is
+compressed using `zlib`. It was introduced in PlanetSide 2's DX11 update in April 2019.
 
-### Description
+**Extension**: `.pack2`
 
-Pack2 files store asset data for games that run on the ForgeLight engine. This format supersedes the [Pack](PackFormat.md) format,
-and includes better support for detecting modified game files. Furthermore, some data is compressed using `zlib`. It was
-introduced in PlanetSide 2's DX11 update in April 2019.
+## Format
 
-### Format
+**Endianness**: Mixed: Headers and maps are in *little* endian, while data is in *big* endian.
 
-Pack2 files have an [initial header](#pack-header) with basic info, such as the asset count and pack length. A buffer containing
-only `0x00` values is then written up to an offset of `0x200`.
+Pack2 files have an [initial header](#pack-header) with basic info, such as the asset count and pack length. A buffer
+containing only `0x00` values is then written up to an offset of `0x200`.
 
-Next, the [asset data](#asset-data) is written. The asset data blocks also contain compression information, if applicable. Note
-that this data is in **big endian** format.
+Next, the [asset data](#asset-data) is written. The asset data blocks also contain compression information, if
+applicable. Note that this data is in **big endian** format.
 
-Finally, an *asset map* is written, which contains numerous sequential [asset headers](#asset-header) that hold information about
-the stored asset data. Note that asset headers must be stored in ascending order of the *asset name hash*.
+Finally, an *asset map* is written, which contains numerous sequential [asset headers](#asset-header) that hold
+information about the stored asset data. Note that asset headers must be stored in ascending order of the *asset name
+hash*.
 
 #### Pack Header
 
-`Little Endian`
+**Endianness**: `Little Endian`
 
 | Name         | Type        | Example                   | Description                                                                          |
 |--------------|-------------|---------------------------|--------------------------------------------------------------------------------------|
@@ -38,7 +38,7 @@ the stored asset data. Note that asset headers must be stored in ascending order
 
 #### Asset Data
 
-`Big Endian`
+**Endianness**: `Big Endian`
 
 | Name                  | Type      | Example       | Description                                                                          |
 |-----------------------|-----------|---------------|--------------------------------------------------------------------------------------|
@@ -48,7 +48,7 @@ the stored asset data. Note that asset headers must be stored in ascending order
 
 #### Asset Header
 
-`Little Endian`
+**Endianness**: `Little Endian`
 
 | Name                  | Type      | Example                   | Description                                                                                                                                                             |
 |-----------------------|-----------|---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
