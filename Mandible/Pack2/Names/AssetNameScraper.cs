@@ -50,6 +50,8 @@ public static class AssetNameScraper
             (FileIdentifiers.Magics[FileType.Gfx], ScrapeGfx),
             (FileIdentifiers.Magics[FileType.MaterialInfo], ScrapeDmat),
             (FileIdentifiers.Magics[FileType.ModelInfo], ScrapeDmod),
+            (FileIdentifiers.Magics[FileType.MorphemeAnimation], ScrapeMrn),
+            (FileIdentifiers.Magics[FileType.MorphemeAnimation64Bit], ScrapeMrn),
             (FileIdentifiers.Magics[FileType.FmodSoundBank5], ScrapeFsb),
             (FileIdentifiers.Magics[FileType.Zone], ScrapeZone)
         ];
@@ -288,6 +290,14 @@ public static class AssetNameScraper
 
         foreach (string element in Dmat.Read(dmodData[reader.Consumed..], out _).TextureFileNames)
             namesOutput.Add(element);
+    }
+
+    private static void ScrapeMrn(ReadOnlySpan<byte> mrnData, List<string> namesOutput)
+    {
+        // TODO: Scrape fbx paths (note different extension for 32-bit MRNs)
+        // and extract info from the path to create MRN file names.
+        // Relevant file on which this works is DomeShieldEmitterX64.mrn
+        ScrapeUnstructuredData(mrnData, namesOutput);
     }
 
     private static void ScrapeFsb(ReadOnlySpan<byte> fsbData, List<string> namesOutput)
