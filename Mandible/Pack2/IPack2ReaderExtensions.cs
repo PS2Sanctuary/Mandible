@@ -85,17 +85,8 @@ public static class IPack2ReaderExtensions
 
         if (replaceFileExtension)
         {
-            FileType discoveredType = FileType.Unknown;
+            FileType discoveredType = FileIdentifiers.InferFileType(data.Span);
             string? discoveredExt = null;
-
-            foreach ((FileType type, ReadOnlyMemory<byte> magic) in FileIdentifiers.Magics)
-            {
-                if (data.Span.StartsWith(magic.Span))
-                {
-                    discoveredType = type;
-                    break;
-                }
-            }
 
             bool valid = discoveredType is not FileType.Unknown
                 && FileIdentifiers.Extensions.TryGetValue(discoveredType, out discoveredExt);

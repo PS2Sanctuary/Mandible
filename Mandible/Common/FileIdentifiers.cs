@@ -72,4 +72,35 @@ public static class FileIdentifiers
         { FileType.Vnfo, "vnfo" },
         { FileType.Zone, "zone" }
     };
+
+    /// <summary>
+    /// Infers the type of the given <paramref name="data"/> by searching for magic bytes.
+    /// </summary>
+    /// <param name="data">
+    /// The data to inspect. Include the whole file, as some magic identifiers are placed at the end of the data.
+    /// </param>
+    /// <returns>The type of the data, or <see cref="FileType.Unknown"/> if the type could not be inferred.</returns>
+    public static FileType InferFileType(ReadOnlySpan<byte> data)
+    {
+        foreach ((FileType type, ReadOnlyMemory<byte> magic) in Magics)
+        {
+            switch (type)
+            {
+                case FileType.TruevisionTga:
+                    if (data.EndsWith(Magics[type].Span))
+                        return type;
+                    break;
+                case FileType.Fxd:
+                    if (data.Length > 11 && data[8..].StartsWith(Magics[type].Span))
+                        return type;
+                    break;
+                default:
+                    if (data.StartsWith(magic.Span))
+                        return type;
+                    break;
+            }
+        }
+
+        return FileType.Unknown;
+    }
 }
