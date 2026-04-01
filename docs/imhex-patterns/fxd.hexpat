@@ -10,10 +10,13 @@ using ulong = u64;
 struct Header
 {
     ulong Hash;
-    char Magic[4]; // ""FXD "u8
+    char Magic[4]; // "FXD "
     uint UnknownValue1; // Always the same, 0x01 0x02 0x02 0x00. Magic?
     uint DecompressedDataLen; // Total length of the decompressed data
     uint PayloadLen; // Includes the alignment padding before the zlib compressed data
+	
+	// I suspect this might actually be null terminated. Which would bring into question
+	// whether the deflate stream is actually padded to a four byte boundary.
     char PayloadMagic[4];
  
     // The payload is wrapped in a zlib deflate stream and padded to start on a 16 byte boundary
