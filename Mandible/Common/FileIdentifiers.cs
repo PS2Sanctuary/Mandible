@@ -19,7 +19,7 @@ public static class FileIdentifiers
         { FileType.Eco, "*TEXTUREPART"u8.ToArray() },
         { FileType.Elf, new byte[] { 0x7F, (byte)'E', (byte)'L', (byte)'F' } },
         { FileType.FmodSoundBank5, "FSB5"u8.ToArray() },
-        { FileType.Fxd, "FXD"u8.ToArray() },
+        { FileType.Fxd, "FXD "u8.ToArray() },
         { FileType.Gfx, "CFX"u8.ToArray() },
         { FileType.Indr, "INDR"u8.ToArray() },
         { FileType.Jpeg, new byte[] { 0xff, 0xd8, 0xff } },

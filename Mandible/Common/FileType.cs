@@ -41,7 +41,7 @@ public enum FileType
     FmodSoundBank5,
     
     /// <summary>
-    /// Unknown.
+    /// Dynamic graphics effects/FX data.
     /// </summary>
     Fxd,
 
