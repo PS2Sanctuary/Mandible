@@ -36,9 +36,14 @@ public enum FileType
     Efb,
 
     /// <summary>
-    /// ForgeLight-specific shader data wrapper, containing DX11 compiled shader data in shader model 4/5 format.
+    /// ForgeLight-specific shader data wrapper, containing DX11 compiled shader data in shader model 4 format.
     /// </summary>
-    EfbDx11,
+    EfbDx11_Model4,
+
+    /// <summary>
+    /// ForgeLight-specific shader data wrapper, containing DX11 compiled shader data in shader model 5 format.
+    /// </summary>
+    EfbDx11_Model5,
 
     /// <summary>
     /// Files containing information regarding the automated flora and clutter generation for materials.

@@ -42,7 +42,8 @@ public static class AssetNameScraper
         {
             { FileType.ActorDefinition, ScrapeAdr },
             { FileType.Eco, ScrapeEco },
-            { FileType.EfbDx11, ScrapeEfbDx11 },
+            { FileType.EfbDx11_Model4, ScrapeEfbDx11 },
+            { FileType.EfbDx11_Model5, ScrapeEfbDx11 },
             { FileType.Gfx, ScrapeGfx },
             { FileType.Fxo, ScrapeFxo },
             { FileType.MaterialInfo, ScrapeDmat },
