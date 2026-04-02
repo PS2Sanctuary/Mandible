@@ -18,6 +18,7 @@ public static class FileIdentifiers
         { FileType.DdsImage, "DDS"u8.ToArray() },
         { FileType.Dxbc, "DXBC"u8.ToArray() },
         { FileType.Eco, "*TEXTUREPART"u8.ToArray() },
+        // Uncertain whether the dx11efb "magics" here aren't actually meaningful header data, but they work.
         { FileType.EfbDx11_Model4, new byte[] { 0x01, 0x00, 0x04, 0x01, 0, 0, 0, 0, 0x78, 0, 0, 0, 0, 0, 0, 0 } },
         { FileType.EfbDx11_Model5, new byte[] { 0x01, 0x00, 0x05, 0x01, 0, 0, 0, 0, 0x78, 0, 0, 0, 0, 0, 0, 0 } },
         { FileType.Elf, new byte[] { 0x7F, (byte)'E', (byte)'L', (byte)'F' } },
