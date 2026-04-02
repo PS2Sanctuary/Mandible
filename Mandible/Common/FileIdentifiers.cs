@@ -14,6 +14,7 @@ public static class FileIdentifiers
     public static IReadOnlyDictionary<FileType, ReadOnlyMemory<byte>> Magics { get; } = new Dictionary<FileType, ReadOnlyMemory<byte>>
     {
         { FileType.ActorDefinition, "<ActorRuntime>"u8.ToArray() },
+        { FileType.ApexXml, "<!DOCTYPE NxParameters>"u8.ToArray() },
         { FileType.CollisionData, "CDTA"u8.ToArray() },
         { FileType.DdsImage, "DDS"u8.ToArray() },
         { FileType.Dxbc, "DXBC"u8.ToArray() },
@@ -52,6 +53,8 @@ public static class FileIdentifiers
     public static IReadOnlyDictionary<FileType, string> Extensions { get; } = new Dictionary<FileType, string>
     {
         { FileType.ActorDefinition, "adr" },
+        { FileType.ApexBinary, "apb" },
+        { FileType.ApexXml, "apx" },
         { FileType.CollisionData, "cdt" },
         { FileType.DdsImage, "dds" },
         { FileType.Dxbc, "cso" },

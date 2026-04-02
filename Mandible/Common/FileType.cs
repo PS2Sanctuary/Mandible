@@ -16,6 +16,16 @@ public enum FileType
     ActorDefinition,
 
     /// <summary>
+    /// PhysX APEX - binary format.
+    /// </summary>
+    ApexBinary,
+
+    /// <summary>
+    /// PhysX APEX - XML format.
+    /// </summary>
+    ApexXml,
+
+    /// <summary>
     /// Collision data (cdt / CDTA).
     /// </summary>
     CollisionData,
