@@ -177,14 +177,18 @@ public static class AssetNameScraper
         ScrapeUnstructuredData(data, namesOutput);
     }
 
-    private static void ScrapeUnstructuredData
+    private static int ScrapeUnstructuredData
     (
         ReadOnlySpan<byte> data,
         List<string> namesOutput
     )
     {
+        int scraped = 0;
+
         foreach (byte[] extName in KNOWN_FILE_EXTENSIONS)
-            ScrapeUnstructuredDataForExtension(data, namesOutput, extName, false);
+            scraped += ScrapeUnstructuredDataForExtension(data, namesOutput, extName, false);
+
+        return scraped;
     }
 
     private static int ScrapeUnstructuredDataForExtension
@@ -267,11 +271,29 @@ public static class AssetNameScraper
 
     private static void ScrapeAdr(ReadOnlySpan<byte> adrData, List<string> namesOutput)
     {
-        // TODO: We can possible do better here by taking the base filename and replacing the dme with adr
-        // after removing any _LODX suffixes
+        int scraped = ScrapeUnstructuredData(adrData, namesOutput);
+        for (int i = namesOutput.Count - 1; i > namesOutput.Count - scraped - 1; i--)
+        {
+            string name = namesOutput[i];
 
-        // Still require an unstructured scrape, there's a heap of names we're ignoring
-        ScrapeUnstructuredData(adrData, namesOutput);
+            // File name and Palette name elements (in particular) often match actor file names, once
+            // you strip the LOD specifier.
+            if (name.EndsWith(".dme", StringComparison.OrdinalIgnoreCase)
+                || name.EndsWith(".dma", StringComparison.OrdinalIgnoreCase))
+            {
+                name = Path.ChangeExtension(name, "adr")
+                    .Replace("_LODAuto", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("_LOD0Auto", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("_LOD1Auto", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("_LOD2Auto", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("_LOD3Auto", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("_LOD0", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("_LOD1", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("_LOD2", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("_LOD3", "", StringComparison.OrdinalIgnoreCase);
+                namesOutput.Add(name);
+            }
+        }
     }
 
     private static void ScrapeEco(ReadOnlySpan<byte> ecoData, List<string> namesOutput)
