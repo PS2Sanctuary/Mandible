@@ -33,6 +33,7 @@ public class IndexCommands
     /// <param name="inputPath">A path to the pack/pack2 file to index, or a directory containing multiple.</param>
     /// <param name="outputDirectory">The directory to output the index files to.</param>
     /// <param name="namelistPath">-n|--namelist, A path to a namelist file.</param>
+    /// <param name="force">-f, Force overwrite of any existing index files.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("")]
     public async Task ExecuteAsync
@@ -40,6 +41,7 @@ public class IndexCommands
         [Argument] string inputPath,
         [Argument] string outputDirectory,
         string? namelistPath,
+        bool force = false,
         CancellationToken ct = default
     )
     {
@@ -49,7 +51,7 @@ public class IndexCommands
         if (!CommandUtils.CheckOutputDirectory(_console, outputDirectory))
             return;
 
-        if (Directory.EnumerateFiles(outputDirectory).Any())
+        if (Directory.EnumerateFiles(outputDirectory).Any() && !force)
         {
             if (!_console.Confirm("The output directory already contains files. [red]Existing indexes in the directory may be overwritten.[/] Are you sure you want to continue?"))
                 return;

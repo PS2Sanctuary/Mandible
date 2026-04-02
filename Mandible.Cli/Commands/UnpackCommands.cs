@@ -35,7 +35,7 @@ public class UnpackCommands
     /// </param>
     /// <param name="namelistPath">-n|--namelist, A path to a namelist file</param>
     /// <param name="filter">
-    /// -f|--search-pattern, A Windows file search pattern to use when enumerating packs should a directory path be provided.
+    /// -f, A Windows file search pattern to use when enumerating packs should a directory path be provided.
     /// </param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("")]

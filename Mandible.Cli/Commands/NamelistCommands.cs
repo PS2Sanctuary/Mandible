@@ -27,16 +27,14 @@ public class NamelistCommands
     /// </summary>
     /// <param name="pack2Directory">The directory containing the pack2 files to extract names from.</param>
     /// <param name="output">The path to output the namelist file to.</param>
-    /// <param name="deepSearch">
-    /// -d|--deep, Performs a deep search for names. This takes considerably longer but captures ~3% more names.
-    /// </param>
+    /// <param name="force">-f, Force overwrite of the output file.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("extract")]
     public async Task ExtractAsync
     (
         [Argument] string pack2Directory,
         [Argument] string output,
-        bool deepSearch = false,
+        bool force = false,
         CancellationToken ct = default
     )
     {
@@ -44,7 +42,7 @@ public class NamelistCommands
             return;
 
         output = Path.ChangeExtension(output, ".txt");
-        if (File.Exists(output))
+        if (File.Exists(output) && !force)
         {
             if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
                 return;
@@ -73,17 +71,19 @@ public class NamelistCommands
     /// </summary>
     /// <param name="output">The path to output the merged namelist to.</param>
     /// <param name="namelistPaths">The namelist files to merge.</param>
+    /// <param name="force">-f, Force overwrite of the output file.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("merge")]
     public async Task MergeAsync
     (
         [Argument] string output,
         CancellationToken ct = default,
+        bool force = false,
         [Argument] params string[] namelistPaths
     )
     {
         output = Path.ChangeExtension(output, ".txt");
-        if (File.Exists(output))
+        if (File.Exists(output) && !force)
         {
             if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
                 return;
@@ -132,17 +132,19 @@ public class NamelistCommands
     /// </summary>
     /// <param name="namelist">The namelist to convert.</param>
     /// <param name="output">The output namelist file.</param>
+    /// <param name="force">-f, Force overwrite of the output file.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("ps2ls2-convert")]
     public async Task PS2LS2ConvertAsync
     (
         [Argument] string namelist,
         [Argument] string output,
+        bool force = false,
         CancellationToken ct = default
     )
     {
         output = Path.ChangeExtension(output, ".txt");
-        if (File.Exists(output))
+        if (File.Exists(output) && !force)
         {
             if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
                 return;

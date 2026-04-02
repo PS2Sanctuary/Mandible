@@ -29,6 +29,7 @@ public class PackCommands
     /// <param name="inputDirectory">The directory containing files to pack.</param>
     /// <param name="outputPath">The path to write the generated pack2 file to.</param>
     /// <param name="verbose">-v, Enable verbose output.</param>
+    /// <param name="force">-f, Force overwrite of the output file.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("create-pack-2")]
     public async Task CreatePack2
@@ -36,10 +37,11 @@ public class PackCommands
         [Argument] string inputDirectory,
         [Argument] string outputPath,
         bool verbose = true,
+        bool force = false,
         CancellationToken ct = default
     )
     {
-        if (File.Exists(outputPath))
+        if (File.Exists(outputPath) && !force)
         {
             if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
                 return;

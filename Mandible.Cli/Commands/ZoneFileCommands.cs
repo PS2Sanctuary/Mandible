@@ -60,12 +60,14 @@ public class ZoneFileCommands
     /// -o|--output, The file to export the JSON data into. If this parameter is not specified, data will be written to
     /// stdout.
     /// </param>
+    /// <param name="force">-f, Force overwrite of output file.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("json")]
     public async Task ExportAsJson
     (
         [Argument] string zoneFilePath,
         string? outputPath = null,
+        bool force = false,
         CancellationToken ct = default
     )
     {
@@ -75,7 +77,7 @@ public class ZoneFileCommands
             return;
         }
 
-        if (File.Exists(outputPath))
+        if (File.Exists(outputPath) && !force)
         {
             if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
                 return;
@@ -100,12 +102,14 @@ public class ZoneFileCommands
     /// </summary>
     /// <param name="inputJsonPath">A path to the input JSON file.</param>
     /// <param name="outputZonePath">A path to the output zone file.</param>
+    /// <param name="force">-f, Force overwrite of output file.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("write")]
     public async Task WriteFromJson
     (
         [Argument] string inputJsonPath,
         [Argument] string outputZonePath,
+        bool force = false,
         CancellationToken ct = default
     )
     {
@@ -115,7 +119,7 @@ public class ZoneFileCommands
             return;
         }
 
-        if (File.Exists(outputZonePath))
+        if (File.Exists(outputZonePath) && !force)
         {
             if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
                 return;
