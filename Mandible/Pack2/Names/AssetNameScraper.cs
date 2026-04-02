@@ -140,7 +140,7 @@ public static partial class AssetNameScraper
             or FileType.TerrainChunkLod2
             or FileType.TerrainChunkLod3
             or FileType.DdsImage
-            or FileType.Indr
+            or FileType.IndoorData
             or FileType.Jpeg
             or FileType.Png
             or FileType.Riff

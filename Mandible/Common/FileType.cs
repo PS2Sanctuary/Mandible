@@ -76,9 +76,9 @@ public enum FileType
     Gfx,
 
     /// <summary>
-    /// Unknown.
+    /// Indoor Data (INDR).
     /// </summary>
-    Indr,
+    IndoorData,
 
     /// <summary>
     /// JPEG image data.
