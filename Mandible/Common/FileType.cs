@@ -26,6 +26,11 @@ public enum FileType
     DdsImage,
 
     /// <summary>
+    /// Direct3D 10/11 compiled shaders (SM4/5).
+    /// </summary>
+    Dxbc,
+
+    /// <summary>
     /// ForgeLight-specific shader data wrapper, containing DX9 compiled shader data in shader model 3 format.
     /// </summary>
     Efb,

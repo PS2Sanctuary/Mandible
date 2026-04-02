@@ -132,6 +132,7 @@ public static class AssetNameScraper
     private static bool IsScrapeableAsset(FileType type, ReadOnlySpan<byte> assetData)
     {
         bool failsTypeCheck = type is FileType.CollisionData
+            or FileType.Dxbc
             or FileType.TerrainChunkLod0
             or FileType.TerrainChunkLod1
             or FileType.TerrainChunkLod2
