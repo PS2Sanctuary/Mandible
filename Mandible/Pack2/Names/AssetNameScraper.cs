@@ -137,15 +137,16 @@ public static partial class AssetNameScraper
     {
         bool failsTypeCheck = type is FileType.CollisionData
             or FileType.Dxbc
-            or FileType.TerrainChunkLod0
-            or FileType.TerrainChunkLod1
-            or FileType.TerrainChunkLod2
-            or FileType.TerrainChunkLod3
+            or FileType.Gnf
             or FileType.DdsImage
             or FileType.IndoorData
             or FileType.Jpeg
             or FileType.Png
             or FileType.Riff
+            or FileType.TerrainChunkLod0
+            or FileType.TerrainChunkLod1
+            or FileType.TerrainChunkLod2
+            or FileType.TerrainChunkLod3
             or FileType.Tome
             or FileType.TruevisionTga
             or FileType.Vnfo;
