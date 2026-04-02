@@ -44,6 +44,7 @@ public static class AssetNameScraper
             { FileType.ActorDefinition, ScrapeAdr },
             { FileType.Eco, ScrapeEco },
             { FileType.Gfx, ScrapeGfx },
+            { FileType.Fxo, ScrapeFxo },
             { FileType.MaterialInfo, ScrapeDmat },
             { FileType.ModelInfo, ScrapeDmod },
             { FileType.MorphemeRuntimeNetwork, ScrapeMrn },
@@ -185,20 +186,21 @@ public static class AssetNameScraper
             ScrapeUnstructuredDataForExtension(data, namesOutput, extName, false);
     }
 
-    private static void ScrapeUnstructuredDataForExtension
+    private static int ScrapeUnstructuredDataForExtension
     (
         ReadOnlySpan<byte> data,
         List<string> namesOutput,
-        ReadOnlySpan<byte> extName,
+        ReadOnlySpan<byte> extNameWithPeriod,
         bool allowDirectorySeparators
     )
     {
         SpanReader<byte> reader = new(data);
+        int scraped = 0;
 
-        while (reader.TryAdvanceTo(extName, advancePastDelimiter: true))
+        while (reader.TryAdvanceTo(extNameWithPeriod, advancePastDelimiter: true))
         {
             int endIndex = reader.Consumed;
-            reader.Rewind(extName.Length + 2); // Rewind to the first letter of the name
+            reader.Rewind(extNameWithPeriod.Length + 2); // Rewind to the first letter of the name
 
             // Rewind until we encounter an invalid character, or reach the start of the file
             while (reader.TryPeek(out byte currentChar)
@@ -216,6 +218,7 @@ public static class AssetNameScraper
                 continue;
 
             string name = Encoding.UTF8.GetString(fullName);
+            scraped++;
 
             // Some datasheet text files contain names with substitutions. Ignore the original as '<' and '>' are
             // invalid in paths.
@@ -231,6 +234,8 @@ public static class AssetNameScraper
             if (!char.IsLetterOrDigit(name[0]))
                 namesOutput.Add(name[1..]);
         }
+
+        return scraped;
     }
 
     private static void PerformSubstitutions(string name, List<string> namesOutput)
@@ -331,6 +336,18 @@ public static class AssetNameScraper
 
         ReadOnlySpan<byte> decompressed = msOut.GetBuffer().AsSpan(0, (int)msOut.Position);
         ScrapeUnstructuredData(decompressed, namesOutput);
+    }
+
+    private static void ScrapeFxo(ReadOnlySpan<byte> fxoData, List<string> namesOutput)
+    {
+        // FXO files reference the source fx and fxh files.
+        // As "fxh" includes "fx", we capture both with the below scrape.
+        int scraped = ScrapeUnstructuredDataForExtension(fxoData, namesOutput, ".fx"u8, false);
+        for (int i = namesOutput.Count - 1; i > namesOutput.Count - scraped - 1; i--)
+            namesOutput[i] += "o";
+
+        // FXO data often references DDS and TGA images. Unsure what else might be snuck in here
+        ScrapeUnstructuredData(fxoData, namesOutput);
     }
 
     private static void ScrapeDmat(ReadOnlySpan<byte> dmatData, List<string> namesOutput)
