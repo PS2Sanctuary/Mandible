@@ -76,6 +76,11 @@ public enum FileType
     Gfx,
 
     /// <summary>
+    /// PlayStation 4/5 Texture format.
+    /// </summary>
+    Gnf,
+
+    /// <summary>
     /// Indoor Data (INDR).
     /// </summary>
     IndoorData,
