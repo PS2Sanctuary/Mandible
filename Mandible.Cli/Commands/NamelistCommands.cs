@@ -53,10 +53,10 @@ public class NamelistCommands
         await _console.Status()
             .StartAsync
             (
-                $"Extracting namelist with deep search {(deepSearch ? "on" : "off")}...",
+                "Extracting namelist...",
                 async _ =>
                 {
-                    Namelist extractedNamelist = await NameExtractor.ExtractAsync(pack2Directory, deepSearch, ct);
+                    Namelist extractedNamelist = await NameExtractor.ExtractAsync(pack2Directory, ct);
                     //extractedNamelist.ToUpperCaseNames();
 
                     await using FileStream nlOut = new(output, FileMode.Create);

@@ -20,22 +20,15 @@ public static class NameExtractor
     private static readonly ulong ObjectTerrainDataNameHash = PackCrc64.Calculate("ObjectTerrainData.xml");
 
     /// <summary>
-    /// Extracts names from pack2 files. Expect this operation to take multiple minutes
-    /// if <paramref name="deepExtract"/> is enabled.
+    /// Extracts names from pack2 files.
     /// </summary>
     /// <param name="packDirectoryPath">The path to the directory containing the pack2 files.</param>
-    /// <param name="deepExtract">
-    /// Considerably decreases the speed of the operation in exchange for searching
-    /// every single asset for names, rather than just those in the data_x64_0 pack.
-    /// Approximately 97% of names will still be extracted with this mode disabled.
-    /// </param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>The extracted namelist.</returns>
     /// <exception cref="DirectoryNotFoundException">Thrown if the <paramref name="packDirectoryPath"/> does not exist.</exception>
     public static async Task<Namelist> ExtractAsync
     (
         string packDirectoryPath,
-        bool deepExtract = false,
         CancellationToken ct = default
     )
     {
@@ -49,9 +42,7 @@ public static class NameExtractor
             using Pack2Reader reader = new(dataReader);
 
             await ExtractFromEmbeddedNamelistAsync(reader, nl, ct);
-
-            if (deepExtract || Path.GetFileNameWithoutExtension(packPath) == "data_x64_0")
-                await ExtractFromAssetsAsync(reader, nl, ct);
+            await ExtractFromAssetsAsync(reader, nl, ct);
         }
 
         return nl;
