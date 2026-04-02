@@ -35,23 +35,22 @@ public static class CommandUtils
     /// <param name="path">The path to search.</param>
     /// <param name="packPaths">A list to append any discovered pack file paths to.</param>
     /// <param name="pack2Paths">A list to append any discovered pack2 file paths to.</param>
+    /// <param name="filter">
+    /// A Windows file search pattern to use when enumerating packs should a directory <paramref name="path"/> be
+    /// provided.
+    /// </param>
     /// <returns>A value indicating whether any pack/pack2 files were found.</returns>
     public static bool TryFindPacksFromPath
     (
         IAnsiConsole console,
         string path,
         out List<string> packPaths,
-        out List<string> pack2Paths
+        out List<string> pack2Paths,
+        string filter = "*"
     )
     {
         packPaths = new List<string>();
         pack2Paths = new List<string>();
-
-        if (!File.Exists(path) && !Directory.Exists(path))
-        {
-            console.MarkupLine("[red]The input path does not exist.[/]");
-            return false;
-        }
 
         if (File.Exists(path))
         {
@@ -68,17 +67,22 @@ public static class CommandUtils
                     return false;
             }
         }
-
-        if (Directory.Exists(path))
+        else if (Directory.Exists(path))
         {
-            packPaths.AddRange(Directory.EnumerateFiles(path, "*.pack"));
-            pack2Paths.AddRange(Directory.EnumerateFiles(path, "*.pack2"));
+            console.MarkupLine($"Enumerating files matching the pattern [cyan]{filter}.pack(2)[/]");
+            packPaths.AddRange(Directory.EnumerateFiles(path, $"{filter}.pack"));
+            pack2Paths.AddRange(Directory.EnumerateFiles(path, $"{filter}.pack2"));
 
             if (packPaths.Count == 0 && pack2Paths.Count == 0)
             {
                 console.MarkupLine("[red]No pack/pack2 files were found in the input directory.[/]");
                 return false;
             }
+        }
+        else
+        {
+            console.MarkupLine("[red]Invalid search path.[/]");
+            return false;
         }
 
         packPaths.Sort();

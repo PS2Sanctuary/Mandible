@@ -39,7 +39,7 @@ public enum FileType
     /// An FMOD sound bank file, version 5 (FSB).
     /// </summary>
     FmodSoundBank5,
-    
+
     /// <summary>
     /// Dynamic graphics effects/FX data.
     /// </summary>
@@ -49,7 +49,7 @@ public enum FileType
     /// Adobe Shockwave files (SWF) which have had their image data stripped.
     /// </summary>
     Gfx,
-    
+
     /// <summary>
     /// Unknown.
     /// </summary>

@@ -7,6 +7,7 @@ using Mandible.Services;
 using Spectre.Console;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -33,6 +34,9 @@ public class UnpackCommands
     /// pack they originated from.
     /// </param>
     /// <param name="namelistPath">-n|--namelist, A path to a namelist file</param>
+    /// <param name="filter">
+    /// -f|--search-pattern, A Windows file search pattern to use when enumerating packs should a directory path be provided.
+    /// </param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("")]
     public async Task ExecuteAsync
@@ -40,6 +44,7 @@ public class UnpackCommands
         [Argument] string inputPath,
         [Argument] string outputDirectory,
         string? namelistPath,
+        string filter = "*",
         CancellationToken ct = default
     )
     {
@@ -48,7 +53,8 @@ public class UnpackCommands
             _console,
             inputPath,
             out List<string> packFiles,
-            out List<string> pack2Files
+            out List<string> pack2Files,
+            filter
         );
 
         if (!packsDiscovered)
@@ -58,49 +64,17 @@ public class UnpackCommands
             return;
 
         Namelist? namelist = null;
-        if (namelistPath is not null)
+        if (!string.IsNullOrEmpty(namelistPath) && pack2Files.Count > 0)
             namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, ct);
 
-        if (packFiles.Count > 0)
-            await ExportPackAssetsAsync(packFiles, outputDirectory, ct);
-
-        if (pack2Files.Count > 0)
-            await ExportPack2AssetsAsync(pack2Files, outputDirectory, namelist, ct);
+        await ExportPackAssetsAsync(packFiles, pack2Files, outputDirectory, namelist, ct);
 
         _console.Markup("[green]Unpacking Complete![/]");
     }
 
     private async Task ExportPackAssetsAsync
     (
-        IReadOnlyList<string> packFiles,
-        string outputPath,
-        CancellationToken ct
-    )
-    {
-        await _console.Progress()
-            .StartAsync(async ctx =>
-            {
-                ProgressTask exportTask = ctx.AddTask("Exporting pack assets...");
-                double increment = exportTask.MaxValue / packFiles.Count;
-
-                foreach (string file in packFiles)
-                {
-                    using RandomAccessDataReaderService dataReader = new(file);
-                    PackReader reader = new(dataReader);
-                    string myOutputPath = Path.Combine(outputPath, Path.GetFileNameWithoutExtension(file));
-
-                    if (!Directory.Exists(myOutputPath))
-                        Directory.CreateDirectory(myOutputPath);
-
-                    await reader.ExportAllAsync(myOutputPath, ct);
-
-                    exportTask.Increment(increment);
-                }
-            });
-    }
-
-    private async Task ExportPack2AssetsAsync
-    (
+        List<string> packFiles,
         List<string> pack2Files,
         string outputPath,
         Namelist? namelist,
@@ -111,26 +85,36 @@ public class UnpackCommands
             (
                 async ctx =>
                 {
-                    ProgressTask exportTask = ctx.AddTask("Exporting pack2 assets...");
-                    double increment = exportTask.MaxValue / pack2Files.Count;
+                    ProgressTask exportTask = ctx.AddTask("Exporting pack assets");
+                    double increment = exportTask.MaxValue / (packFiles.Count + pack2Files.Count);
 
-                    foreach (string file in pack2Files)
+                    foreach (string file in packFiles.Concat(pack2Files))
                     {
+                        exportTask.Description = $"Exporting [cyan]{Path.GetFileName(file)}[/]";
+
                         using RandomAccessDataReaderService dataReader = new(file);
-                        using Pack2Reader reader = new(dataReader);
                         string myOutputPath = Path.Combine(outputPath, Path.GetFileNameWithoutExtension(file));
 
                         if (!Directory.Exists(myOutputPath))
                             Directory.CreateDirectory(myOutputPath);
 
-                        await reader.ExportAllAsync
-                        (
-                            myOutputPath,
-                            namelist,
-                            inferFileExtension: true,
-                            excludeUnnamed: false,
-                            ct: ct
-                        );
+                        if (file.EndsWith(".pack2"))
+                        {
+                            using Pack2Reader reader = new(dataReader);
+                            await reader.ExportAllAsync
+                            (
+                                myOutputPath,
+                                namelist,
+                                inferFileExtension: true,
+                                excludeUnnamed: false,
+                                ct: ct
+                            );
+                        }
+                        else
+                        {
+                            PackReader reader = new(dataReader);
+                            await reader.ExportAllAsync(myOutputPath, ct);
+                        }
 
                         exportTask.Increment(increment);
                     }
