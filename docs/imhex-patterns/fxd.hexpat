@@ -1,5 +1,5 @@
 #pragma endian little
-#define PADDING 4
+#define ALIGNMENT 4
 
 using uint = u32;
 using ulong = u64;
@@ -20,7 +20,7 @@ struct Header
     char PayloadMagic[];
  
     // The payload is wrapped in a zlib deflate stream and padded to start on a 4 byte boundary
-    u8 paddingLen = PADDING - ($ % PADDING);
+    u8 paddingLen = ALIGNMENT - ($ % ALIGNMENT);
     padding[paddingLen];
     u8 ZlibDeflateData[PayloadLen - paddingLen];
 
