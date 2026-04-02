@@ -35,8 +35,7 @@ public static partial class AssetNameScraper
 
         UNSCRAPEABLE_FILE_MAGICS =
         [
-            "DSKE"u8.ToArray(),
-            "GNF"u8.ToArray()
+            "DSKE"u8.ToArray()
         ];
 
         _dedicatedAssetHandlers = new Dictionary<FileType, DedicatedAssetHandler>
@@ -113,8 +112,7 @@ public static partial class AssetNameScraper
             // efb files have DX11 variants
             if (name.EndsWith(".efb", StringComparison.OrdinalIgnoreCase))
                 names.Add(Path.ChangeExtension(name, "dx11efb"));
-            // Actor files aren't all referenced from other pack files, but generally they will contain a reference
-            // to a collision data file of the same name, so use this to extract the ADR name
+            // Actor files often reference a CDT file with the same name as themselves
             else if (name.EndsWith(".cdt", StringComparison.OrdinalIgnoreCase))
                 names.Add(Path.ChangeExtension(name, "adr"));
             // Morpheme animation files have 64-bit variants

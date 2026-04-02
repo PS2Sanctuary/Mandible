@@ -64,6 +64,9 @@ public static class NameExtractor
     {
         IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
 
+        // TODO: Can we use an existing namelist to help trim down the number of files we have to search?
+        // E.g. if we encounter a unique extension such as apx which we know is not valid to search,
+        // then we can skip loading the asset data - faster!
         foreach (Asset2Header asset in assetHeaders)
         {
             ct.ThrowIfCancellationRequested();
