@@ -26,6 +26,16 @@ public enum FileType
     DdsImage,
 
     /// <summary>
+    /// ForgeLight-specific shader data wrapper, containing DX9 compiled shader data in shader model 3 format.
+    /// </summary>
+    Efb,
+
+    /// <summary>
+    /// ForgeLight-specific shader data wrapper, containing DX11 compiled shader data in shader model 4/5 format.
+    /// </summary>
+    EfbDx11,
+
+    /// <summary>
     /// Files containing information regarding the automated flora and clutter generation for materials.
     /// </summary>
     Eco,
