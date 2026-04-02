@@ -1,34 +1,33 @@
+// Indoor Data. Referenced by Actor files.
+
 import type.guid;
 
 using uint = u32;
 
-/*struct Item
+struct Item
 {
     uint Type; // Suspected
     // I'm not convinced that these first four values aren't a hash
     float UnknownValue1;
     float UnknownValue2;
     float UnknownValue3;
-    uint GlobalHash; // The same across all INDR files
+    uint GlobalHash; // The same across all INDR files that I've seen
     float UnknownValue5;
-    type::GUID FileHash;
+    type::GUID RelatedId; // The same across some/all Items. Might pair Items together?
     //uint FileHash[4]; // The same across all Items in an INDR file
-    //uint UnknownValue7;
-    //uint UnknownValue8;
-    //float UnknownValue9;
-    float UnknownValue10;
-    float UnknownValue11;
+    float UnknownValue7;
+    float UnknownValue8;
+    float UnknownValue9;
+    uint UnknownValue10;
+    uint UnknownValue11;
     float UnknownValue12;
     float UnknownValue13;
     float UnknownValue14;
     float UnknownValue15;
     float UnknownValue16;
-    float UnknownValue17;
-    float UnknownValue18;
-    float UnknownValue19;
-};*/
+};
 
-struct Item_UnknownType1
+/*struct Item_UnknownType1
 {
     // I'm not convinced that these first four values aren't a hash
     float UnknownValue1;
@@ -37,14 +36,14 @@ struct Item_UnknownType1
     uint GlobalHash; // The same across all INDR files
     float UnknownValue5;
     type::GUID FileHash; // Not correct, produces invalid GUIDs
-};
+};*/
 
-struct Item
+/*struct Item
 {
     uint ElementCount; // Suspected
     Item_UnknownType1 Elements[ElementCount];
     float UnknownValue2;
-};
+};*/
 
 struct Header
 {
