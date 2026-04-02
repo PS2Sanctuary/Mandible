@@ -56,7 +56,8 @@ public static partial class AssetNameScraper
         };
 
         // TODO: There are probably extensions that we ONLY need to scrape from certain file formats,
-        // e.g. .ind is only ever present in ActorDefinition files
+        // This will help us to speed up the scrape
+        // TODO: apx only ever present in ADR files?
         string[] knownFileExtensions =
         [
             "adr", "agr", "Agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3",
@@ -135,7 +136,8 @@ public static partial class AssetNameScraper
 
     private static bool IsScrapeableAsset(FileType type, ReadOnlySpan<byte> assetData)
     {
-        bool failsTypeCheck = type is FileType.CollisionData
+        bool failsTypeCheck = type is FileType.ApexXml
+            or FileType.CollisionData
             or FileType.Dxbc
             or FileType.Gnf
             or FileType.DdsImage
