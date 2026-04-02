@@ -35,7 +35,6 @@ public static class AssetNameScraper
         UNSCRAPEABLE_FILE_MAGICS =
         [
             "DSKE"u8.ToArray(),
-            "DXBC"u8.ToArray(),
             "GNF"u8.ToArray()
         ];
 
@@ -43,6 +42,7 @@ public static class AssetNameScraper
         {
             { FileType.ActorDefinition, ScrapeAdr },
             { FileType.Eco, ScrapeEco },
+            { FileType.EfbDx11, ScrapeEfbDx11 },
             { FileType.Gfx, ScrapeGfx },
             { FileType.Fxo, ScrapeFxo },
             { FileType.MaterialInfo, ScrapeDmat },
@@ -309,6 +309,18 @@ public static class AssetNameScraper
                 namesOutput.Add(name + ".eco");
         }
         while (reader.TryAdvanceTo("\r\n"u8, advancePastDelimiter: true));
+    }
+
+    private static void ScrapeEfbDx11(ReadOnlySpan<byte> efbData, List<string> namesOutput)
+    {
+        const int nameOffset = 0x78;
+
+        if (efbData.Length < nameOffset)
+            return;
+
+        efbData = efbData[nameOffset..];
+        int nameEnd = efbData.IndexOf((byte)0);
+        namesOutput.Add(Encoding.ASCII.GetString(efbData[..nameEnd]) + ".dx11efb");
     }
 
     private static unsafe void ScrapeGfx(ReadOnlySpan<byte> gfxData, List<string> namesOutput)
