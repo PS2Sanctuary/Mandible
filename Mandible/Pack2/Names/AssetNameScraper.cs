@@ -12,13 +12,14 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Mandible.Pack2.Names;
 
 /// <summary>
 /// A utility class for scraping asset names from PACK2 asset data.
 /// </summary>
-public static class AssetNameScraper
+public static partial class AssetNameScraper
 {
     private delegate void DedicatedAssetHandler(ReadOnlySpan<byte> assetData, List<string> namesOutput);
 
@@ -272,6 +273,8 @@ public static class AssetNameScraper
 
     private static void ScrapeAdr(ReadOnlySpan<byte> adrData, List<string> namesOutput)
     {
+        Regex dmeToAdrPattern = Regex_ScrapeAdr_DmeToAdrPattern();
+
         int scraped = ScrapeUnstructuredData(adrData, namesOutput);
         for (int i = namesOutput.Count - 1; i > namesOutput.Count - scraped - 1; i--)
         {
@@ -282,17 +285,7 @@ public static class AssetNameScraper
             if (name.EndsWith(".dme", StringComparison.OrdinalIgnoreCase)
                 || name.EndsWith(".dma", StringComparison.OrdinalIgnoreCase))
             {
-                name = Path.ChangeExtension(name, "adr")
-                    .Replace("_LODAuto", "", StringComparison.OrdinalIgnoreCase)
-                    .Replace("_LOD0Auto", "", StringComparison.OrdinalIgnoreCase)
-                    .Replace("_LOD1Auto", "", StringComparison.OrdinalIgnoreCase)
-                    .Replace("_LOD2Auto", "", StringComparison.OrdinalIgnoreCase)
-                    .Replace("_LOD3Auto", "", StringComparison.OrdinalIgnoreCase)
-                    .Replace("_LOD0", "", StringComparison.OrdinalIgnoreCase)
-                    .Replace("_LOD1", "", StringComparison.OrdinalIgnoreCase)
-                    .Replace("_LOD2", "", StringComparison.OrdinalIgnoreCase)
-                    .Replace("_LOD3", "", StringComparison.OrdinalIgnoreCase);
-                namesOutput.Add(name);
+                namesOutput.Add(dmeToAdrPattern.Replace(name, ".adr"));
             }
         }
     }
@@ -483,4 +476,10 @@ public static class AssetNameScraper
             (byte)'\\' or (byte)'/' when allowDirectorySeparators => true,
             _ => false
         };
+
+    // This Regex strictly matches any values that end in either .dma or .dme.
+    // This is captured so that the extension can be changed.
+    // Further, it matches fragments in the format _LOD[0-9][Auto], so they can be removed.
+    [GeneratedRegex(@"(?:_LOD\d?(?:Auto)?)*(\.dm[ea])", RegexOptions.IgnoreCase)]
+    private static partial Regex Regex_ScrapeAdr_DmeToAdrPattern();
 }
