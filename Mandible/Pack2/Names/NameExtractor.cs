@@ -16,10 +16,8 @@ namespace Mandible.Pack2.Names;
 /// </summary>
 public static class NameExtractor
 {
-    /// <summary>
-    /// Gets the CRC-64 hash of the namelist file name ( {NAMELIST} ).
-    /// </summary>
     private static readonly ulong NamelistFileNameHash = PackCrc64.Calculate("{NAMELIST}");
+    private static readonly ulong ObjectTerrainDataNameHash = PackCrc64.Calculate("ObjectTerrainData.xml");
 
     /// <summary>
     /// Extracts names from pack2 files. Expect this operation to take multiple minutes
@@ -50,10 +48,10 @@ public static class NameExtractor
             using RandomAccessDataReaderService dataReader = new(packPath);
             using Pack2Reader reader = new(dataReader);
 
-            await ExtractFromEmbeddedNamelistAsync(reader, nl, ct).ConfigureAwait(false);
+            await ExtractFromEmbeddedNamelistAsync(reader, nl, ct);
 
             if (deepExtract || Path.GetFileNameWithoutExtension(packPath) == "data_x64_0")
-                await ExtractFromAssetsAsync(reader, nl, ct).ConfigureAwait(false);
+                await ExtractFromAssetsAsync(reader, nl, ct);
         }
 
         return nl;
@@ -61,30 +59,30 @@ public static class NameExtractor
 
     private static async Task ExtractFromEmbeddedNamelistAsync(Pack2Reader reader, Namelist namelist, CancellationToken ct)
     {
-        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
+        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
 
         Asset2Header? namelistHeader = assetHeaders.FirstOrDefault(asset => asset.NameHash == NamelistFileNameHash);
         if (namelistHeader is null)
             return;
 
-        using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(namelistHeader, false, ct).ConfigureAwait(false);
+        using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(namelistHeader, false, ct);
         namelist.Append(buffer.Span);
     }
 
     private static async Task ExtractFromAssetsAsync(Pack2Reader reader, Namelist namelist, CancellationToken ct)
     {
-        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
+        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
 
         foreach (Asset2Header asset in assetHeaders)
         {
             ct.ThrowIfCancellationRequested();
-            using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(asset, false, ct).ConfigureAwait(false);
+            using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(asset, false, ct);
 
             IReadOnlyList<string> names = AssetNameScraper.ScrapeFromAssetData(buffer.Span);
             namelist.Append(names, ct);
 
-            if (asset.NameHash == PackCrc64.Calculate("ObjectTerrainData.xml"))
-                await GuessWorldNamesAsync(buffer.Memory, namelist, ct).ConfigureAwait(false);
+            if (asset.NameHash == ObjectTerrainDataNameHash)
+                await GuessWorldNamesAsync(buffer.Memory, namelist, ct);
         }
     }
 
@@ -104,7 +102,7 @@ public static class NameExtractor
         };
         using XmlReader xml = XmlReader.Create(new MemoryStream(objectTerrainDataXmlBuffer.ToArray()), xmlSettings);
 
-        while (await xml.ReadAsync().ConfigureAwait(false))
+        while (await xml.ReadAsync())
         {
             if (ct.IsCancellationRequested)
                 throw new TaskCanceledException();

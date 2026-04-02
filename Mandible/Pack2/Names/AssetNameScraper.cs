@@ -346,7 +346,8 @@ public static class AssetNameScraper
         for (int i = namesOutput.Count - 1; i > namesOutput.Count - scraped - 1; i--)
             namesOutput[i] += "o";
 
-        // FXO data often references DDS and TGA images. Unsure what else might be snuck in here
+        // PlanetSide's shaders often reference DDS and TGA images, but a lot more is possible to be used in shader dev,
+        // so do a full unstructured scrape.
         ScrapeUnstructuredData(fxoData, namesOutput);
     }
 
