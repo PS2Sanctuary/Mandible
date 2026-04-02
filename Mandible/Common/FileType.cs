@@ -46,6 +46,11 @@ public enum FileType
     Fxd,
 
     /// <summary>
+    /// Compiled shader data.
+    /// </summary>
+    Fxo,
+
+    /// <summary>
     /// Adobe Shockwave files (SWF) which have had their image data stripped.
     /// </summary>
     Gfx,
