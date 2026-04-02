@@ -101,15 +101,6 @@ public enum FileType
     Riff,
 
     /// <summary>
-    /// Terrain chunk data.
-    /// <seealso cref="TerrainChunkLod0"/>
-    /// <seealso cref="TerrainChunkLod1"/>
-    /// <seealso cref="TerrainChunkLod2"/>
-    /// <seealso cref="TerrainChunkLod3"/>
-    /// </summary>
-    TerrainChunkGeneric,
-
-    /// <summary>
     /// Terrain chunk data, LOD0.
     /// </summary>
     TerrainChunkLod0,

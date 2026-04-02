@@ -34,7 +34,6 @@ public static class FileIdentifiers
         { FileType.TerrainChunkLod1, "CNK1"u8.ToArray() },
         { FileType.TerrainChunkLod2, "CNK2"u8.ToArray() },
         { FileType.TerrainChunkLod3, "CNK3"u8.ToArray() },
-        { FileType.TerrainChunkGeneric, "CNK"u8.ToArray() }, // Below more specific identifiers
         { FileType.Tome, new byte[] { 0x14, 0x00, 0x00, 0xD6 } },
         { FileType.TruevisionTga, "TRUEVISION-XFILE.\0"u8.ToArray() },
         { FileType.Vnfo, "VNFO"u8.ToArray() },
