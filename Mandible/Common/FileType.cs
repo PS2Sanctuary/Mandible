@@ -73,12 +73,12 @@ public enum FileType
     /// <summary>
     /// Morpheme animation data (MRN).
     /// </summary>
-    MorphemeAnimation,
+    MorphemeRuntimeNetwork,
 
     /// <summary>
     /// Morpheme animation data, 64-bit (MRN).
     /// </summary>
-    MorphemeAnimation64Bit,
+    MorphemeRuntimeNetwork64Bit,
 
     /// <summary>
     /// Forgelight asset pack, version 1.

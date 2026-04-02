@@ -46,8 +46,8 @@ public static class AssetNameScraper
             { FileType.Gfx, ScrapeGfx },
             { FileType.MaterialInfo, ScrapeDmat },
             { FileType.ModelInfo, ScrapeDmod },
-            { FileType.MorphemeAnimation, ScrapeMrn },
-            { FileType.MorphemeAnimation64Bit, ScrapeMrn },
+            { FileType.MorphemeRuntimeNetwork, ScrapeMrn },
+            { FileType.MorphemeRuntimeNetwork64Bit, ScrapeMrn },
             { FileType.FmodSoundBank5, ScrapeFsb },
             { FileType.Zone, ScrapeZone }
         };
