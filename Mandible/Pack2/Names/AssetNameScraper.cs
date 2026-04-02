@@ -55,12 +55,14 @@ public static partial class AssetNameScraper
             { FileType.Zone, ScrapeZone }
         };
 
+        // TODO: There are probably extensions that we ONLY need to scrape from certain file formats,
+        // e.g. .ind is only ever present in ActorDefinition files
         string[] knownFileExtensions =
         [
             "adr", "agr", "Agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3",
-            "cnk4", "cnk5", "crc", "crt", "cso", "cur", "Cur", "db", "dds", "DDS", "def", "Def",
-            "dir", "Dir", "dll", "DLL", "dma", "dme", "DME", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb",
-            "eco", "efb", "exe", "fsb", "fxd", "fxo", "gfx", "gnf", "i64", "ini", "INI", "Ini", "jpg", "JPG",
+            "cnk4", "cnk5", "crc", "crt", "cso", "cur", "Cur", "db", "dds", "DDS", "def", "Def", "dir",
+            "Dir", "dll", "DLL", "dma", "dme", "DME", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb", "eco",
+            "efb", "exe", "fsb", "fxd", "fxo", "gfx", "gnf", "i64", "ini", "INI", "Ini", "jpg", "JPG",
             "lst", "lua", "mrn", "pak", "pem", "playerstudio", "PlayerStudio", "png", "prsb", "psd", "pssb",
             "swf", "tga", "TGA", "thm", "tome", "ttf", "txt", "vnfo", "wav", "xlsx", "xml", "xrsb", "xssb",
             "zone", "Zone"
@@ -288,6 +290,8 @@ public static partial class AssetNameScraper
                 namesOutput.Add(dmeToAdrPattern.Replace(name, ".adr"));
             }
         }
+
+        ScrapeUnstructuredDataForExtension(adrData, namesOutput, ".ind"u8, false);
     }
 
     private static void ScrapeEco(ReadOnlySpan<byte> ecoData, List<string> namesOutput)
