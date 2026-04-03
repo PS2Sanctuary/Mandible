@@ -59,7 +59,7 @@ public static partial class AssetNameScraper
         // TODO: apx only ever present in ADR files?
         string[] knownFileExtensions =
         [
-            "adr", "agr", "Agr", "ags", "apb", "apx", "bat", "bin", "cdt", "cnk0", "cnk1", "cnk2", "cnk3",
+            "adr", "agr", "Agr", "ags", "apb", "bat", "bin", "cnk0", "cnk1", "cnk2", "cnk3",
             "cnk4", "cnk5", "crc", "crt", "cso", "cur", "Cur", "db", "dds", "DDS", "def", "Def", "dir",
             "Dir", "dll", "DLL", "dma", "dme", "DME", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb", "eco",
             "efb", "exe", "fsb", "fxd", "fxo", "gfx", "gnf", "i64", "ini", "INI", "Ini", "jpg", "JPG",
@@ -112,9 +112,6 @@ public static partial class AssetNameScraper
             // efb files have DX11 variants
             if (name.EndsWith(".efb", StringComparison.OrdinalIgnoreCase))
                 names.Add(Path.ChangeExtension(name, "dx11efb"));
-            // Actor files often reference a CDT file with the same name as themselves
-            else if (name.EndsWith(".cdt", StringComparison.OrdinalIgnoreCase))
-                names.Add(Path.ChangeExtension(name, "adr"));
             // Morpheme animation files have 64-bit variants
             else if (name.EndsWith(".mrn", StringComparison.OrdinalIgnoreCase) && !name.Contains("X64", StringComparison.OrdinalIgnoreCase))
                 names.Add($"{Path.GetFileNameWithoutExtension(name)}X64.mrn");
@@ -289,8 +286,15 @@ public static partial class AssetNameScraper
     {
         Regex dmeToAdrPattern = Regex_ScrapeAdr_DmeToAdrPattern();
 
-        int scraped = ScrapeUnstructuredData(adrData, namesOutput);
-        for (int i = namesOutput.Count - 1; i > namesOutput.Count - scraped - 1; i--)
+        // To date, these files are only referenced from ADRs
+        ScrapeUnstructuredDataForExtension(adrData, namesOutput, ".apx"u8, false);
+        ScrapeUnstructuredDataForExtension(adrData, namesOutput, ".cdt"u8, false);
+        ScrapeUnstructuredDataForExtension(adrData, namesOutput, ".ind"u8, false);
+
+        ScrapeUnstructuredData(adrData, namesOutput);
+        int finalCount = namesOutput.Count;
+
+        for (int i = 0; i < finalCount; i++)
         {
             string name = namesOutput[i];
 
@@ -298,12 +302,11 @@ public static partial class AssetNameScraper
             // you strip the LOD specifier.
             if (name.EndsWith(".dme", StringComparison.OrdinalIgnoreCase)
                 || name.EndsWith(".dma", StringComparison.OrdinalIgnoreCase))
-            {
                 namesOutput.Add(dmeToAdrPattern.Replace(name, ".adr"));
-            }
+            // <CollisionData fileName=""> tags often reference a CDT file with the same name as the ADR file
+            else if (name.EndsWith(".cdt", StringComparison.OrdinalIgnoreCase))
+                namesOutput.Add(Path.ChangeExtension(name, "adr"));
         }
-
-        ScrapeUnstructuredDataForExtension(adrData, namesOutput, ".ind"u8, false);
     }
 
     private static void ScrapeEco(ReadOnlySpan<byte> ecoData, List<string> namesOutput)
