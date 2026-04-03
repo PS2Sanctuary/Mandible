@@ -11,9 +11,14 @@ public enum FileType
     Unknown = 0,
 
     /// <summary>
-    /// A Forgelight XML file defining an actor.
+    /// A ForgeLight XML file defining an actor.
     /// </summary>
     ActorDefinition,
+
+    /// <summary>
+    /// A ForgeLight XML file defining an actor set.
+    /// </summary>
+    ActorSetXml,
 
     /// <summary>
     /// PhysX APEX - binary format.
