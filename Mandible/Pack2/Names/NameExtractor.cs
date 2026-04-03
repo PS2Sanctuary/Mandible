@@ -1,10 +1,11 @@
 ﻿using CommunityToolkit.HighPerformance.Buffers;
 using Mandible.Services;
 using Mandible.Util;
+using MemoryReaders;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -41,23 +42,10 @@ public static class NameExtractor
             using RandomAccessDataReaderService dataReader = new(packPath);
             using Pack2Reader reader = new(dataReader);
 
-            await ExtractFromEmbeddedNamelistAsync(reader, nl, ct);
             await ExtractFromAssetsAsync(reader, nl, ct);
         }
 
         return nl;
-    }
-
-    private static async Task ExtractFromEmbeddedNamelistAsync(Pack2Reader reader, Namelist namelist, CancellationToken ct)
-    {
-        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
-
-        Asset2Header? namelistHeader = assetHeaders.FirstOrDefault(asset => asset.NameHash == NamelistFileNameHash);
-        if (namelistHeader is null)
-            return;
-
-        using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(namelistHeader, false, ct);
-        namelist.Append(buffer.Span);
     }
 
     private static async Task ExtractFromAssetsAsync(Pack2Reader reader, Namelist namelist, CancellationToken ct)
@@ -72,12 +60,37 @@ public static class NameExtractor
             ct.ThrowIfCancellationRequested();
             using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(asset, false, ct);
 
-            IReadOnlyList<string> names = AssetNameScraper.ScrapeFromAssetData(buffer.Span);
-            namelist.Append(names, ct);
+            if (asset.NameHash == NamelistFileNameHash)
+            {
+                ProcessNamelistFile(buffer.Span, namelist);
+            }
+            else
+            {
+                IReadOnlyList<string> names = AssetNameScraper.ScrapeFromAssetData(buffer.Span);
+                namelist.Append(names, ct);
+            }
 
             if (asset.NameHash == ObjectTerrainDataNameHash)
                 await GuessWorldNamesAsync(buffer.Memory, namelist, ct);
         }
+    }
+
+    private static void ProcessNamelistFile(ReadOnlySpan<byte> data, Namelist namelist)
+    {
+        List<string> readNames = [];
+        SpanReader<byte> textReader = new(data);
+
+        while (textReader.TryReadToAny(out ReadOnlySpan<byte> name, "\r\n"u8, advancePastDelimiter: true))
+        {
+            string nameStr = Encoding.UTF8.GetString(name);
+            readNames.Add(nameStr);
+            AssetNameScraper.AddGlobalFileNamePatterns(nameStr, readNames);
+
+            // If the file has \r then we'll only have read up to this
+            textReader.IsNext((byte)'\n', advancePast: true);
+        }
+
+        namelist.Append(readNames);
     }
 
     private static async Task GuessWorldNamesAsync

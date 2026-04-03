@@ -109,24 +109,40 @@ public static partial class AssetNameScraper
                 names[i] = name = new string(newName, 0, nameIndex);
             }
 
-            // efb files have DX11 variants
-            if (name.EndsWith(".efb", StringComparison.OrdinalIgnoreCase))
-                names.Add(Path.ChangeExtension(name, "dx11efb"));
-            // Morpheme animation files have 64-bit variants
-            else if (name.EndsWith(".mrn", StringComparison.OrdinalIgnoreCase) && !name.Contains("X64", StringComparison.OrdinalIgnoreCase))
-                names.Add($"{Path.GetFileNameWithoutExtension(name)}X64.mrn");
-            // Forgelight games use SWF files in GFX mode
-            else if (name.EndsWith(".swf", StringComparison.OrdinalIgnoreCase))
-                names.Add(Path.ChangeExtension(name, "gfx"));
-            // xrsb files have DX11 variants
-            else if (name.EndsWith(".xrsb", StringComparison.OrdinalIgnoreCase))
-                names.Add(Path.ChangeExtension(name, "dx11rsb"));
-            // xssb files have DX11 variants
-            else if (name.EndsWith("xssb", StringComparison.OrdinalIgnoreCase))
-                names.Add(Path.ChangeExtension(name, "dx11ssb"));
+            AddGlobalFileNamePatterns(name, names);
         }
 
         return names;
+    }
+
+    /// <summary>
+    /// Applies various patterns based on the given file name.
+    /// Only patterns that are likely to apply at a global level are performed here. Certain file formats may
+    /// do their own patterning which is appropriate for the context, but would otherwise result in too many false
+    /// positives.
+    /// </summary>
+    /// <param name="name">The name to process.</param>
+    /// <param name="names">The list of names to add the pattern outputs to.</param>
+    public static void AddGlobalFileNamePatterns(string name, List<string> names)
+    {
+        // <CollisionData fileName=""> tags often reference a CDT file with the same name as the ADR file
+        if (name.EndsWith(".cdt", StringComparison.OrdinalIgnoreCase))
+            names.Add(Path.ChangeExtension(name, "adr"));
+        // efb files have DX11 variants
+        else if (name.EndsWith(".efb", StringComparison.OrdinalIgnoreCase))
+            names.Add(Path.ChangeExtension(name, "dx11efb"));
+        // Morpheme animation files have 64-bit variants
+        else if (name.EndsWith(".mrn", StringComparison.OrdinalIgnoreCase) && !name.Contains("X64", StringComparison.OrdinalIgnoreCase))
+            names.Add($"{Path.GetFileNameWithoutExtension(name)}X64.mrn");
+        // Forgelight games use SWF files in GFX mode
+        else if (name.EndsWith(".swf", StringComparison.OrdinalIgnoreCase))
+            names.Add(Path.ChangeExtension(name, "gfx"));
+        // xrsb files have DX11 variants
+        else if (name.EndsWith(".xrsb", StringComparison.OrdinalIgnoreCase))
+            names.Add(Path.ChangeExtension(name, "dx11rsb"));
+        // xssb files have DX11 variants
+        else if (name.EndsWith(".xssb", StringComparison.OrdinalIgnoreCase))
+            names.Add(Path.ChangeExtension(name, "dx11ssb"));
     }
 
     private static bool IsScrapeableAsset(FileType type, ReadOnlySpan<byte> assetData)
@@ -303,9 +319,6 @@ public static partial class AssetNameScraper
             if (name.EndsWith(".dme", StringComparison.OrdinalIgnoreCase)
                 || name.EndsWith(".dma", StringComparison.OrdinalIgnoreCase))
                 namesOutput.Add(dmeToAdrPattern.Replace(name, ".adr"));
-            // <CollisionData fileName=""> tags often reference a CDT file with the same name as the ADR file
-            else if (name.EndsWith(".cdt", StringComparison.OrdinalIgnoreCase))
-                namesOutput.Add(Path.ChangeExtension(name, "adr"));
         }
     }
 
@@ -487,10 +500,10 @@ public static partial class AssetNameScraper
             >= (byte)'A' and <= (byte)'Z' => true,
             >= (byte)'a' and <= (byte)'z' => true,
             (byte)'-' or (byte)'_' => true,
-            (byte)'(' or (byte)')' => true,
-            (byte)'[' or (byte)']' => true,
+            (byte)'(' or (byte)')' => true, // TODO: Experiment with removing
+            (byte)'[' or (byte)']' => true, // TODO: Experiment with removing
             (byte)'<' or (byte)'>' => true, // Almost always used when substitutions into the name are required
-            (byte)'\'' => true,
+            (byte)'\'' => true, // TODO: Experiment with removing
             (byte)'.' => true, // Periods in name (e.g. my.file.txt)
             (byte)'\\' or (byte)'/' when allowDirectorySeparators => true,
             _ => false
