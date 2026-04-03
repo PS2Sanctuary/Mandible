@@ -228,27 +228,34 @@ public static partial class AssetNameScraper
                 continue;
 
             string name = Encoding.UTF8.GetString(fullName);
-            scraped++;
 
             // Some datasheet text files contain names with substitutions. Ignore the original as '<' and '>' are
             // invalid in paths.
             // E.g. ClientItemDefinitions.txt is particularly egregious with this
             if (name.Contains('<') && name.Contains('>'))
-                PerformSubstitutions(name, namesOutput);
+            {
+                scraped += PerformSubstitutions(name, namesOutput);
+            }
             else
+            {
                 namesOutput.Add(name);
+                scraped++;
+            }
 
-            // It's possible common for this scrape to capture leading characters (e.g. braces or quotes) that
+            // It's somewhat common for this scrape to capture leading characters (e.g. braces or quotes) that
             // aren't likely to be part of the filename. Hence, remove any non-letter or digit characters
             // and add the name as a variant
             if (!char.IsLetterOrDigit(name[0]))
+            {
                 namesOutput.Add(name[1..]);
+                scraped++;
+            }
         }
 
         return scraped;
     }
 
-    private static void PerformSubstitutions(string name, List<string> namesOutput)
+    private static int PerformSubstitutions(string name, List<string> namesOutput)
     {
         const string genderKey = "<gender>";
         const string factionKey = "<Faction>";
@@ -258,6 +265,7 @@ public static partial class AssetNameScraper
         {
             namesOutput.Add(name.Replace(genderKey, "FEMALE"));
             namesOutput.Add(name.Replace(genderKey, "MALE"));
+            return 2;
         }
 
         if (name.Contains(factionKey, StringComparison.OrdinalIgnoreCase))
@@ -266,12 +274,15 @@ public static partial class AssetNameScraper
             namesOutput.Add(name.Replace(factionKey, "NSO"));
             namesOutput.Add(name.Replace(factionKey, "TR"));
             namesOutput.Add(name.Replace(factionKey, "VS"));
+            return 4;
         }
 
         if (name.Contains(actorKey, StringComparison.OrdinalIgnoreCase))
         {
             // TODO: Fill in actor values
         }
+
+        return 0;
     }
 
     private static void ScrapeAdr(ReadOnlySpan<byte> adrData, List<string> namesOutput)
