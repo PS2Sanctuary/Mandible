@@ -390,8 +390,8 @@ public static partial class AssetNameScraper
     {
         // FXO files reference the source fx and fxh files.
         // As "fxh" includes "fx", we capture both with the below scrape.
-        int scraped = ScrapeUnstructuredDataForExtension(fxoData, namesOutput, ".fx"u8, false);
-        for (int i = namesOutput.Count - 1; i > namesOutput.Count - scraped - 1; i--)
+        ScrapeUnstructuredDataForExtension(fxoData, namesOutput, ".fx"u8, false);
+        for (int i = 0; i < namesOutput.Count; i++)
             namesOutput[i] += "o";
 
         // PlanetSide's shaders often reference DDS and TGA images, but a lot more is possible to be used in shader dev,
