@@ -121,4 +121,15 @@ public static class FileIdentifiers
 
         return FileType.Unknown;
     }
+
+    public static FileType InferFileType(string fileExtension)
+    {
+        foreach ((FileType type, string ext) in Extensions)
+        {
+            if (ext.Equals(fileExtension, StringComparison.OrdinalIgnoreCase))
+                return type;
+        }
+
+        return FileType.Unknown;
+    }
 }

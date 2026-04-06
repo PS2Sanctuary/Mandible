@@ -27,6 +27,10 @@ public class NamelistCommands
     /// </summary>
     /// <param name="pack2Directory">The directory containing the pack2 files to extract names from.</param>
     /// <param name="output">The path to output the namelist file to.</param>
+    /// <param name="existingNamelistPath">
+    /// -n|--namelist, A path to an existing namelist file. The output will contain values from this namelist, and it
+    /// will also be used to speed up the extraction by being able to ignore files without needing to extract the data.
+    /// </param>
     /// <param name="force">-f, Force overwrite of the output file.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
     [Command("extract")]
@@ -34,6 +38,7 @@ public class NamelistCommands
     (
         [Argument] string pack2Directory,
         [Argument] string output,
+        string? existingNamelistPath = null,
         bool force = false,
         CancellationToken ct = default
     )
@@ -48,15 +53,25 @@ public class NamelistCommands
                 return;
         }
 
+        Namelist? existingNl = null;
+        if (!string.IsNullOrEmpty(existingNamelistPath))
+        {
+            if (!File.Exists(existingNamelistPath))
+            {
+                _console.MarkupLine("[red]The existing namelist path is not valid[/]");
+                return;
+            }
+
+            existingNl = await CommandUtils.BuildNamelistAsync(_console, existingNamelistPath, ct);
+        }
+
         await _console.Status()
             .StartAsync
             (
                 "Extracting namelist...",
                 async _ =>
                 {
-                    Namelist extractedNamelist = await NameExtractor.ExtractAsync(pack2Directory, ct);
-                    //extractedNamelist.ToUpperCaseNames();
-
+                    Namelist extractedNamelist = await NameExtractor.ExtractAsync(pack2Directory, existingNl, ct);
                     await using FileStream nlOut = new(output, FileMode.Create);
                     await extractedNamelist.WriteAsync(nlOut, ct);
                 }

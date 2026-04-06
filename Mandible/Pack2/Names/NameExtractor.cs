@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.HighPerformance.Buffers;
+using Mandible.Common;
 using Mandible.Services;
 using Mandible.Util;
 using MemoryReaders;
@@ -24,19 +25,27 @@ public static class NameExtractor
     /// Extracts names from pack2 files.
     /// </summary>
     /// <param name="packDirectoryPath">The path to the directory containing the pack2 files.</param>
+    /// <param name="existingNamelist">
+    /// An existing namelist - both to use as a base for the new namelist, and to speed up extraction times by allowing
+    /// certain assets to be ignored based on their filename, instead of needing to read and check the data.
+    /// </param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    /// <returns>The extracted namelist.</returns>
+    /// <returns>The newly-built extracted namelist.</returns>
     /// <exception cref="DirectoryNotFoundException">Thrown if the <paramref name="packDirectoryPath"/> does not exist.</exception>
     public static async Task<Namelist> ExtractAsync
     (
         string packDirectoryPath,
+        Namelist? existingNamelist,
         CancellationToken ct = default
     )
     {
         if (!Directory.Exists(packDirectoryPath))
             throw new DirectoryNotFoundException("The pack directory path does not exist: " + packDirectoryPath);
 
-        Namelist nl = new();
+        Namelist nl = existingNamelist is null
+            ? new Namelist()
+            : new Namelist(existingNamelist.Map);
+
         foreach (string packPath in Directory.EnumerateFiles(packDirectoryPath, "*.pack2", SearchOption.AllDirectories))
         {
             using RandomAccessDataReaderService dataReader = new(packPath);
@@ -58,13 +67,21 @@ public static class NameExtractor
         foreach (Asset2Header asset in assetHeaders)
         {
             ct.ThrowIfCancellationRequested();
+
+            FileType inferredType = FileType.Unknown;
+            if (namelist.TryGet(asset.NameHash, out string? assetName))
+            {
+                string extension = Path.GetExtension(assetName);
+                inferredType = FileIdentifiers.InferFileType(extension);
+            }
+            
             using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(asset, false, ct);
 
             if (asset.NameHash == NamelistFileNameHash)
             {
                 ProcessNamelistFile(buffer.Span, namelist);
             }
-            else
+            else if (AssetNameScraper.IsScrapeableAsset(inferredType))
             {
                 IReadOnlyList<string> names = AssetNameScraper.ScrapeFromAssetData(buffer.Span);
                 namelist.Append(names, ct);
