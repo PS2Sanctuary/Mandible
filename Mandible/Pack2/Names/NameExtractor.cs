@@ -163,17 +163,20 @@ public static class NameExtractor
             names.Add(name + ".zone");
             names.Add(name + ".vnfo");
 
-            // World tile info files
+            // World tile info files (these list the DDS image tiles used to show the world map)
             for (int i = 0; i < 4; i++)
                 names.Add($"{name}_TileInfo_LOD{i}.txt");
-
-            // World chunk files
-            for (int i = 0; i < 6; i++)
+            
+            // World chunk files (.cnk0 -> .cnk3)
+            for (int i = 0; i <= 3; i++)
             {
-                int increment = (i - 1) < 0
-                    ? 4
-                    : 4 * (int)Math.Pow(2, i - 1);
-
+                int increment = i switch
+                {
+                    0 or 1 => 4,
+                    2 or 3 => 8,
+                    _ => throw new InvalidOperationException()
+                };
+            
                 for (int x = -64; x < 64; x += increment)
                 {
                     for (int y = -64; y < 64; y += increment)
