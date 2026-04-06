@@ -18,6 +18,7 @@ public static class FileIdentifiers
         { FileType.ApexXml, "<!DOCTYPE NxParameters>"u8.ToArray() },
         { FileType.CollisionData, "CDTA"u8.ToArray() },
         { FileType.DdsImage, "DDS"u8.ToArray() },
+        { FileType.Dske, "DSKE"u8.ToArray() },
         { FileType.Dxbc, "DXBC"u8.ToArray() },
         { FileType.Eco, "*TEXTUREPART"u8.ToArray() },
         // Uncertain whether the dx11efb "magics" here aren't actually meaningful header data, but they work.
@@ -59,6 +60,7 @@ public static class FileIdentifiers
         { FileType.ApexXml, "apx" },
         { FileType.CollisionData, "cdt" },
         { FileType.DdsImage, "dds" },
+        { FileType.Dske, "dsk" },
         { FileType.Dxbc, "cso" },
         { FileType.Eco, "eco" },
         { FileType.Efb, "efb" },

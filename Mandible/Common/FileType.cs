@@ -39,6 +39,11 @@ public enum FileType
     /// DDS image data.
     /// </summary>
     DdsImage,
+    
+    /// <summary>
+    /// Unknown.
+    /// </summary>
+    Dske,
 
     /// <summary>
     /// Direct3D 10/11 compiled shaders (SM4/5).

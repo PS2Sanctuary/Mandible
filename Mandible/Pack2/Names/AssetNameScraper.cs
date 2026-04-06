@@ -24,19 +24,12 @@ public static partial class AssetNameScraper
     private delegate void DedicatedAssetHandler(ReadOnlySpan<byte> assetData, List<string> namesOutput);
 
     private static readonly SearchValues<char> INVALID_FILE_NAME_CHARS;
-    // Additional magics for unscrapeable file data. Most are handled by inferring the FileType in IsScrapeableAsset
-    private static readonly IReadOnlyList<ReadOnlyMemory<byte>> UNSCRAPEABLE_FILE_MAGICS;
     private static readonly IReadOnlyList<byte[]> KNOWN_FILE_EXTENSIONS;
     private static readonly Dictionary<FileType, DedicatedAssetHandler> _dedicatedAssetHandlers;
 
     static AssetNameScraper()
     {
         INVALID_FILE_NAME_CHARS = SearchValues.Create(Path.GetInvalidFileNameChars());
-
-        UNSCRAPEABLE_FILE_MAGICS =
-        [
-            "DSKE"u8.ToArray()
-        ];
 
         _dedicatedAssetHandlers = new Dictionary<FileType, DedicatedAssetHandler>
         {
@@ -80,7 +73,7 @@ public static partial class AssetNameScraper
     {
         FileType type = FileIdentifiers.InferFileType(data);
 
-        if (!IsScrapeableAsset(type, data))
+        if (!IsScrapeableAsset(type))
             return [];
 
         List<string> names = [];
@@ -145,10 +138,11 @@ public static partial class AssetNameScraper
             names.Add(Path.ChangeExtension(name, "dx11ssb"));
     }
 
-    private static bool IsScrapeableAsset(FileType type, ReadOnlySpan<byte> assetData)
+    public static bool IsScrapeableAsset(FileType type)
     {
         bool failsTypeCheck = type is FileType.ApexXml
             or FileType.CollisionData
+            or FileType.Dske
             or FileType.Dxbc
             or FileType.Gnf
             or FileType.DdsImage
@@ -164,17 +158,7 @@ public static partial class AssetNameScraper
             or FileType.TruevisionTga
             or FileType.Vnfo;
 
-        if (failsTypeCheck)
-            return false;
-
-        // Skip any files with a magic value in our unscrapeable list
-        foreach (ReadOnlyMemory<byte> value in UNSCRAPEABLE_FILE_MAGICS)
-        {
-            if (assetData.StartsWith(value.Span))
-                return false;
-        }
-
-        return true;
+        return !failsTypeCheck;
     }
 
     private static void ScrapeInternal(FileType type, ReadOnlySpan<byte> data, List<string> namesOutput)
