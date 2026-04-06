@@ -352,9 +352,19 @@ public static partial class AssetNameScraper
             name = name.Trim('"'); // ClumpMask is quoted
 
             if (takeDirectName)
+            {
                 namesOutput.Add(name);
+                int lastFragment = name.LastIndexOf('_');
+                if (lastFragment != -1)
+                {
+                    string tempName = name[..lastFragment];
+                    namesOutput.Add(tempName + ".eco");
+                }
+            }
             else if (takeEcoName)
+            {
                 namesOutput.Add(name + ".eco");
+            }
         }
         while (reader.TryAdvanceTo("\r\n"u8, advancePastDelimiter: true));
     }
