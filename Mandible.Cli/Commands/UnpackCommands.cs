@@ -65,7 +65,7 @@ public class UnpackCommands
 
         Namelist? namelist = null;
         if (!string.IsNullOrEmpty(namelistPath) && pack2Files.Count > 0)
-            namelist = await CommandUtils.BuildNamelistAsync(_console, namelistPath, ct);
+            namelist = await CommandUtils.TryBuildNamelist(_console, namelistPath, ct);
 
         await ExportPackAssetsAsync(packFiles, pack2Files, outputDirectory, namelist, ct);
 

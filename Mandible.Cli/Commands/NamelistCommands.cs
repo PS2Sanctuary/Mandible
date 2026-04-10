@@ -52,17 +52,9 @@ public class NamelistCommands
                 return;
         }
 
-        Namelist? existingNl = null;
-        if (!string.IsNullOrEmpty(existingNamelistPath))
-        {
-            if (!File.Exists(existingNamelistPath))
-            {
-                _console.MarkupLine("[red]The existing namelist path is not valid[/]");
-                return;
-            }
-
-            existingNl = await CommandUtils.BuildNamelistAsync(_console, existingNamelistPath, ct);
-        }
+        Namelist? existingNl = string.IsNullOrEmpty(existingNamelistPath)
+            ? null
+            : await CommandUtils.TryBuildNamelist(_console, existingNamelistPath, ct);
 
         await _console.Status()
             .StartAsync
@@ -162,11 +154,9 @@ public class NamelistCommands
                 return;
         }
 
-        if (!File.Exists(namelist))
-        {
-            _console.Markup("[red]The input namelist does not exist.[/]");
+        Namelist? nl = await CommandUtils.TryBuildNamelist(_console, namelist, ct);
+        if (nl is null)
             return;
-        }
 
         await _console.Status()
             .StartAsync
@@ -174,8 +164,6 @@ public class NamelistCommands
                 "Converting...",
                 async _ =>
                 {
-                    Namelist nl = await Namelist.FromFileAsync(namelist, ct);
-
                     await using FileStream fsOut = new(output, FileMode.Create, FileAccess.Write);
                     await using StreamWriter sw = new(fsOut);
 

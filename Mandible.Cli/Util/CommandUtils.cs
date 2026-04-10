@@ -116,4 +116,30 @@ public static class CommandUtils
         console.MarkupLine("[green]Namelist build complete![/]");
         return nl;
     }
+
+    /// <summary>
+    /// Tries to build a namelist from the given path. If a file does not existing at the path, the user is notified
+    /// and a null value is returned.
+    /// </summary>
+    /// <param name="console">The console to write to.</param>
+    /// <param name="namelistPath">The path to a namelist file.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
+    /// <returns>The built namelist, or <c>null</c> if the <paramref name="namelistPath"/> was invalid.</returns>
+    public static async Task<Namelist?> TryBuildNamelist
+    (
+        IAnsiConsole console,
+        string namelistPath,
+        CancellationToken ct
+    )
+    {
+        if (!File.Exists(namelistPath))
+        {
+            return await BuildNamelistAsync(console, namelistPath, ct);
+        }
+        else
+        {
+            console.MarkupLine($"[red]The namelist path is invalid[/] ({namelistPath})");
+            return null;
+        }
+    }
 }
