@@ -21,6 +21,11 @@ public static class NameExtractor
     private static readonly ulong NamelistFileNameHash = PackCrc64.Calculate("{NAMELIST}");
     private static readonly ulong ObjectTerrainDataNameHash = PackCrc64.Calculate("ObjectTerrainData.xml");
 
+    public static readonly IReadOnlyList<string> HardcodedNames =
+    [
+        "ZoneGroupMappings.txt"
+    ];
+
     /// <summary>
     /// Extracts names from pack2 files.
     /// </summary>
@@ -80,6 +85,8 @@ public static class NameExtractor
 
             await ExtractFromAssetsAsync(reader, nl, ct);
         }
+
+        nl.Append(HardcodedNames);
 
         return nl;
     }
