@@ -9,10 +9,11 @@
 
   <!-- NuGet-related properties -->
   <PropertyGroup>
-    <Version>5.0.0</Version>
+    <Version>6.0.0</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
     <PackageReleaseNotes>
-      - Fix asset compression. Migrate to internal Zlib components.
+      - Major improvements to asset PACK2 asset name scraping.
+      - Added Common ForgeLight file type enumeration and inference.
     </PackageReleaseNotes>
 
     <PackageId>carlst99.Mandible</PackageId>
