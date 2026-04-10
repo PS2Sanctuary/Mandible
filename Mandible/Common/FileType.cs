@@ -186,7 +186,7 @@ public enum FileType
     Vnfo,
 
     /// <summary>
-    /// Zone tiling & object information files.
+    /// Zone tiling &amp; object information files.
     /// </summary>
     Zone
 }

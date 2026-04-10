@@ -142,6 +142,11 @@ public static partial class AssetNameScraper
             names.Add(Path.ChangeExtension(name, "dx11ssb"));
     }
 
+    /// <summary>
+    /// Returns a value indicating whether the given file type may contain asset names.
+    /// </summary>
+    /// <param name="type">The type of the file.</param>
+    /// <returns>Whether the file should be scraped for asset names.</returns>
     public static bool IsScrapeableAsset(FileType type)
     {
         bool failsTypeCheck = type is FileType.ApexXml

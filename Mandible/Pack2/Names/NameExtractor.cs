@@ -21,6 +21,9 @@ public static class NameExtractor
     private static readonly ulong NamelistFileNameHash = PackCrc64.Calculate("{NAMELIST}");
     private static readonly ulong ObjectTerrainDataNameHash = PackCrc64.Calculate("ObjectTerrainData.xml");
 
+    /// <summary>
+    /// Gets a list of asset names that are known to be valid, but are not resolved by a full pack scrape.
+    /// </summary>
     public static readonly IReadOnlyList<string> HardcodedNames =
     [
         "ZoneGroupMappings.txt"

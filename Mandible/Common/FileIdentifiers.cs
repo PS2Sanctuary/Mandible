@@ -122,6 +122,12 @@ public static class FileIdentifiers
         return FileType.Unknown;
     }
 
+
+    /// <summary>
+    /// Infers the type of the given <paramref name="fileExtension"/>.
+    /// </summary>
+    /// <param name="fileExtension">A file path extension.</param>
+    /// <returns>The type of the data, or <see cref="FileType.Unknown"/> if the type could not be inferred.</returns>
     public static FileType InferFileType(string fileExtension)
     {
         foreach ((FileType type, string ext) in Extensions)
