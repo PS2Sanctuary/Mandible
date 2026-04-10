@@ -1,6 +1,8 @@
 ﻿using ConsoleAppFramework;
 using Mandible.Cli.Util;
+using Mandible.Pack2;
 using Mandible.Pack2.Names;
+using Mandible.Services;
 using Spectre.Console;
 using System.Collections.Generic;
 using System.IO;
@@ -173,5 +175,81 @@ public class NamelistCommands
             );
 
         _console.MarkupLine("[green]Conversion Complete![/]");
+    }
+
+    /// <summary>
+    /// Trims a namelist by removing any names which do not exist in the provided pack data.
+    /// </summary>
+    /// <param name="namelistPath">A path to the namelist to trim.</param>
+    /// <param name="output">The path to output the namelist file to.</param>
+    /// <param name="force">-f, Force overwrite of the output file.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
+    /// <param name="pack2Directories">At least one directory containing pack2 files to trim the namelist against.</param>
+    [Command("trim")]
+    public async Task Trim
+    (
+        [Argument] string namelistPath,
+        [Argument] string output,
+        bool force = false,
+        CancellationToken ct = default,
+        [Argument] params string[] pack2Directories
+    )
+    {
+        List<string> pack2Paths = [];
+        foreach (string dir in pack2Directories)
+        {
+            if (CommandUtils.TryFindPacksFromPath(_console, dir, out _, out List<string> tempPaths))
+                pack2Paths.AddRange(tempPaths);
+        }
+        if (pack2Paths.Count is 0)
+        {
+            _console.MarkupLine("[red]No pack2 files were found, cannot trim![/]");
+            return;
+        }
+
+        if (File.Exists(output) && !force)
+        {
+            if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
+                return;
+        }
+
+        Namelist? nl = await CommandUtils.TryBuildNamelist(_console, namelistPath, ct);
+        if (nl is null)
+            return;
+
+        HashSet<ulong> knownHashes = [];
+        Namelist outputNl = new();
+
+        await _console.Status()
+            .StartAsync
+            (
+                "Trimming namelist...",
+                async _ =>
+                {
+                    // Retrieve all known hashes
+                    foreach (string path in pack2Paths)
+                    {
+                        using RandomAccessDataReaderService dr = new(path);
+                        using Pack2Reader pr = new(dr);
+
+                        IReadOnlyList<Asset2Header> headers = await pr.ReadAssetHeadersAsync(ct);
+                        foreach (Asset2Header element in headers)
+                            knownHashes.Add(element.NameHash);
+                    }
+
+                    // Check all hashes in the existing namelist against the known hashes
+                    foreach ((ulong hash, string name) in nl.Map)
+                    {
+                        if (knownHashes.Contains(hash))
+                            outputNl.Append(hash, name);
+                    }
+
+                    await using FileStream nlOut = new(output, FileMode.Create);
+                    await outputNl.WriteAsync(nlOut, ct);
+                }
+            );
+
+        _console.MarkupLine($"Namelist trimmed to [cyan]{output}[/]");
+        _console.MarkupLine("[green]Trimming complete![/]");
     }
 }
