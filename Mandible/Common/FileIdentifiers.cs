@@ -126,7 +126,7 @@ public static class FileIdentifiers
     {
         foreach ((FileType type, string ext) in Extensions)
         {
-            if (ext.Equals(fileExtension, StringComparison.OrdinalIgnoreCase))
+            if (ext.Equals(fileExtension.TrimStart('.'), StringComparison.OrdinalIgnoreCase))
                 return type;
         }
 
