@@ -12,12 +12,14 @@
     <Version>6.0.0</Version>
     <Description>A library for working with the ForgeLight game engine's asset packs.</Description>
     <PackageReleaseNotes>
+      - Target net8.0 and net10.0.
       - Major improvements to asset PACK2 asset name scraping.
       - Added Common ForgeLight file type enumeration and inference.
     </PackageReleaseNotes>
 
     <PackageId>carlst99.Mandible</PackageId>
     <Authors>Carl Stephens</Authors>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageLicenseExpression>ISC</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/PS2Sanctuary/Mandible</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -50,10 +52,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)../README.md">
-      <Pack>True</Pack>
-      <PackagePath>.</PackagePath>
-    </None>
+    <None Include="$(MSBuildThisFileDirectory)../README.md" Pack="true" PackagePath="." />
+    <None Include="$(MSBuildThisFileDirectory)../icon.png" Pack="true" PackagePath="." />
   </ItemGroup>
 
 </Project>
