@@ -4,6 +4,7 @@ using Mandible.Abstractions.Services;
 using Mandible.Exceptions;
 using Mandible.Util.Zlib;
 using System;
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
@@ -15,6 +16,14 @@ namespace Mandible.Pack2;
 /// <inheritdoc cref="IPack2Reader" />
 public class Pack2Reader : IPack2Reader, IDisposable
 {
+    // Average file length is ~0.12 MiB
+    // Max file length at time of writing was 93 MiB
+    // Max array length = 2 MiB
+    private const int SMALL_ARRAY_POOL_CUTOFF = 2097152;
+    private static readonly ArrayPool<byte> SmallArrayPool = ArrayPool<byte>.Create(SMALL_ARRAY_POOL_CUTOFF, 50);
+    // Max array length = 10 MiB
+    private static readonly ArrayPool<byte> LargeArrayPool = ArrayPool<byte>.Create(10485760, 10);
+
     /// <summary>
     /// Gets the indicator placed in front of an asset data block to indicate that it has been compressed.
     /// </summary>
@@ -110,7 +119,10 @@ public class Pack2Reader : IPack2Reader, IDisposable
     )
     {
         await ValidateAsync(ct).ConfigureAwait(false);
-        MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate((int)header.DataSize);
+        ArrayPool<byte> pool = header.DataSize > SMALL_ARRAY_POOL_CUTOFF
+            ? LargeArrayPool
+            : SmallArrayPool;
+        MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate((int)header.DataSize, pool);
 
         await _dataReader.ReadAsync
         (
@@ -123,7 +135,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
             return buffer;
 
         uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(buffer.Span[4..8]);
-        MemoryOwner<byte> unzippedBuffer = MemoryOwner<byte>.Allocate((int)decompressedLength);
+        MemoryOwner<byte> unzippedBuffer = MemoryOwner<byte>.Allocate((int)decompressedLength, pool);
         UnzipAssetData(buffer.Span, unzippedBuffer.Span);
 
         buffer.Dispose();
