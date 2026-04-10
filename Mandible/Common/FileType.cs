@@ -39,7 +39,7 @@ public enum FileType
     /// DDS image data.
     /// </summary>
     DdsImage,
-    
+
     /// <summary>
     /// Unknown.
     /// </summary>
