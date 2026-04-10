@@ -27,7 +27,6 @@ public class NamelistCommands
     /// <summary>
     /// Extracts names from a collection of pack2 files.
     /// </summary>
-    /// <param name="pack2Directory">The directory containing the pack2 files to extract names from.</param>
     /// <param name="output">The path to output the namelist file to.</param>
     /// <param name="existingNamelistPath">
     /// -n|--namelist, A path to an existing namelist file. It will be appended to the output, and used to speed up the
@@ -35,18 +34,22 @@ public class NamelistCommands
     /// </param>
     /// <param name="force">-f, Force overwrite of the output file.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
+    /// <param name="pack2Paths">At least one path to a pack2 file or a directory containing pack2 files.</param>
     [Command("extract")]
     public async Task ExtractAsync
     (
-        [Argument] string pack2Directory,
         [Argument] string output,
         string? existingNamelistPath = null,
         bool force = false,
-        CancellationToken ct = default
+        CancellationToken ct = default,
+        [Argument] params string[] pack2Paths
     )
     {
-        if (!CommandUtils.TryFindPacksFromPath(_console, pack2Directory, out _, out _))
+        if (!CommandUtils.TryFindPacksFromPaths(_console, pack2Paths, out _, out List<string> pack2Files))
+        {
+            _console.MarkupLine("[red]No pack2 files were found, cannot extract a namelist![/]");
             return;
+        }
 
         if (File.Exists(output) && !force)
         {
@@ -64,7 +67,7 @@ public class NamelistCommands
                 "Extracting namelist...",
                 async _ =>
                 {
-                    Namelist extractedNamelist = await NameExtractor.ExtractAsync(pack2Directory, existingNl, ct);
+                    Namelist extractedNamelist = await NameExtractor.ExtractAsync(pack2Files, existingNl, ct);
                     await using FileStream nlOut = new(output, FileMode.Create);
                     await extractedNamelist.WriteAsync(nlOut, ct);
                 }
@@ -178,13 +181,13 @@ public class NamelistCommands
     }
 
     /// <summary>
-    /// Trims a namelist by removing any names which do not exist in the provided pack data.
+    /// Trims a namelist by removing any names of assets which do not exist in the provided pack data.
     /// </summary>
     /// <param name="namelistPath">A path to the namelist to trim.</param>
     /// <param name="output">The path to output the namelist file to.</param>
     /// <param name="force">-f, Force overwrite of the output file.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
-    /// <param name="pack2Directories">At least one directory containing pack2 files to trim the namelist against.</param>
+    /// <param name="pack2Paths">At least one path to a pack2 file or a directory containing pack2 files.</param>
     [Command("trim")]
     public async Task Trim
     (
@@ -192,16 +195,10 @@ public class NamelistCommands
         [Argument] string output,
         bool force = false,
         CancellationToken ct = default,
-        [Argument] params string[] pack2Directories
+        [Argument] params string[] pack2Paths
     )
     {
-        List<string> pack2Paths = [];
-        foreach (string dir in pack2Directories)
-        {
-            if (CommandUtils.TryFindPacksFromPath(_console, dir, out _, out List<string> tempPaths))
-                pack2Paths.AddRange(tempPaths);
-        }
-        if (pack2Paths.Count is 0)
+        if (!CommandUtils.TryFindPacksFromPaths(_console, pack2Paths, out _, out List<string> pack2Files))
         {
             _console.MarkupLine("[red]No pack2 files were found, cannot trim![/]");
             return;
@@ -227,7 +224,7 @@ public class NamelistCommands
                 async _ =>
                 {
                     // Retrieve all known hashes
-                    foreach (string path in pack2Paths)
+                    foreach (string path in pack2Files)
                     {
                         using RandomAccessDataReaderService dr = new(path);
                         using Pack2Reader pr = new(dr);

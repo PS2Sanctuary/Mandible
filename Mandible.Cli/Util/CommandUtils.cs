@@ -63,7 +63,7 @@ public static class CommandUtils
                     pack2Paths.Add(path);
                     break;
                 default:
-                    console.MarkupLine("[red]The input file was not a pack/pack2.[/]");
+                    console.MarkupLine($"[red]The file was not a pack/pack2[/] ({path})");
                     return false;
             }
         }
@@ -75,7 +75,7 @@ public static class CommandUtils
 
             if (packPaths.Count == 0 && pack2Paths.Count == 0)
             {
-                console.MarkupLine("[red]No pack/pack2 files were found in the input directory.[/]");
+                console.MarkupLine($"[red]No pack/pack2 files were found in the input directory[/] ({path})");
                 return false;
             }
         }
@@ -89,6 +89,44 @@ public static class CommandUtils
         pack2Paths.Sort();
 
         return true;
+    }
+
+    /// <summary>
+    /// Attempts to find any pack/pack2 files on the given paths.
+    /// </summary>
+    /// <param name="console">The console to log error messages to.</param>
+    /// <param name="paths">The paths to search.</param>
+    /// <param name="packPaths">A list to append any discovered pack file paths to.</param>
+    /// <param name="pack2Paths">A list to append any discovered pack2 file paths to.</param>
+    /// <param name="filter">
+    /// A Windows file search pattern to use when enumerating packs should a directory path be provided.
+    /// </param>
+    /// <returns>A value indicating whether any pack/pack2 files were found.</returns>
+    public static bool TryFindPacksFromPaths
+    (
+        IAnsiConsole console,
+        IEnumerable<string> paths,
+        out List<string> packPaths,
+        out List<string> pack2Paths,
+        string filter = "*"
+    )
+    {
+        packPaths = [];
+        pack2Paths = [];
+
+        foreach (string dir in paths)
+        {
+            if (!TryFindPacksFromPath(console, dir, out List<string> tempPaths, out List<string> temp2Paths, filter))
+                continue;
+
+            packPaths.AddRange(tempPaths);
+            pack2Paths.AddRange(temp2Paths);
+        }
+
+        packPaths.Sort();
+        pack2Paths.Sort();
+
+        return packPaths.Count is not 0 || pack2Paths.Count is not 0;
     }
 
     /// <summary>

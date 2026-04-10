@@ -31,7 +31,9 @@ public static class NameExtractor
     /// </param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>The newly-built extracted namelist.</returns>
-    /// <exception cref="DirectoryNotFoundException">Thrown if the <paramref name="packDirectoryPath"/> does not exist.</exception>
+    /// <exception cref="DirectoryNotFoundException">
+    /// Thrown if the <paramref name="packDirectoryPath"/> does not exist.
+    /// </exception>
     public static async Task<Namelist> ExtractAsync
     (
         string packDirectoryPath,
@@ -42,11 +44,36 @@ public static class NameExtractor
         if (!Directory.Exists(packDirectoryPath))
             throw new DirectoryNotFoundException("The pack directory path does not exist: " + packDirectoryPath);
 
+        return await ExtractAsync
+        (
+            Directory.EnumerateFiles(packDirectoryPath, "*.pack2", SearchOption.AllDirectories),
+            existingNamelist,
+            ct
+        );
+    }
+
+    /// <summary>
+    /// Extracts names from pack2 files.
+    /// </summary>
+    /// <param name="pack2FilePaths">A list of pack2 file paths.</param>
+    /// <param name="existingNamelist">
+    /// An existing namelist - both to use as a base for the new namelist, and to speed up extraction times by allowing
+    /// certain assets to be ignored based on their filename, instead of needing to read and check the data.
+    /// </param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <returns>The newly-built extracted namelist.</returns>
+    public static async Task<Namelist> ExtractAsync
+    (
+        IEnumerable<string> pack2FilePaths,
+        Namelist? existingNamelist,
+        CancellationToken ct = default
+    )
+    {
         Namelist nl = existingNamelist is null
             ? new Namelist()
             : new Namelist(existingNamelist.Map);
 
-        foreach (string packPath in Directory.EnumerateFiles(packDirectoryPath, "*.pack2", SearchOption.AllDirectories))
+        foreach (string packPath in pack2FilePaths)
         {
             using RandomAccessDataReaderService dataReader = new(packPath);
             using Pack2Reader reader = new(dataReader);
