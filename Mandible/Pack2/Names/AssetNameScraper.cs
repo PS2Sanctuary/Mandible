@@ -24,6 +24,10 @@ public static partial class AssetNameScraper
     private delegate void DedicatedAssetHandler(ReadOnlySpan<byte> assetData, List<string> namesOutput);
 
     private static readonly SearchValues<char> INVALID_FILE_NAME_CHARS;
+
+    // A list of file extensions that are known to appear in the asset data and result in valid file names.
+    // Some assets do contain names/extensions from source files which are not included in the asset output, so we
+    // don't list those here either
     private static readonly IReadOnlyList<byte[]> KNOWN_FILE_EXTENSIONS;
     private static readonly Dictionary<FileType, DedicatedAssetHandler> _dedicatedAssetHandlers;
 
@@ -48,17 +52,14 @@ public static partial class AssetNameScraper
         };
 
         // TODO: There are probably extensions that we ONLY need to scrape from certain file formats,
-        // This will help us to speed up the scrape
-        // TODO: apx only ever present in ADR files?
+        // This may help us to speed up the scrape? Benchmark
         string[] knownFileExtensions =
         [
-            "adr", "agr", "Agr", "ags", "apb", "bat", "bin", "cnk0", "cnk1", "cnk2", "cnk3",
-            "cnk4", "cnk5", "crc", "crt", "cso", "cur", "Cur", "db", "dds", "DDS", "def", "Def", "dir",
-            "Dir", "dll", "DLL", "dma", "dme", "DME", "dmv", "dsk", "dx11efb", "dx11rsb", "dx11ssb", "eco",
-            "efb", "exe", "fsb", "fxd", "fxo", "gfx", "gnf", "i64", "ini", "INI", "Ini", "jpg", "JPG",
-            "lst", "lua", "mrn", "pak", "pem", "playerstudio", "PlayerStudio", "png", "prsb", "psd", "pssb",
-            "swf", "tga", "TGA", "thm", "tome", "ttf", "txt", "vnfo", "wav", "xlsx", "xml", "xrsb", "xssb",
-            "zone", "Zone"
+            "adr", "agr", "Agr", "ags", "apb", "cnk0", "cnk1", "cnk2", "cnk3", "cnk4", "cnk5", "crt", "cso",
+            "cur", "Cur", "db", "dds", "DDS", "def", "Def", "dma", "dme", "DME", "dmv", "dsk", "dx11efb", "dx11rsb",
+            "dx11ssb", "eco", "efb", "fsb", "fxd", "fxo", "gfx", "gnf", "ini", "INI", "Ini", "jpg", "JPG", "lst",
+            "lua", "mrn", "pem", "playerstudio", "PlayerStudio", "png", "prsb", "pssb", "swf", "tga", "TGA", "tome",
+            "txt", "vnfo", "wav", "xml", "xrsb", "xssb", "zone", "Zone"
         ];
         KNOWN_FILE_EXTENSIONS = knownFileExtensions.Select(ext => Encoding.ASCII.GetBytes("." + ext))
             .ToArray();
@@ -338,6 +339,9 @@ public static partial class AssetNameScraper
             if (takeDirectName)
             {
                 namesOutput.Add(name);
+
+                // Removing the texture type denominator often gives the name of the eco file
+                // e.g. indar_ocean_pebbles_c.dds -> indar_ocean_pebbles.eco
                 int lastFragment = name.LastIndexOf('_');
                 if (lastFragment != -1)
                 {
