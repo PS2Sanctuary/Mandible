@@ -101,14 +101,10 @@ public class Namelist
     /// </summary>
     /// <remarks>Extremely long lists could take some time to hash and append.</remarks>
     /// <param name="names">The names to append</param>
-    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
-    public void Append(IEnumerable<string> names, CancellationToken ct = default)
+    public void Append(IEnumerable<string> names)
     {
         foreach (string name in names)
-        {
-            ct.ThrowIfCancellationRequested();
             Append(name);
-        }
     }
 
     /// <summary>

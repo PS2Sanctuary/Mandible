@@ -108,11 +108,11 @@ public static class NameExtractor
             else if (AssetNameScraper.IsScrapeableAsset(inferredType))
             {
                 IReadOnlyList<string> names = AssetNameScraper.ScrapeFromAssetData(buffer.Span);
-                namelist.Append(names, ct);
+                namelist.Append(names);
             }
 
             if (asset.NameHash == ObjectTerrainDataNameHash)
-                await GuessWorldNamesAsync(buffer.Memory, namelist, ct);
+                GuessWorldNamesAsync(buffer.Memory, namelist);
         }
     }
 
@@ -134,11 +134,10 @@ public static class NameExtractor
         namelist.Append(readNames);
     }
 
-    private static async Task GuessWorldNamesAsync
+    private static void GuessWorldNamesAsync
     (
         ReadOnlyMemory<byte> objectTerrainDataXmlBuffer,
-        Namelist namelist,
-        CancellationToken ct
+        Namelist namelist
     )
     {
         List<string> names = [];
@@ -150,11 +149,8 @@ public static class NameExtractor
         };
         using XmlReader xml = XmlReader.Create(new MemoryStream(objectTerrainDataXmlBuffer.ToArray()), xmlSettings);
 
-        while (await xml.ReadAsync())
+        while (xml.Read())
         {
-            if (ct.IsCancellationRequested)
-                throw new TaskCanceledException();
-
             if (xml.NodeType is not XmlNodeType.Element)
                 continue;
 
@@ -193,7 +189,7 @@ public static class NameExtractor
         AddName("Desolation");
         AddName("OutfitWars");
 
-        namelist.Append(names, ct);
+        namelist.Append(names);
 
         return;
 
