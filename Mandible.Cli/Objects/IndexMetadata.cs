@@ -32,7 +32,7 @@ public record IndexMetadata
         {
             string path = Path.GetFileName(index.Path);
 
-            // Hashing the index gives us an easy way to diff changes between indexing 
+            // Hashing the index gives us an easy way to diff changes between indexing
             long hash = 17;
             unchecked
             {
@@ -50,7 +50,7 @@ public record IndexMetadata
         PackMetadata[] packMetas = indexes.Select(PackMetadata.FromIndex)
             .OrderBy(i => i.Name)
             .ToArray();
-        
+
         return new IndexMetadata
         (
             DateTimeOffset.UtcNow,

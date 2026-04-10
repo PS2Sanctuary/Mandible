@@ -207,7 +207,7 @@ public static class NameExtractor
             // World tile info files (these list the DDS image tiles used to show the world map)
             for (int i = 0; i < 4; i++)
                 names.Add($"{name}_TileInfo_LOD{i}.txt");
-            
+
             // World chunk files (.cnk0 -> .cnk3)
             for (int i = 0; i <= 3; i++)
             {
@@ -217,7 +217,7 @@ public static class NameExtractor
                     2 or 3 => 8,
                     _ => throw new InvalidOperationException()
                 };
-            
+
                 for (int x = -64; x < 64; x += increment)
                 {
                     for (int y = -64; y < 64; y += increment)
