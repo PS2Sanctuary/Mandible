@@ -46,7 +46,6 @@ public class NamelistCommands
         if (!CommandUtils.TryFindPacksFromPath(_console, pack2Directory, out _, out _))
             return;
 
-        output = Path.ChangeExtension(output, ".txt");
         if (File.Exists(output) && !force)
         {
             if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
@@ -97,7 +96,6 @@ public class NamelistCommands
         [Argument] params string[] namelistPaths
     )
     {
-        output = Path.ChangeExtension(output, ".txt");
         if (File.Exists(output) && !force)
         {
             if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
@@ -158,7 +156,6 @@ public class NamelistCommands
         CancellationToken ct = default
     )
     {
-        output = Path.ChangeExtension(output, ".txt");
         if (File.Exists(output) && !force)
         {
             if (!_console.Confirm("[red]The output file already exists.[/] Would you like to overwrite it?"))
