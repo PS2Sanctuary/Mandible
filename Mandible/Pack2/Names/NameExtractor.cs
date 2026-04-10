@@ -208,13 +208,15 @@ public static class NameExtractor
             for (int i = 0; i < 4; i++)
                 names.Add($"{name}_TileInfo_LOD{i}.txt");
 
-            // World chunk files (.cnk0 -> .cnk3)
-            for (int i = 0; i <= 3; i++)
+            // World chunk files (.cnk0 -> .cnk5)
+            for (int i = 0; i <= 5; i++)
             {
                 int increment = i switch
                 {
                     0 or 1 => 4,
                     2 or 3 => 8,
+                    4 => 16,
+                    5 => 32,
                     _ => throw new InvalidOperationException()
                 };
 
