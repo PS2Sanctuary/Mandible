@@ -249,4 +249,27 @@ public class NamelistCommands
         _console.MarkupLine($"Namelist trimmed to [cyan]{output}[/]");
         _console.MarkupLine("[green]Trimming complete![/]");
     }
+
+    /// <summary>
+    /// Trims a namelist by removing any names which do not exist in the provided pack data.
+    /// </summary>
+    /// <param name="namelistPath">A path to the namelist to trim.</param>
+    /// <param name="output">The path to output the namelist file to.</param>
+    /// <param name="force">-f, Force overwrite of the output file.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
+    /// <param name="pack2Directories">
+    /// At least one directory containing pack2 files to trim the namelist against.
+    /// </param>
+    [Command("unnamed")]
+    public async Task Unnamed
+    (
+        [Argument] string namelistPath,
+        [Argument] string output,
+        bool force = false,
+        CancellationToken ct = default,
+        [Argument] params string[] pack2Directories
+    )
+    {
+
+    }
 }

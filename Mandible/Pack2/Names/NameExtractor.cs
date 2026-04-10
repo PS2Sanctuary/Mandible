@@ -106,13 +106,16 @@ public static class NameExtractor
                 inferredType = FileIdentifiers.InferFileType(extension);
             }
 
+            if (!AssetNameScraper.IsScrapeableAsset(inferredType))
+                continue;
+
             using MemoryOwner<byte> buffer = await reader.ReadAssetDataAsync(asset, false, ct);
 
             if (asset.NameHash == NamelistFileNameHash)
             {
                 ProcessNamelistFile(buffer.Span, namelist);
             }
-            else if (AssetNameScraper.IsScrapeableAsset(inferredType))
+            else
             {
                 IReadOnlyList<string> names = AssetNameScraper.ScrapeFromAssetData(buffer.Span);
                 namelist.Append(names);
