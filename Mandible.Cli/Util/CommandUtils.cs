@@ -132,7 +132,7 @@ public static class CommandUtils
         CancellationToken ct
     )
     {
-        if (!File.Exists(namelistPath))
+        if (File.Exists(namelistPath))
         {
             return await BuildNamelistAsync(console, namelistPath, ct);
         }
