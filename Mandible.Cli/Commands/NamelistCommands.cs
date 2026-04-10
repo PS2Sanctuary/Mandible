@@ -28,8 +28,8 @@ public class NamelistCommands
     /// <param name="pack2Directory">The directory containing the pack2 files to extract names from.</param>
     /// <param name="output">The path to output the namelist file to.</param>
     /// <param name="existingNamelistPath">
-    /// -n|--namelist, A path to an existing namelist file. The output will contain values from this namelist, and it
-    /// will also be used to speed up the extraction by being able to ignore files without needing to extract the data.
+    /// -n|--namelist, A path to an existing namelist file. It will be appended to the output, and used to speed up the
+    /// extraction by preventing the need to extract files to determine their type (and hence ignore them).
     /// </param>
     /// <param name="force">-f, Force overwrite of the output file.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
@@ -92,8 +92,8 @@ public class NamelistCommands
     public async Task MergeAsync
     (
         [Argument] string output,
-        CancellationToken ct = default,
         bool force = false,
+        CancellationToken ct = default,
         [Argument] params string[] namelistPaths
     )
     {
