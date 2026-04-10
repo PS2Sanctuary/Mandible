@@ -125,6 +125,9 @@ public static partial class AssetNameScraper
         // efb files have DX11 variants
         else if (name.EndsWith(".efb", StringComparison.OrdinalIgnoreCase))
             names.Add(Path.ChangeExtension(name, "dx11efb"));
+        // FSB faction sounds have NSO equivalents
+        else if (name.EndsWith("_NS.fsb", StringComparison.OrdinalIgnoreCase))
+            names.Add(name.Replace("_NS.fsb", "_NSO.fsb", StringComparison.OrdinalIgnoreCase));
         // Morpheme animation files have 64-bit variants
         else if (name.EndsWith(".mrn", StringComparison.OrdinalIgnoreCase) && !name.Contains("X64", StringComparison.OrdinalIgnoreCase))
             names.Add($"{Path.GetFileNameWithoutExtension(name)}X64.mrn");
