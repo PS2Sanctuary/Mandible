@@ -62,10 +62,10 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <inheritdoc />
     public virtual async ValueTask<Pack2Header> ReadHeaderAsync(CancellationToken ct = default)
     {
-        await ValidateAsync(ct).ConfigureAwait(false);
+        await ValidateAsync(ct);
         using MemoryOwner<byte> data = MemoryOwner<byte>.Allocate(Pack2Header.Size);
 
-        await _dataReader.ReadAsync(data.Memory, 0, ct).ConfigureAwait(false);
+        await _dataReader.ReadAsync(data.Memory, 0, ct);
 
         return Pack2Header.Deserialize(data.Span);
     }
@@ -73,9 +73,9 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <inheritdoc />
     public virtual async ValueTask<IReadOnlyList<Asset2Header>> ReadAssetHeadersAsync(CancellationToken ct = default)
     {
-        await ValidateAsync(ct).ConfigureAwait(false);
+        await ValidateAsync(ct);
 
-        Pack2Header header = await ReadHeaderAsync(ct).ConfigureAwait(false);
+        Pack2Header header = await ReadHeaderAsync(ct);
         List<Asset2Header> assetHeaders = [];
 
         int bufferSize = (int)header.AssetCount * Asset2Header.Size;
@@ -98,27 +98,27 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <inheritdoc />
     public virtual async ValueTask<int> GetAssetLengthAsync(Asset2Header header, CancellationToken ct = default)
     {
-        await ValidateAsync(ct).ConfigureAwait(false);
+        await ValidateAsync(ct);
 
         if (header.ZipStatus is Asset2ZipDefinition.Unzipped or Asset2ZipDefinition.UnzippedAlternate)
             return (int)header.DataSize;
 
         using MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate(8);
 
-        await _dataReader.ReadAsync(buffer.Memory, (long)header.DataOffset, ct).ConfigureAwait(false);
+        await _dataReader.ReadAsync(buffer.Memory, (long)header.DataOffset, ct);
         return (int)BinaryPrimitives.ReadUInt32BigEndian(buffer.Span[4..8]);
     }
 
     /// <inheritdoc />
-    /// <exception cref="ArgumentOutOfRangeException">Thrown if the output buffer was not long enough.</exception>
-    public virtual async Task<MemoryOwner<byte>> ReadAssetDataAsync
+    public virtual async ValueTask<MemoryOwner<byte>> ReadAssetDataAsync
     (
         Asset2Header header,
         bool raw = false,
         CancellationToken ct = default
     )
     {
-        await ValidateAsync(ct).ConfigureAwait(false);
+        await ValidateAsync(ct);
+
         ArrayPool<byte> pool = header.DataSize > SMALL_ARRAY_POOL_CUTOFF
             ? LargeArrayPool
             : SmallArrayPool;
@@ -129,7 +129,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
             buffer.Memory,
             (long)header.DataOffset,
             ct
-        ).ConfigureAwait(false);
+        );
 
         if (raw || header.ZipStatus is Asset2ZipDefinition.Unzipped or Asset2ZipDefinition.UnzippedAlternate)
             return buffer;
@@ -140,7 +140,6 @@ public class Pack2Reader : IPack2Reader, IDisposable
 
         buffer.Dispose();
         return unzippedBuffer;
-
     }
 
     /// <inheritdoc />
@@ -154,17 +153,16 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <exception cref="UnsupportedVersionException">
     /// Thrown if the underlying pack2 data is of an unsupported version.
     /// </exception>
-    public virtual async Task ValidateAsync(CancellationToken ct = default)
+    public virtual async ValueTask ValidateAsync(CancellationToken ct = default)
     {
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
+
         if (IsValid)
             return;
 
-        if (IsDisposed)
-            throw new ObjectDisposedException(nameof(Pack2Reader));
-
         // Ensure that there is space for the header
         using MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate(Pack2Header.Size);
-        int amountRead = await _dataReader.ReadAsync(buffer.Memory, 0, ct).ConfigureAwait(false);
+        int amountRead = await _dataReader.ReadAsync(buffer.Memory, 0, ct);
         if (amountRead != Pack2Header.Size)
             throw new InvalidBufferSizeException(Pack2Header.Size, amountRead);
 

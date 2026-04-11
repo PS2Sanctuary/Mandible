@@ -10,7 +10,7 @@ namespace Mandible.Abstractions.Services;
 public interface IDataReaderService
 {
     /// <summary>
-    /// Reads as much data as the underlying source can provide into the given buffer
+    /// Reads as much data as the underlying source can provide into the given buffer.
     /// </summary>
     /// <param name="buffer">The buffer to fill.</param>
     /// <param name="offset">The offset into the source at which to begin reading data.</param>
@@ -18,7 +18,7 @@ public interface IDataReaderService
     int Read(Span<byte> buffer, long offset);
 
     /// <summary>
-    /// Reads as much data as the underlying source can provide into the given buffer
+    /// Reads as much data as the underlying source can provide into the given buffer.
     /// </summary>
     /// <param name="buffer">The buffer to fill.</param>
     /// <param name="offset">The offset into the source at which to begin reading data.</param>

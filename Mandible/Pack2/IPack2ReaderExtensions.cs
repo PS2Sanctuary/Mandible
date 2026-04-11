@@ -3,7 +3,6 @@ using Mandible.Abstractions.Pack2;
 using Mandible.Common;
 using Mandible.Pack2.Names;
 using Microsoft.Win32.SafeHandles;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -51,7 +50,7 @@ public static class IPack2ReaderExtensions
             "If excluding unnamed files, a name list must be provided"
         );
 
-        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct).ConfigureAwait(false);
+        IReadOnlyList<Asset2Header> assetHeaders = await reader.ReadAssetHeadersAsync(ct);
 
         foreach (Asset2Header assetHeader in assetHeaders)
         {
@@ -68,7 +67,7 @@ public static class IPack2ReaderExtensions
                 Path.Combine(outputPath, fileName ?? assetHeader.NameHash.ToString()),
                 inferFileExtension && fileName is null,
                 ct
-            ).ConfigureAwait(false);
+            );
         }
     }
 

@@ -40,7 +40,7 @@ public interface IPack2Reader
     /// <param name="raw">Indicates whether to retrieve the raw (i.e. compressed) asset data.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>A buffer containing the asset data.</returns>
-    Task<MemoryOwner<byte>> ReadAssetDataAsync
+    ValueTask<MemoryOwner<byte>> ReadAssetDataAsync
     (
         Asset2Header header,
         bool raw = false,
@@ -51,5 +51,5 @@ public interface IPack2Reader
     /// Ensures that the underlying data source represents a valid pack2.
     /// </summary>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
-    Task ValidateAsync(CancellationToken ct = default);
+    ValueTask ValidateAsync(CancellationToken ct = default);
 }
