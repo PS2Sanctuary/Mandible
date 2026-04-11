@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Mandible.Exceptions;
 
@@ -37,11 +39,16 @@ public class UnrecognisedMagicException : Exception
     /// <exception cref="UnrecognisedMagicException">
     /// Thrown if the given magic bytes are not present at the start of the <paramref name="buffer"/>.
     /// </exception>
+    [StackTraceHidden]
     public static void ThrowIfNotAtStart(ReadOnlySpan<byte> magicBytes, ReadOnlySpan<byte> buffer)
     {
-        if (buffer.StartsWith(magicBytes))
-            return;
+        if (!buffer.StartsWith(magicBytes))
+            ThrowHelper(magicBytes, buffer);
+    }
 
+    [DoesNotReturn, StackTraceHidden]
+    private static void ThrowHelper(ReadOnlySpan<byte> magicBytes, ReadOnlySpan<byte> buffer)
+    {
         int bufLen = Math.Min(magicBytes.Length, buffer.Length);
         throw new UnrecognisedMagicException(magicBytes.ToArray(), buffer[..bufLen].ToArray());
     }
