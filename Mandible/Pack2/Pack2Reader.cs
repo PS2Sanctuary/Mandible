@@ -81,7 +81,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
         int bufferSize = (int)header.AssetCount * Asset2Header.Size;
         using MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate(bufferSize);
 
-        await _dataReader.ReadAsync(buffer.Memory, (long)header.AssetMapOffset, ct).ConfigureAwait(false);
+        await _dataReader.ReadAsync(buffer.Memory, (long)header.AssetMapOffset, ct);
 
         for (uint i = 0; i < header.AssetCount; i++)
         {
@@ -134,9 +134,9 @@ public class Pack2Reader : IPack2Reader, IDisposable
         if (raw || header.ZipStatus is Asset2ZipDefinition.Unzipped or Asset2ZipDefinition.UnzippedAlternate)
             return buffer;
 
-        uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(buffer.Span[4..8]);
-        MemoryOwner<byte> unzippedBuffer = MemoryOwner<byte>.Allocate((int)decompressedLength, pool);
-        UnzipAssetData(buffer.Span, unzippedBuffer.Span);
+        int decompressedLength = AssetZipHelper.GetDecompressedLength(buffer.Span);
+        MemoryOwner<byte> unzippedBuffer = MemoryOwner<byte>.Allocate(decompressedLength, pool);
+        AssetZipHelper.UnzipAssetData(buffer.Span, unzippedBuffer.Span, _inflater);
 
         buffer.Dispose();
         return unzippedBuffer;
@@ -178,39 +178,6 @@ public class Pack2Reader : IPack2Reader, IDisposable
             throw new InvalidBufferSizeException((int)upperBoundLength, buffer.Length);
 
         IsValid = true;
-    }
-
-    /// <summary>
-    /// Unzips an asset.
-    /// </summary>
-    /// <param name="data">The compressed asset data.</param>
-    /// <param name="outputBuffer">The output buffer.</param>
-    /// <returns>The length of the decompressed data.</returns>
-    /// <exception cref="InvalidDataException">Thrown if the compressed data was not in the expected format.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown if the output buffer was not long enough.</exception>
-    protected virtual uint UnzipAssetData(ReadOnlySpan<byte> data, Span<byte> outputBuffer)
-    {
-        // Read the compression information
-        uint compressionIndicator = BinaryPrimitives.ReadUInt32BigEndian(data[..4]);
-        uint decompressedLength = BinaryPrimitives.ReadUInt32BigEndian(data[4..8]);
-
-        if (compressionIndicator != AssetCompressionIndicator)
-            throw new InvalidDataException("The asset header indicated that this asset was compressed, but no compression indicator was found in the asset data.");
-
-        if (outputBuffer.Length < decompressedLength)
-        {
-            throw new ArgumentOutOfRangeException
-            (
-                nameof(outputBuffer),
-                outputBuffer.Length,
-                $"The output buffer must be at least {decompressedLength} bytes in length."
-            );
-        }
-
-        _inflater.Inflate(data[8..], outputBuffer);
-        _inflater.Reset();
-
-        return decompressedLength;
     }
 
     /// <inheritdoc />
