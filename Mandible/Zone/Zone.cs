@@ -2,7 +2,6 @@ using BinaryPrimitiveHelpers;
 using Mandible.Abstractions;
 using Mandible.Common;
 using Mandible.Exceptions;
-using Mandible.Util;
 using System;
 using System.Collections.Generic;
 
@@ -108,10 +107,9 @@ public class Zone : IBufferWritable
     /// <exception cref="UnrecognisedMagicException">Thrown if the buffer does not represent a zone asset.</exception>
     public static Zone Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
-        BinaryPrimitiveReader reader = new(buffer);
+        UnrecognisedMagicException.ThrowIfNotAtStart(MAGIC.Span, buffer);
 
-        if (buffer.IndexOf(MAGIC.Span) != 0)
-            throw new UnrecognisedMagicException(MAGIC.ToArray(), buffer[..MAGIC.Length].ToArray());
+        BinaryPrimitiveReader reader = new(buffer);
         reader.Seek(MAGIC.Length);
 
         ZoneVersion version = (ZoneVersion)reader.ReadUInt32LE();

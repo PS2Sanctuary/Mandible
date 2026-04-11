@@ -160,8 +160,7 @@ public class Fsb5Header
     public static Fsb5Header Read(ref BinaryPrimitiveReader reader)
     {
         ReadOnlySpan<byte> magic = reader.ReadBytes(MAGIC.Length);
-        if (!magic.SequenceEqual(MAGIC.Span))
-            throw new UnrecognisedMagicException(MAGIC.ToArray(), magic.ToArray());
+        UnrecognisedMagicException.ThrowIfNotAtStart(MAGIC.Span, magic);
 
         int version = reader.ReadInt32LE();
         int numSamples = reader.ReadInt32LE();

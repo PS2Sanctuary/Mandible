@@ -34,8 +34,8 @@ public record Dmat
     /// <returns>A <see cref="Dmat"/> instance.</returns>
     public static Dmat Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
-        if (buffer.IndexOf(MAGIC.Span) != 0)
-            throw new UnrecognisedMagicException(buffer[..MAGIC.Length].ToArray(), MAGIC.ToArray());
+        UnrecognisedMagicException.ThrowIfNotAtStart(MAGIC.Span, buffer);
+
         BinaryPrimitiveReader reader = new(buffer);
         reader.Seek(MAGIC.Length);
 
