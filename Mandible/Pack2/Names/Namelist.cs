@@ -1,4 +1,5 @@
 ﻿using Mandible.Util;
+using MemoryReaders;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -141,26 +142,19 @@ public class Namelist
     /// <param name="buffer">The buffer.</param>
     public void Append(ReadOnlySpan<byte> buffer)
     {
-        int startIndex = 0;
-
-        for (int i = 0; i < buffer.Length; i++)
+        SpanReader<byte> reader = new(buffer);
+        while (reader.TryReadToAny(out ReadOnlySpan<byte> line, "\r\n"u8, advancePastDelimiter: true))
         {
-            byte cur = buffer[i];
-            int endIndex;
+            Append(Encoding.UTF8.GetString(line));
+            // If the encoding is \r\n, we've only advanced past the carriage return. Advance past the line feed
+            reader.IsNext((byte)'\n', true);
+        }
 
-            if (cur is (byte)'\r' or (byte)'\n')
-                endIndex = i;
-            else
-                continue;
-
-            // Check that we haven't encountered a \r\n sequence
-            if (endIndex == startIndex)
-                continue;
-
-            string name = Encoding.ASCII.GetString(buffer[startIndex..endIndex]);
-            Append(name);
-
-            startIndex = endIndex + 1;
+        // Read the last line, which may not be terminated by a line feed
+        if (!reader.End)
+        {
+            reader.TryReadExact(out ReadOnlySpan<byte> line, reader.Remaining);
+            Append(Encoding.UTF8.GetString(line));
         }
     }
 
