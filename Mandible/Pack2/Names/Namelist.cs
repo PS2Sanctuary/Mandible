@@ -124,12 +124,13 @@ public class Namelist
     {
         using StreamReader sr = new(stream, leaveOpen: true);
 
-        while (!sr.EndOfStream && (stream.Position < endPosition || endPosition < 0))
+        while (await sr.ReadLineAsync(ct) is { } name)
         {
-            if (ct.IsCancellationRequested)
-                throw new TaskCanceledException();
+            if (endPosition > -1 && stream.Position >= endPosition)
+                break;
 
-            string? name = await sr.ReadLineAsync(ct).ConfigureAwait(false);
+            ct.ThrowIfCancellationRequested();
+
             if (!string.IsNullOrWhiteSpace(name))
                 Append(name);
         }
