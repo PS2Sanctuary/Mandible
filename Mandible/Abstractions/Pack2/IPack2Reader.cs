@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.HighPerformance.Buffers;
 using Mandible.Pack2;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,6 +45,21 @@ public interface IPack2Reader
     (
         Asset2Header header,
         bool raw = false,
+        CancellationToken ct = default
+    );
+
+    /// <summary>
+    /// Reads raw asset data from the pack. If the data is compressed, it will neither be decompressed nor stripped of
+    /// the compression indicators.
+    /// </summary>
+    /// <param name="header">The asset to retrieve.</param>
+    /// <param name="outputBuffer">The buffer to write the asset data into.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
+    /// <returns>The length of the data that was read.</returns>
+    ValueTask<int> ReadRawAssetDataAsync
+    (
+        Asset2Header header,
+        Memory<byte> outputBuffer,
         CancellationToken ct = default
     );
 

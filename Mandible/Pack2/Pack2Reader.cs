@@ -143,6 +143,26 @@ public class Pack2Reader : IPack2Reader, IDisposable
     }
 
     /// <inheritdoc />
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if the output buffer was not long enough.</exception>
+    public virtual async ValueTask<int> ReadRawAssetDataAsync
+    (
+        Asset2Header header,
+        Memory<byte> outputBuffer,
+        CancellationToken ct = default
+    )
+    {
+        await ValidateAsync(ct);
+        ArgumentOutOfRangeException.ThrowIfLessThan(outputBuffer.Length, (int)header.DataSize, nameof(outputBuffer));
+
+        return await _dataReader.ReadAsync
+        (
+            outputBuffer[..(int)header.DataSize],
+            (long)header.DataOffset,
+            ct
+        );
+    }
+
+    /// <inheritdoc />
     /// <exception cref="ObjectDisposedException">Thrown if this reader has been disposed.</exception>
     /// <exception cref="InvalidBufferSizeException">
     /// Thrown if the underlying data source is too short to contain pack2 data.
