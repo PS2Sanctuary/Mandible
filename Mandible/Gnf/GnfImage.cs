@@ -2,6 +2,8 @@ using BinaryPrimitiveHelpers;
 using Mandible.Abstractions.Services;
 using Mandible.Common;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Mandible.Gnf;
 
@@ -18,6 +20,16 @@ public class GnfImage
     private readonly IDataReaderService _reader;
 
     /// <summary>
+    /// Custom user data.
+    /// </summary>
+    public ReadOnlyMemory<byte>? UserData { get; set; }
+
+    /// <summary>
+    /// Gets the list of textures.
+    /// </summary>
+    public IReadOnlyList<GnfTextureHeader> Textures { get; private set; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="GnfImage"/> class.
     /// </summary>
     /// <param name="dataReader">The data reader to load the image data from.</param>
@@ -27,6 +39,7 @@ public class GnfImage
         LoadFromReader();
     }
 
+    [MemberNotNull(nameof(Textures))]
     private void LoadFromReader()
     {
         Span<byte> headerBuffer = stackalloc byte[GnfHeader.SIZE];
@@ -38,5 +51,9 @@ public class GnfImage
         _reader.Read(contentsBuffer, GnfHeader.SIZE);
         reader = new BinaryPrimitiveReader(contentsBuffer);
         GnfContents contents = GnfContents.Deserialize(ref reader);
+        Textures = contents.Textures;
+
+        if (!reader.IsAtEnd && reader.Remaining.StartsWith("USER"u8))
+            UserData = GnfUserData.Deserialize(ref reader).Data;
     }
 }

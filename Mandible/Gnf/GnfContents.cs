@@ -10,7 +10,7 @@ namespace Mandible.Gnf;
 /// Represents the contents block of a GNF image file.
 /// </summary>
 /// <param name="Version">The version of the file.</param>
-/// <param name="AlignmentShift">Shift <c>1</c> by this value to get the byte alignment of the file.</param>
+/// <param name="AlignmentShift">Left-shift <c>1</c> by this value to get the byte alignment of the file.</param>
 /// <param name="Reserved">Reserved.</param>
 /// <param name="Textures">The textures contained in the file.</param>
 public record GnfContents
@@ -37,6 +37,8 @@ public record GnfContents
         InvalidBufferSizeException.ThrowIfLessThan(MINIMUM_SIZE, reader.RemainingLength);
 
         byte version = reader.ReadByte();
+        UnsupportedVersionException<byte>.ThrowIfMismatch(2, version);
+
         byte numTextures = reader.ReadByte();
         byte alignmentShift = reader.ReadByte();
         byte reserved = reader.ReadByte();
