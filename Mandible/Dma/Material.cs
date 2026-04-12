@@ -1,7 +1,6 @@
 using BinaryPrimitiveHelpers;
 using Mandible.Abstractions;
 using Mandible.Exceptions;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -18,12 +17,17 @@ public record Material
     uint NameHash,
     uint MaterialDefinitionHash,
     IReadOnlyList<MaterialParameter> Parameters
-) : IBufferSerializable<Material>
+) : IBinarySerializable<Material>
 {
+    public const int MINIMUM_SIZE = sizeof(uint) // NameHash
+        + sizeof(uint) // DataLen
+        + sizeof(uint) // MaterialDefinitionHash
+        + sizeof(uint); // ParameterCount
+
     /// <inheritdoc />
-    public static Material Read(ReadOnlySpan<byte> buffer, out int amountRead)
+    public static Material Deserialize(BinaryPrimitiveReader reader)
     {
-        BinaryPrimitiveReader reader = new(buffer);
+        InvalidBufferSizeException.ThrowIfLessThan(MINIMUM_SIZE, reader.RemainingLength);
 
         uint nameHash = reader.ReadUInt32LE();
         reader.Seek(sizeof(uint)); // Skip the data length field
@@ -33,12 +37,10 @@ public record Material
         List<MaterialParameter> parameters = [];
         for (int i = 0; i < parameterCount; i++)
         {
-            MaterialParameter parameter = MaterialParameter.Read(buffer[reader.Offset..], out int paramAmountRead);
+            MaterialParameter parameter = MaterialParameter.Deserialize(reader);
             parameters.Add(parameter);
-            reader.Seek(paramAmountRead);
         }
 
-        amountRead = reader.Offset;
         return new Material
         (
             nameHash,
@@ -48,32 +50,21 @@ public record Material
     }
 
     /// <inheritdoc />
-    public int GetRequiredBufferSize()
-        => sizeof(uint) // NameHash
-           + sizeof(uint) // DataLen
-           + sizeof(uint) // MaterialDefinitionHash
-           + sizeof(uint) // ParameterCount
-           + Parameters.Sum(p => p.GetRequiredBufferSize());
+    public int GetSerializedSize()
+        => MINIMUM_SIZE + Parameters.Sum(p => p.GetSerializedSize());
 
     /// <inheritdoc />
-    public int Write(Span<byte> buffer)
+    public void Serialize(BinaryPrimitiveWriter writer)
     {
-        int requiredBufferSize = GetRequiredBufferSize();
-        if (buffer.Length < requiredBufferSize)
-            throw new InvalidBufferSizeException(requiredBufferSize, buffer.Length);
+        int requiredBufferSize = GetSerializedSize();
+        InvalidBufferSizeException.ThrowIfLessThan(requiredBufferSize, writer.RemainingLength);
 
-        BinaryPrimitiveWriter writer = new(buffer);
         writer.WriteUInt32LE(NameHash);
         writer.WriteUInt32LE((uint)requiredBufferSize - sizeof(uint) - sizeof(uint));
         writer.WriteUInt32LE(MaterialDefinitionHash);
         writer.WriteUInt32LE((uint)Parameters.Count);
 
         foreach (MaterialParameter param in Parameters)
-        {
-            int paramAmountWritten = param.Write(buffer[writer.Offset..]);
-            writer.Seek(paramAmountWritten);
-        }
-
-        return writer.Offset;
+            param.Serialize(writer);
     }
 }

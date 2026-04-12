@@ -50,9 +50,8 @@ public record Dmat
         List<Material> materials = [];
         for (int i = 0; i < materialCount; i++)
         {
-            Material material = Material.Read(buffer[reader.Offset..], out int matAmountRead);
+            Material material = Material.Deserialize(reader);
             materials.Add(material);
-            reader.Seek(matAmountRead);
         }
 
         amountRead = reader.Offset;
@@ -66,14 +65,12 @@ public record Dmat
            + sizeof(uint) // TexturesBlockLen
            + TextureFileNames.Sum(t => t.Length + 1) // name + null terminator
            + sizeof(uint) // MaterialsCount
-           + Materials.Sum(m => m.GetRequiredBufferSize());
+           + Materials.Sum(m => m.GetSerializedSize());
 
     /// <inheritdoc />
     public int Write(Span<byte> buffer)
     {
-        int requiredBufferSize = GetRequiredBufferSize();
-        if (buffer.Length < requiredBufferSize)
-            throw new InvalidBufferSizeException(requiredBufferSize, buffer.Length);
+        InvalidBufferSizeException.ThrowIfLessThan(GetRequiredBufferSize(), buffer.Length);
 
         BinaryPrimitiveWriter writer = new(buffer);
         writer.WriteBytes(MAGIC.Span);
@@ -86,10 +83,7 @@ public record Dmat
         writer.WriteUInt32LE((uint)Materials.Count);
 
         foreach (Material material in Materials)
-        {
-            int matAmountWritten = material.Write(buffer[writer.Offset..]);
-            writer.Seek(matAmountWritten);
-        }
+            material.Serialize(writer);
 
         return writer.Offset;
     }

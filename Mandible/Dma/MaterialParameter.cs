@@ -17,8 +17,7 @@ public enum D3DXParameterClass : uint
     MatrixRows = 2,
     MatrixColumns = 3,
     Object = 4,
-    Struct = 5,
-    ForceDword = 0x7fffffff
+    Struct = 5
 };
 
 /// <summary>
@@ -46,8 +45,7 @@ public enum D3DXParameterType : uint
     VertexShader,
     PixelFragment,
     VertexFragment,
-    Unsupported,
-    ForceDword = 0x7fffffff
+    Unsupported
 };
 #pragma warning restore CS1591
 
@@ -68,15 +66,20 @@ public enum D3DXParameterType : uint
 public record MaterialParameter
 (
     uint SemanticHash,
-    uint D3DXParameterClass,
-    uint D3DXParameterType,
+    D3DXParameterClass D3DXParameterClass,
+    D3DXParameterType D3DXParameterType,
     ReadOnlyMemory<byte> Data
-) : IBufferSerializable<MaterialParameter>
+) : IBinarySerializable<MaterialParameter>
 {
+    public const int MINIMUM_SIZE = sizeof(uint) // SemanticHash
+        + sizeof(uint) // D3DXClass
+        + sizeof(uint) // D3DXType
+        + sizeof(uint); // DataLength
+
     /// <inheritdoc />
-    public static MaterialParameter Read(ReadOnlySpan<byte> buffer, out int amountRead)
+    public static MaterialParameter Deserialize(BinaryPrimitiveReader reader)
     {
-        BinaryPrimitiveReader reader = new(buffer);
+        InvalidBufferSizeException.ThrowIfLessThan(MINIMUM_SIZE, reader.RemainingLength);
 
         uint semanticHash = reader.ReadUInt32LE();
         uint d3Class = reader.ReadUInt32LE();
@@ -84,38 +87,28 @@ public record MaterialParameter
         uint dataLength = reader.ReadUInt32LE();
         ReadOnlySpan<byte> data = reader.ReadBytes((int)dataLength);
 
-        amountRead = reader.Offset;
         return new MaterialParameter
         (
             semanticHash,
-            d3Class,
-            d3Type,
+            (D3DXParameterClass)d3Class,
+            (D3DXParameterType)d3Type,
             data.ToArray()
         );
     }
 
     /// <inheritdoc />
-    public int GetRequiredBufferSize()
-        => sizeof(uint) // SemanticHash
-           + sizeof(uint) // D3DXClass
-           + sizeof(uint) // D3DXType
-           + sizeof(uint) // DataLength
-           + Data.Length;
+    public int GetSerializedSize()
+        => MINIMUM_SIZE + Data.Length;
 
     /// <inheritdoc />
-    public int Write(Span<byte> buffer)
+    public void Serialize(BinaryPrimitiveWriter writer)
     {
-        int requiredBufferSize = GetRequiredBufferSize();
-        if (buffer.Length < requiredBufferSize)
-            throw new InvalidBufferSizeException(requiredBufferSize, buffer.Length);
+        InvalidBufferSizeException.ThrowIfLessThan(GetSerializedSize(), writer.RemainingLength);
 
-        BinaryPrimitiveWriter writer = new(buffer);
         writer.WriteUInt32LE(SemanticHash);
-        writer.WriteUInt32LE(D3DXParameterClass);
-        writer.WriteUInt32LE(D3DXParameterType);
+        writer.WriteUInt32LE((uint)D3DXParameterClass);
+        writer.WriteUInt32LE((uint)D3DXParameterType);
         writer.WriteUInt32LE((uint)Data.Length);
         writer.WriteBytes(Data.Span);
-
-        return writer.Offset;
     }
 }
