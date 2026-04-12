@@ -108,32 +108,35 @@ public class Zone : IBufferSerializable<Zone>
         reader.Seek(MAGIC.Length);
 
         ZoneVersion version = (ZoneVersion)reader.ReadUInt32LE();
+        if (!Enum.IsDefined(version))
+            throw new UnsupportedVersionException<ZoneVersion>(ZoneVersion.V2, version);
+
         DataOffsets.Read(ref reader);
         TileInfo tileInfo = TileInfo.Read(ref reader);
         ChunkInfo chunkInfo = ChunkInfo.Read(ref reader);
 
         uint ecosCount = reader.ReadUInt32LE();
-        List<Eco> ecos = new();
+        List<Eco> ecos = [];
         for (int i = 0; i < ecosCount; i++)
             ecos.Add(Eco.Read(ref reader));
 
         uint floraeCount = reader.ReadUInt32LE();
-        List<Flora> florae = new();
+        List<Flora> florae = [];
         for (int i = 0; i < floraeCount; i++)
             florae.Add(Flora.Read(ref reader));
 
         uint invisibleWallsCount = reader.ReadUInt32LE();
-        List<InvisibleWall> invisibleWalls = new();
+        List<InvisibleWall> invisibleWalls = [];
         for (int i = 0; i < invisibleWallsCount; i++)
             invisibleWalls.Add(InvisibleWall.Read(ref reader));
 
         uint objectsCount = reader.ReadUInt32LE();
-        List<RuntimeObject> objects = new();
+        List<RuntimeObject> objects = [];
         for (int i = 0; i < objectsCount; i++)
             objects.Add(RuntimeObject.Read(ref reader, version));
 
         uint lightsCount = reader.ReadUInt32LE();
-        List<Light> lights = new();
+        List<Light> lights = [];
         for (int i = 0; i < lightsCount; i++)
             lights.Add(Light.Read(ref reader));
 

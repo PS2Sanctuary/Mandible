@@ -36,7 +36,7 @@ public record Dmat
 
         uint version = reader.ReadUInt32LE();
         if (version != SUPPORTED_VERSION)
-            throw new UnsupportedVersionException(1, version);
+            throw new UnsupportedVersionException<uint>(1, version);
 
         uint texturesBlockLen = reader.ReadUInt32LE();
         int texBlockStartOffset = reader.Offset;

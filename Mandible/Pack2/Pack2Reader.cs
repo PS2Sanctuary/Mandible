@@ -7,7 +7,6 @@ using System;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -165,7 +164,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
     /// <exception cref="UnrecognisedMagicException">
     /// Thrown if the underlying data source does not appear to represent pack2 data.
     /// </exception>
-    /// <exception cref="UnsupportedVersionException">
+    /// <exception cref="UnsupportedVersionException{T}">
     /// Thrown if the underlying pack2 data is of an unsupported version.
     /// </exception>
     public virtual async ValueTask ValidateAsync(CancellationToken ct = default)
@@ -185,7 +184,7 @@ public class Pack2Reader : IPack2Reader, IDisposable
         Pack2Header header = Pack2Header.Deserialize(buffer.Span);
 
         if (header.Version is not 1)
-            throw new UnsupportedVersionException(1, header.Version);
+            throw new UnsupportedVersionException<byte>(1, header.Version);
 
         // Ensure that the pack is long enough to contain the asset map denoted by the header
         long upperBoundLength = (long)header.AssetMapOffset + Asset2Header.Size * header.AssetCount;
