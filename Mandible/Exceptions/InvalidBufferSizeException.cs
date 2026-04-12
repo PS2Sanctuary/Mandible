@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Mandible.Exceptions;
 
@@ -28,4 +30,21 @@ public class InvalidBufferSizeException : Exception
         RequiredBufferSize = requiredBufferSize;
         ActualBufferSize = actualBufferSize;
     }
+
+    /// <summary>
+    /// Throws a <see cref="InvalidBufferSizeException"/> if the <see cref="actualSize"/> is less than the
+    /// <see cref="minimumSize"/>.
+    /// </summary>
+    /// <param name="minimumSize">The minimum length that the buffer must be.</param>
+    /// <param name="actualSize">The actual length of the buffer.</param>
+    [StackTraceHidden]
+    public static void ThrowIfLessThan(int minimumSize, int actualSize)
+    {
+        if (actualSize < minimumSize)
+            ThrowHelper(minimumSize, actualSize);
+    }
+
+    [DoesNotReturn, StackTraceHidden]
+    public static void ThrowHelper(int requiredSize, int actualSize)
+        => throw new InvalidBufferSizeException(requiredSize, actualSize);
 }
