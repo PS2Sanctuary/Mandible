@@ -50,12 +50,55 @@ public enum FmodMode : uint
     /// stream buffer and file handle.  Open multiple streams to have them play concurrently.
     /// </summary>
     FMOD_CREATESTREAM = 0x00000080,
+
+    /// <summary>
+    /// Decompress at loadtime, decompressing or decoding whole file into memory as the target sample format (ie PCM).
+    /// Fastest for playback and most flexible.
+    /// </summary>
     FMOD_CREATESAMPLE = 0x00000100,
+
+    /// <summary>
+    /// Load MP2/MP3/FADPCM/IMAADPCM/Vorbis/AT9 or XMA into memory and leave it compressed. Vorbis/AT9/FADPCM encoding
+    /// only supported in the .FSB container format. During playback the FMOD software mixer will decode it in realtime
+    /// as a 'compressed sample'. Overrides FMOD_CREATESAMPLE. If the sound data is not one of the supported formats,
+    /// it will behave as if it was created with FMOD_CREATESAMPLE and decode the sound into PCM.
+    /// </summary>
     FMOD_CREATECOMPRESSEDSAMPLE = 0x00000200,
+
+    /// <summary>
+    /// Opens a user created static sample or stream. Use FMOD_CREATESOUNDEXINFO to specify format, defaultfrequency,
+    /// numchannels, and optionally a read callback. If a user created 'sample' is created with no read callback, the
+    /// sample will be empty. Use Sound::lock and Sound::unlock to place sound data into the sound if this is the case.
+    /// </summary>
     FMOD_OPENUSER = 0x00000400,
+
+    /// <summary>
+    /// "name_or_data" will be interpreted as a pointer to memory instead of filename for creating sounds. Use
+    /// FMOD_CREATESOUNDEXINFO to specify length. If used with FMOD_CREATESAMPLE or FMOD_CREATECOMPRESSEDSAMPLE, FMOD
+    /// duplicates the memory into its own buffers. Your own buffer can be freed after open. If used with
+    /// FMOD_CREATESTREAM, FMOD will stream out of the buffer whose pointer you passed in. In this case, your own buffer
+    /// should not be freed until you have finished with and released the stream.
+    /// </summary>
     FMOD_OPENMEMORY = 0x00000800,
+
+    /// <summary>
+    /// "name_or_data" will be interpreted as a pointer to memory instead of filename for creating sounds. Use
+    /// FMOD_CREATESOUNDEXINFO to specify length. This differs to FMOD_OPENMEMORY in that it uses the memory as is,
+    /// without duplicating the memory into its own buffers. Cannot be freed after open, only after Sound::release.
+    /// Will not work if the data is compressed and FMOD_CREATECOMPRESSEDSAMPLE is not used.
+    /// </summary>
     FMOD_OPENMEMORY_POINT = 0x10000000,
+
+    /// <summary>
+    /// Will ignore file format and treat as raw pcm. Use FMOD_CREATESOUNDEXINFO to specify format. Requires at least
+    /// defaultfrequency, numchannels and format to be specified before it will open. Must be little endian data.
+    /// </summary>
     FMOD_OPENRAW = 0x00001000,
+
+    /// <summary>
+    /// Just open the file, don't prebuffer or read. Good for fast opens for info, or when sound::readData is to be
+    /// used.
+    /// </summary>
     FMOD_OPENONLY = 0x00002000,
     FMOD_ACCURATETIME = 0x00004000,
     FMOD_MPEGSEARCH = 0x00008000,
@@ -79,13 +122,16 @@ public enum FmodMode : uint
 /// </summary>
 public class Fsb5Header : IBinarySerializable<Fsb5Header>
 {
+    /// <summary>
+    /// Gets the size in bytes of a serialized <see cref="Fsb5Header"/> structure.
+    /// </summary>
     public const int SIZE = 4 // Magic
         + sizeof(int) // Version
         + sizeof(int) // NumSamples
         + sizeof(int) // SampleHeaderLen
         + sizeof(int) // NameLen
         + sizeof(int) // DataLen
-        + sizeof(uint) // Mode
+        + sizeof(FmodMode) // Mode
         + 8 // Zero
         + 16 // Hash
         + 8; // Dummy
@@ -189,6 +235,7 @@ public class Fsb5Header : IBinarySerializable<Fsb5Header>
     public int GetSerializedSize()
         => SIZE;
 
+    /// <inheritdoc />
     public void Serialize(ref BinaryPrimitiveWriter writer)
         => throw new NotImplementedException();
 }
