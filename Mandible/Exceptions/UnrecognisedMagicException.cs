@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace Mandible.Exceptions;
 
@@ -25,6 +26,7 @@ public class UnrecognisedMagicException : Exception
     /// <param name="expectedMagicBytes">The expected magic bytes.</param>
     /// <param name="actualMagicBytes">The actual magic bytes.</param>
     public UnrecognisedMagicException(ReadOnlyMemory<byte> expectedMagicBytes, ReadOnlyMemory<byte> actualMagicBytes)
+        : base(GetMessage(expectedMagicBytes.Span, actualMagicBytes.Span))
     {
         ExpectedMagicBytes = expectedMagicBytes;
         ActualMagicBytes = actualMagicBytes;
@@ -52,4 +54,8 @@ public class UnrecognisedMagicException : Exception
         int bufLen = Math.Min(magicBytes.Length, buffer.Length);
         throw new UnrecognisedMagicException(magicBytes.ToArray(), buffer[..bufLen].ToArray());
     }
+
+    private static string GetMessage(ReadOnlySpan<byte> expectedMagic, ReadOnlySpan<byte> actualMagic)
+        => $"The expected magic was {Encoding.ASCII.GetString(expectedMagic)}, "
+            + $"but version {Encoding.ASCII.GetString(actualMagic)} was found";
 }

@@ -13,22 +13,24 @@ public class InvalidBufferSizeException : Exception
     /// <summary>
     /// Gets the required buffer size.
     /// </summary>
-    public int RequiredBufferSize { get; }
+    public int RequiredSize { get; }
 
     /// <summary>
     /// Gets the actual buffer size.
     /// </summary>
-    public int ActualBufferSize { get; }
+    public int ActualSize { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="InvalidBufferSizeException"/> class.
     /// </summary>
-    /// <param name="requiredBufferSize">The required buffer size.</param>
-    /// <param name="actualBufferSize">The actual buffer size.</param>
-    public InvalidBufferSizeException(int requiredBufferSize, int actualBufferSize)
+    /// <param name="requiredSize">The required buffer size.</param>
+    /// <param name="actualSize">The actual buffer size.</param>
+    /// <param name="message">An message describing the exception circumstances.</param>
+    public InvalidBufferSizeException(int requiredSize, int actualSize, string? message = null)
+        : base(message ?? $"The buffer length was expected to be {requiredSize}, but instead it was {actualSize}")
     {
-        RequiredBufferSize = requiredBufferSize;
-        ActualBufferSize = actualBufferSize;
+        RequiredSize = requiredSize;
+        ActualSize = actualSize;
     }
 
     /// <summary>
@@ -40,11 +42,18 @@ public class InvalidBufferSizeException : Exception
     [StackTraceHidden]
     public static void ThrowIfLessThan(int minimumSize, int actualSize)
     {
-        if (actualSize < minimumSize)
-            ThrowHelper(minimumSize, actualSize);
+        if (actualSize >= minimumSize)
+            return;
+
+        ThrowHelper
+        (
+            minimumSize,
+            actualSize,
+            $"The buffer length is {actualSize}, but is must be at least {minimumSize}"
+        );
     }
 
     [DoesNotReturn, StackTraceHidden]
-    public static void ThrowHelper(int requiredSize, int actualSize)
-        => throw new InvalidBufferSizeException(requiredSize, actualSize);
+    private static void ThrowHelper(int requiredSize, int actualSize, string message)
+        => throw new InvalidBufferSizeException(requiredSize, actualSize, message);
 }
