@@ -1,6 +1,7 @@
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 using BinaryPrimitiveHelpers;
+using Mandible.Abstractions;
 using Mandible.Common;
 using Mandible.Exceptions;
 using System;
@@ -76,7 +77,7 @@ public enum FmodMode : uint
 /// <summary>
 /// Represents the file header information from an FSB5 sound bank file.
 /// </summary>
-public class Fsb5Header
+public class Fsb5Header : IBinarySerializable<Fsb5Header>
 {
     public const int SIZE = 4 // Magic
         + sizeof(int) // Version
@@ -157,7 +158,8 @@ public class Fsb5Header
         Mode = mode;
     }
 
-    public static Fsb5Header Read(ref BinaryPrimitiveReader reader)
+    /// <inheritdoc />
+    public static Fsb5Header Deserialize(ref BinaryPrimitiveReader reader)
     {
         ReadOnlySpan<byte> magic = reader.ReadBytes(MAGIC.Length);
         UnrecognisedMagicException.ThrowIfNotAtStart(MAGIC.Span, magic);
@@ -182,4 +184,11 @@ public class Fsb5Header
             mode
         );
     }
+
+    /// <inheritdoc />
+    public int GetSerializedSize()
+        => SIZE;
+
+    public void Serialize(ref BinaryPrimitiveWriter writer)
+        => throw new NotImplementedException();
 }

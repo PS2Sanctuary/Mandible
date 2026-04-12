@@ -447,7 +447,7 @@ public static partial class AssetNameScraper
     private static void ScrapeFsb(ReadOnlySpan<byte> fsbData, List<string> namesOutput)
     {
         BinaryPrimitiveReader reader = new(fsbData);
-        Fsb5Header header = Fsb5Header.Read(ref reader);
+        Fsb5Header header = Fsb5Header.Deserialize(ref reader);
 
         if (header.NumSamples > 1)
         {
