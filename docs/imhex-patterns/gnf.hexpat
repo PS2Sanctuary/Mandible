@@ -13,7 +13,7 @@ enum GnmChannel : u8
     GNM_CHAN_W = 0x7
 };
 
-enum GnmImageFormat : u8
+enum GnmImageDataFormat : u8
 {
     GNM_IMG_DATA_FORMAT_INVALID = 0x0,
     GNM_IMG_DATA_FORMAT_8 = 0x1,
@@ -151,6 +151,7 @@ bitfield GnfTextureHeader
     // -- Register 1 --
     // Left-shift `1` by this value to get the texture offset alignment
     // (i.e. baseAddressAlignment = 1 << BaseAddressAlignmentShift)
+    // Actually, possibly this is the mipmap alignment
     BaseAddressAlignmentShift : 6;
     // 0x0 - no coherency
     // 0x1 - GPU coherent
@@ -178,9 +179,9 @@ bitfield GnfTextureHeader
     GnmChannel_Y : 3;
     GnmChannel_Z : 3;
     GnmChannel_W : 3;
-    // Base mip level
+    // Base mip level (largest mipmap)
     BaseMipLevel : 4;
-    // Last mip level, or number of fragments / samples for MSAA
+    // Last mip level (smallest mipmap), or number of fragments / samples for MSAA
     LastMipLevel : 4;
     GnmTileMode : 5;
     // If true, memory footprint is padded to pow2 dimensions

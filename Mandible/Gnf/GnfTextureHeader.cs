@@ -16,13 +16,11 @@ public enum GnfTextureMemoryCoherency : byte
 /// Represents a GNF texture header structure.
 /// </summary>
 /// <param name="BaseAddress">
-/// The base address of the texture data in the file. This value must be offset by
-/// <see cref="GnfHeader">sizeof(GnfHeader)</see> + <see cref="GnfHeader.ContentsSize"/>, and then ensure it is
-/// aligned by <see cref="BaseAddressAlignmentShift"/>.
+/// The base address of the texture data in the file. This value must be offset by sizeof(<see cref="GnfHeader"/>) +
+/// <see cref="GnfHeader.ContentsSize"/> (and is most probably aligned according to
+/// <see cref="GnfContents.AlignmentShift"/>).
 /// </param>
-/// <param name="BaseAddressAlignmentShift">
-/// Left-shift <c>1</c> by this value to get the alignment of the texture data.
-/// </param>
+/// <param name="MipAlignmentShift">Left-shift <c>1</c> by this value to get the alignment of the mip levels.</param>
 /// <param name="MemoryCoherency">The memory coherency.</param>
 /// <param name="MinLod">The minimum level of detail.</param>
 /// <param name="DataFormat">The texture data / surface format.</param>
@@ -37,7 +35,10 @@ public enum GnfTextureMemoryCoherency : byte
 /// <param name="ChannelZ">Which texture channel to map to Z.</param>
 /// <param name="ChannelW">Which texture channel to map to W.</param>
 /// <param name="BaseMipLevel">The base mip level.</param>
-/// <param name="LastMipLevel">Either the last mip level, or number of fragments / samples for MSAA.</param>
+/// <param name="LastMipLevel">
+/// Either the last mip level, or number of fragments / samples if the texture type is
+/// <see cref="GnmTextureType.GNM_TEXTURE_2D_MSAA"/> or <see cref="GnmTextureType.GNM_TEXTURE_2D_ARRAY_MSAA"/>.
+/// </param>
 /// <param name="TileMode">The tile mode.</param>
 /// <param name="Pow2Pad">If <c>true</c>, the memory footprint is padded to pow2 dimensions.</param>
 /// <param name="IsReadOnly">If true, the texture is read-only.</param>
@@ -58,7 +59,7 @@ public enum GnfTextureMemoryCoherency : byte
 public readonly record struct GnfTextureHeader
 (
     uint BaseAddress,
-    byte BaseAddressAlignmentShift,
+    byte MipAlignmentShift,
     GnfTextureMemoryCoherency MemoryCoherency,
     ushort MinLod,
     GnmImageDataFormat DataFormat,
@@ -101,14 +102,19 @@ public readonly record struct GnfTextureHeader
         0x1, 0x3, 0x7, 0xF, 0x1F, 0x3F, 0x7F, 0xFF, 0x1FF, 0x3FF, 0x7FF, 0xFFF, 0x1FFF, 0x3FFF, 0x7FFF, 0xFFFF
     ];
 
+    /// <summary>
+    /// Gets the number of mipmaps (mip levels) in the texture.
+    /// </summary>
+    public int MipmapCount => LastMipLevel - BaseMipLevel + 1;
+
     public static GnfTextureHeader Deserialize(ref BinaryPrimitiveReader reader)
     {
         InvalidBufferSizeException.ThrowIfLessThan(SIZE, reader.RemainingLength);
 
-        uint baseAddress = reader.ReadUInt32LE(); // register 0
+        uint baseAddress = reader.ReadUInt32LE() << 8; // register 0
 
         uint register = reader.ReadUInt32LE(); // register 1
-        byte baseAddressAlignmentShift = ReadAndShiftByte(ref register, 6);
+        byte mipAlignmentShift = ReadAndShiftByte(ref register, 6);
         byte memoryCoherency = ReadAndShiftByte(ref register, 2);
         ushort minLod = ReadAndShiftUInt16(ref register, 12);
         byte dataFormat = ReadAndShiftByte(ref register, 6);
@@ -156,14 +162,14 @@ public readonly record struct GnfTextureHeader
         return new GnfTextureHeader
         (
             baseAddress,
-            baseAddressAlignmentShift,
+            mipAlignmentShift,
             (GnfTextureMemoryCoherency)memoryCoherency,
             minLod,
             (GnmImageDataFormat)dataFormat,
             (GnmImageNumberFormat)imgNumFormat,
             mType0,
-            width,
-            height,
+            (ushort)(width + 1),
+            (ushort)(height + 1),
             perfmod,
             interlaced == 1,
             (GnmChannel)channelX,
@@ -177,8 +183,8 @@ public readonly record struct GnfTextureHeader
             readOnly == 1,
             atc == 1,
             (GnmTextureType)textureType,
-            depth,
-            pitch,
+            (ushort)(depth + 1),
+            (ushort)(pitch + 1),
             baseArray,
             lastArray,
             minLodWarn,
