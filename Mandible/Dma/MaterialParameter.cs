@@ -71,14 +71,9 @@ public record MaterialParameter
     uint D3DXParameterClass,
     uint D3DXParameterType,
     ReadOnlyMemory<byte> Data
-) : IBufferWritable
+) : IBufferSerializable<MaterialParameter>
 {
-    /// <summary>
-    /// Reads a <see cref="MaterialParameter"/> instance from a buffer.
-    /// </summary>
-    /// <param name="buffer">The buffer.</param>
-    /// <param name="amountRead">The amount of data read from the <paramref name="buffer"/>.</param>
-    /// <returns>A <see cref="MaterialParameter"/> instance.</returns>
+    /// <inheritdoc />
     public static MaterialParameter Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
         BinaryPrimitiveReader reader = new(buffer);

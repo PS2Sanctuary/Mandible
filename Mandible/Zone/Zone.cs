@@ -10,7 +10,7 @@ namespace Mandible.Zone;
 /// <summary>
 /// Represents a zone asset.
 /// </summary>
-public class Zone : IBufferWritable
+public class Zone : IBufferSerializable<Zone>
 {
     /// <summary>
     /// Gets the magic identifier of a zone file.
@@ -98,12 +98,7 @@ public class Zone : IBufferWritable
         UnknownValue1 = unknownValue1;
     }
 
-    /// <summary>
-    /// Reads a <see cref="Zone"/> instance from a buffer.
-    /// </summary>
-    /// <param name="buffer">The buffer.</param>
-    /// <param name="amountRead">The amount of data read from the <paramref name="buffer"/></param>
-    /// <returns>A <see cref="Zone"/> instance.</returns>
+    /// <inheritdoc />
     /// <exception cref="UnrecognisedMagicException">Thrown if the buffer does not represent a zone asset.</exception>
     public static Zone Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {

@@ -18,14 +18,9 @@ public record Material
     uint NameHash,
     uint MaterialDefinitionHash,
     IReadOnlyList<MaterialParameter> Parameters
-) : IBufferWritable
+) : IBufferSerializable<Material>
 {
-    /// <summary>
-    /// Reads a <see cref="Material"/> instance from a buffer.
-    /// </summary>
-    /// <param name="buffer">The buffer.</param>
-    /// <param name="amountRead">The amount of data read from the <paramref name="buffer"/>.</param>
-    /// <returns>A <see cref="Material"/> instance.</returns>
+    /// <inheritdoc />
     public static Material Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
         BinaryPrimitiveReader reader = new(buffer);
@@ -35,7 +30,7 @@ public record Material
         uint materialDefinitionHash = reader.ReadUInt32LE();
         uint parameterCount = reader.ReadUInt32LE();
 
-        List<MaterialParameter> parameters = new();
+        List<MaterialParameter> parameters = [];
         for (int i = 0; i < parameterCount; i++)
         {
             MaterialParameter parameter = MaterialParameter.Read(buffer[reader.Offset..], out int paramAmountRead);

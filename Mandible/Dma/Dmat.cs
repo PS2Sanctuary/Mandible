@@ -17,7 +17,7 @@ public record Dmat
 (
     IReadOnlyList<string> TextureFileNames,
     IReadOnlyList<Material> Materials
-) : IBufferWritable
+) : IBufferSerializable<Dmat>
 {
     private static readonly ReadOnlyMemory<byte> MAGIC = FileIdentifiers.Magics[FileType.MaterialInfo];
 
@@ -26,12 +26,7 @@ public record Dmat
     /// </summary>
     public const int SUPPORTED_VERSION = 1;
 
-    /// <summary>
-    /// Reads a <see cref="Dmat"/> instance from a buffer.
-    /// </summary>
-    /// <param name="buffer">The buffer.</param>
-    /// <param name="amountRead">The amount of data read from the <paramref name="buffer"/>.</param>
-    /// <returns>A <see cref="Dmat"/> instance.</returns>
+    /// <inheritdoc />
     public static Dmat Read(ReadOnlySpan<byte> buffer, out int amountRead)
     {
         UnrecognisedMagicException.ThrowIfNotAtStart(MAGIC.Span, buffer);
@@ -45,14 +40,14 @@ public record Dmat
 
         uint texturesBlockLen = reader.ReadUInt32LE();
         int texBlockStartOffset = reader.Offset;
-        List<string> textureFileNames = new();
+        List<string> textureFileNames = [];
 
         while (reader.Offset - texBlockStartOffset < texturesBlockLen)
             textureFileNames.Add(reader.ReadStringNullTerminated());
 
         uint materialCount = reader.ReadUInt32LE();
 
-        List<Material> materials = new();
+        List<Material> materials = [];
         for (int i = 0; i < materialCount; i++)
         {
             Material material = Material.Read(buffer[reader.Offset..], out int matAmountRead);
