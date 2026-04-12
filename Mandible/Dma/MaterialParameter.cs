@@ -77,7 +77,7 @@ public record MaterialParameter
         + sizeof(uint); // DataLength
 
     /// <inheritdoc />
-    public static MaterialParameter Deserialize(BinaryPrimitiveReader reader)
+    public static MaterialParameter Deserialize(ref BinaryPrimitiveReader reader)
     {
         InvalidBufferSizeException.ThrowIfLessThan(MINIMUM_SIZE, reader.RemainingLength);
 
@@ -101,7 +101,7 @@ public record MaterialParameter
         => MINIMUM_SIZE + Data.Length;
 
     /// <inheritdoc />
-    public void Serialize(BinaryPrimitiveWriter writer)
+    public void Serialize(ref BinaryPrimitiveWriter writer)
     {
         InvalidBufferSizeException.ThrowIfLessThan(GetSerializedSize(), writer.RemainingLength);
 

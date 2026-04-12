@@ -14,7 +14,7 @@ public interface IBinarySerializable<out T>
     /// <typeparam name="T">The type of object to deserialize.</typeparam>
     /// <param name="reader">A binary primitive reader wrapping the data buffer.</param>
     /// <returns>The deserialized object.</returns>
-    static abstract T Deserialize(BinaryPrimitiveReader reader);
+    static abstract T Deserialize(ref BinaryPrimitiveReader reader);
 
     /// <summary>
     /// Gets the size in bytes of this object when serialized.
@@ -26,5 +26,5 @@ public interface IBinarySerializable<out T>
     /// Serializes this object to the given buffer.
     /// </summary>
     /// <param name="writer">A binary primitive writer wrapping the data buffer.</param>
-    void Serialize(BinaryPrimitiveWriter writer);
+    void Serialize(ref BinaryPrimitiveWriter writer);
 }

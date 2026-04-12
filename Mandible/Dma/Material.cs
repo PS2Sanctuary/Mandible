@@ -25,7 +25,7 @@ public record Material
         + sizeof(uint); // ParameterCount
 
     /// <inheritdoc />
-    public static Material Deserialize(BinaryPrimitiveReader reader)
+    public static Material Deserialize(ref BinaryPrimitiveReader reader)
     {
         InvalidBufferSizeException.ThrowIfLessThan(MINIMUM_SIZE, reader.RemainingLength);
 
@@ -37,7 +37,7 @@ public record Material
         List<MaterialParameter> parameters = [];
         for (int i = 0; i < parameterCount; i++)
         {
-            MaterialParameter parameter = MaterialParameter.Deserialize(reader);
+            MaterialParameter parameter = MaterialParameter.Deserialize(ref reader);
             parameters.Add(parameter);
         }
 
@@ -54,7 +54,7 @@ public record Material
         => MINIMUM_SIZE + Parameters.Sum(p => p.GetSerializedSize());
 
     /// <inheritdoc />
-    public void Serialize(BinaryPrimitiveWriter writer)
+    public void Serialize(ref BinaryPrimitiveWriter writer)
     {
         int requiredBufferSize = GetSerializedSize();
         InvalidBufferSizeException.ThrowIfLessThan(requiredBufferSize, writer.RemainingLength);
@@ -65,6 +65,6 @@ public record Material
         writer.WriteUInt32LE((uint)Parameters.Count);
 
         foreach (MaterialParameter param in Parameters)
-            param.Serialize(writer);
+            param.Serialize(ref writer);
     }
 }

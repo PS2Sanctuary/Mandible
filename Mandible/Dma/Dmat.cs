@@ -50,7 +50,7 @@ public record Dmat
         List<Material> materials = [];
         for (int i = 0; i < materialCount; i++)
         {
-            Material material = Material.Deserialize(reader);
+            Material material = Material.Deserialize(ref reader);
             materials.Add(material);
         }
 
@@ -83,7 +83,7 @@ public record Dmat
         writer.WriteUInt32LE((uint)Materials.Count);
 
         foreach (Material material in Materials)
-            material.Serialize(writer);
+            material.Serialize(ref writer);
 
         return writer.Offset;
     }
