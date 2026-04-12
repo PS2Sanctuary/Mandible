@@ -25,11 +25,6 @@ public class Pack2Reader : IPack2Reader, IDisposable
     private static readonly ArrayPool<byte> LargeArrayPool = ArrayPool<byte>.Create(10485760, 10);
 
     /// <summary>
-    /// Gets the indicator placed in front of an asset data block to indicate that it has been compressed.
-    /// </summary>
-    protected const uint AssetCompressionIndicator = 0xA1B2C3D4;
-
-    /// <summary>
     /// Gets the <see cref="IDataReaderService"/> that this <see cref="Pack2Reader"/> was initialized with.
     /// </summary>
     protected readonly IDataReaderService _dataReader;
