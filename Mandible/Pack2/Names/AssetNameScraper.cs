@@ -51,8 +51,6 @@ public static partial class AssetNameScraper
             { FileType.Zone, ScrapeZone }
         };
 
-        // TODO: There are probably extensions that we ONLY need to scrape from certain file formats,
-        // This may help us to speed up the scrape? Benchmark
         string[] knownFileExtensions =
         [
             "adr", "agr", "Agr", "ags", "apb", "cnk0", "cnk1", "cnk2", "cnk3", "cnk4", "cnk5", "crt", "cso",
