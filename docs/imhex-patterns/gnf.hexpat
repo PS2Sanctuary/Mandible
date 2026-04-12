@@ -221,7 +221,9 @@ struct GnfContents
 {
     byte Version;
     byte NumTextures;
-    byte Alignment;
+    // Left-shift `1` by this value to get the texture offset alignment
+    // (i.e. alignment = 1 << AlignmentShift)
+    byte AlignmentShift;
     byte Reserved;
     uint StreamSize; // The length of the entire file
     GnfTextureHeader Textures[NumTextures];
