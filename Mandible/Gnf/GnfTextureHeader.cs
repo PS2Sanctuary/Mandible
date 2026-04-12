@@ -96,6 +96,11 @@ public readonly record struct GnfTextureHeader
     // Texture headers are designed to be stored in seven registers.
     public const int SIZE = 7 * sizeof(uint);
 
+    private static readonly int[] BitLengthMask =
+    [
+        0x1, 0x3, 0x7, 0xF, 0x1F, 0x3F, 0x7F, 0xFF, 0x1FF, 0x3FF, 0x7FF, 0xFFF, 0x1FFF, 0x3FFF, 0x7FFF, 0xFFFF
+    ];
+
     public static GnfTextureHeader Deserialize(ref BinaryPrimitiveReader reader)
     {
         InvalidBufferSizeException.ThrowIfLessThan(SIZE, reader.RemainingLength);
@@ -186,16 +191,18 @@ public readonly record struct GnfTextureHeader
             textureSize
         );
 
+        // Yes, these are slower than hardcoded masks. But more usable and less error-prone
+
         byte ReadAndShiftByte(ref uint register, int bitLength)
         {
-            byte val = (byte)(register & bitLength);
+            byte val = (byte)(register & BitLengthMask[bitLength - 1]);
             register >>= bitLength;
             return val;
         }
 
         ushort ReadAndShiftUInt16(ref uint register, int bitLength)
         {
-            ushort val = (ushort)(register & bitLength);
+            ushort val = (ushort)(register & BitLengthMask[bitLength - 1]);
             register >>= bitLength;
             return val;
         }
