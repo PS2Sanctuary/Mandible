@@ -9,45 +9,51 @@ public class GnfMipmapHelperTests
     public void TestCalculateMipmapCount()
     {
         Assert.Equal(10, GnfMipmapHelper.CalculateMipmapCount(512, 256));
+        Assert.Equal(11, GnfMipmapHelper.CalculateMipmapCount(512, 256, 1024));
     }
 
     [Fact]
-    public void TestGetMipmapSizes()
+    public void TestGetMipmapSize2D()
     {
-        GnfTextureHeader texHead = new()
-        {
-            BaseAddress = 0,
-            MipAlignmentShift = 8,
-            BaseMipLevel = 0,
-            LastMipLevel = 9,
-            DataFormat = GnmImageDataFormat.FORMAT_BC3,
-            Width = 512,
-            Height = 256
-        };
+        (int Width, int Height) size = GnfMipmapHelper.GetMipmapSize2D(512, 256, 0);
+        Assert.Equal(512, size.Width);
+        Assert.Equal(256, size.Height);
 
-        (int Width, int Height)[] sizes = GnfMipmapHelper.GetMipmapSizes(texHead);
-        Assert.Equal(10, sizes.Length);
+        size = GnfMipmapHelper.GetMipmapSize2D(512, 256, 1);
+        Assert.Equal(256, size.Width);
+        Assert.Equal(128, size.Height);
 
-        Assert.Equal(512, sizes[0].Width);
-        Assert.Equal(256, sizes[0].Height);
-        Assert.Equal(256, sizes[1].Width);
-        Assert.Equal(128, sizes[1].Height);
-        Assert.Equal(128, sizes[2].Width);
-        Assert.Equal(64, sizes[2].Height);
-        Assert.Equal(64, sizes[3].Width);
-        Assert.Equal(32, sizes[3].Height);
-        Assert.Equal(32, sizes[4].Width);
-        Assert.Equal(16, sizes[4].Height);
-        Assert.Equal(16, sizes[5].Width);
-        Assert.Equal(8, sizes[5].Height);
-        Assert.Equal(8, sizes[6].Width);
-        Assert.Equal(4, sizes[6].Height);
-        Assert.Equal(4, sizes[7].Width);
-        Assert.Equal(2, sizes[7].Height);
-        Assert.Equal(2, sizes[8].Width);
-        Assert.Equal(1, sizes[8].Height);
-        Assert.Equal(1, sizes[9].Width);
-        Assert.Equal(1, sizes[9].Height);
+        size = GnfMipmapHelper.GetMipmapSize2D(512, 256, 4);
+        Assert.Equal(32, size.Width);
+        Assert.Equal(16, size.Height);
+
+        size = GnfMipmapHelper.GetMipmapSize2D(512, 256, 9);
+        Assert.Equal(1, size.Width);
+        Assert.Equal(1, size.Height);
+    }
+
+    [Fact]
+    public void TestGetMipmapSize3D()
+    {
+        (int Width, int Height, int Depth) size = GnfMipmapHelper.GetMipmapSize3D(512, 256, 1024, 0);
+        Assert.Equal(512, size.Width);
+        Assert.Equal(256, size.Height);
+        Assert.Equal(1024, size.Depth);
+
+        size = GnfMipmapHelper.GetMipmapSize3D(512, 256, 1024, 1);
+        Assert.Equal(256, size.Width);
+        Assert.Equal(128, size.Height);
+        Assert.Equal(512, size.Depth);
+
+        size = GnfMipmapHelper.GetMipmapSize3D(512, 256, 1024, 4);
+        Assert.Equal(32, size.Width);
+        Assert.Equal(16, size.Height);
+        Assert.Equal(64, size.Depth);
+
+        size = GnfMipmapHelper.GetMipmapSize3D(512, 256, 1024, 10);
+        Assert.Equal(1, size.Width);
+        Assert.Equal(1, size.Height);
+        Assert.Equal(1, size.Depth);
     }
 
     [Fact]

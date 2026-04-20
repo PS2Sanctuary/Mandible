@@ -9,17 +9,20 @@ public static class GnfMipmapHelper
     /// </summary>
     /// <param name="baseWidth">The width of the texture.</param>
     /// <param name="baseHeight">The height of the texture.</param>
+    /// <param name="baseDepth">The depth of the texture.</param>
     /// <returns></returns>
-    public static int CalculateMipmapCount(int baseWidth, int baseHeight)
+    public static int CalculateMipmapCount(int baseWidth, int baseHeight, int baseDepth = 1)
     {
         int count = 1;
 
-        while (baseWidth > 1 || baseHeight > 1)
+        while (baseWidth > 1 || baseHeight > 1 || baseDepth > 1)
         {
             if (baseWidth > 1)
                 baseWidth >>= 1;
             if (baseHeight > 1)
                 baseHeight >>= 1;
+            if (baseDepth > 1)
+                baseDepth >>= 1;
             count++;
         }
 
@@ -27,25 +30,35 @@ public static class GnfMipmapHelper
     }
 
     /// <summary>
-    /// Gets the pixel size of a mipmap.
+    /// Gets the pixel size of a 2D mipmap.
     /// </summary>
-    /// <param name="header">The texture header.</param>
-    public static (int Width, int Height)[] GetMipmapSizes(GnfTextureHeader header)
+    /// <param name="width">The width of the base texture.</param>
+    /// <param name="height">The height of the base texture.</param>
+    /// <param name="mipLevel">The level of the mipmap to calculate the pixel size of.</param>
+    public static (int Width, int Height) GetMipmapSize2D(int width, int height, int mipLevel)
     {
-        (int Width, int Height)[] ret = new (int Width, int Height)[header.MipmapCount];
-
-        for (int mipLevel = 0; mipLevel < header.MipmapCount; mipLevel++)
-        {
-            int mipWidth = Math.Max(1, header.Width >> mipLevel);
-            int mipHeight = Math.Max(1, header.Height >> mipLevel);
-            ret[mipLevel] = (mipWidth, mipHeight);
-        }
-
-        return ret;
+        int mipWidth = Math.Max(1, width >> mipLevel);
+        int mipHeight = Math.Max(1, height >> mipLevel);
+        return (mipWidth, mipHeight);
     }
 
     /// <summary>
-    /// Gets the offset of a mipmap within a block of texture data, accounting for padding. Only works for 2D textures.
+    /// Gets the pixel size of a 2D mipmap.
+    /// </summary>
+    /// <param name="width">The width of the base texture.</param>
+    /// <param name="height">The height of the base texture.</param>
+    /// <param name="depth">The depth of the base texture.</param>
+    /// <param name="mipLevel">The level of the mipmap to calculate the pixel size of.</param>
+    public static (int Width, int Height, int Depth) GetMipmapSize3D(int width, int height, int depth, int mipLevel)
+    {
+        int mipWidth = Math.Max(1, width >> mipLevel);
+        int mipHeight = Math.Max(1, height >> mipLevel);
+        int mipDepth = Math.Max(1, depth >> mipLevel);
+        return (mipWidth, mipHeight, mipDepth);
+    }
+
+    /// <summary>
+    /// Gets the offset of mipmap within a block of texture data, accounting for padding.
     /// </summary>
     /// <param name="header">The texture header.</param>
     /// <exception cref="NotSupportedException">
@@ -53,13 +66,13 @@ public static class GnfMipmapHelper
     /// </exception>
     public static (int StartOffset, int Length)[] GetMipmapOffsets(GnfTextureHeader header)
     {
-        // Note - this algorithm only works on texels that are 4x4 pixels
-
         (int StartOffset, int Length)[] ret = new (int StartOffset, int Length)[header.MipmapCount];
         int lastOffset = 0;
         // Unsure if adding two is actually "correct" here, or just works by chance
         int alignment = 1 << (header.MipAlignmentShift + 2);
 
+        // Note - this algorithm only works on texels that are 4x4 pixels. This may need revising if we need to support
+        // more image data formats than below
         int blockSize = header.DataFormat switch
         {
             GnmImageDataFormat.FORMAT_BC1
@@ -76,6 +89,7 @@ public static class GnfMipmapHelper
         {
             int mipWidth = Math.Max(1, header.Width >> mipLevel);
             int mipHeight = Math.Max(1, header.Height >> mipLevel);
+            int depth = Math.Max(1, header.Depth >> mipLevel);
 
             // Adding the (denominator - 1) to the numerator before dividing is the same as Math.Ceiling() given
             // integer rounding
@@ -83,7 +97,7 @@ public static class GnfMipmapHelper
             mipWidth = Math.Max(1, (mipWidth + 3) / 4);
             mipHeight = Math.Max(1, (mipHeight + 3) / 4);
 
-            int mipByteLength = mipWidth * mipHeight * blockSize;
+            int mipByteLength = mipWidth * mipHeight * blockSize * depth;
             ret[mipLevel] = (lastOffset, mipByteLength);
 
             lastOffset += mipByteLength;
