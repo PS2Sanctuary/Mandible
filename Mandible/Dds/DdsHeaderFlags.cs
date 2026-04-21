@@ -1,5 +1,8 @@
 namespace Mandible.Dds;
 
+/// <summary>
+/// Pre-defined flags for the <see cref="DdsHeader.Flags"/> field.
+/// </summary>
 public enum DdsHeaderFlags : uint
 {
     /// <summary>
