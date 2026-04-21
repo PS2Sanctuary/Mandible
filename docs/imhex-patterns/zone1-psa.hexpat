@@ -1,4 +1,4 @@
-#pragma pattern_limit 0xffff
+#pragma pattern_limit 0xfffff
 
 using byte = u8;
 using ushort = u16;
@@ -37,7 +37,7 @@ struct FloatRange
 {
     float Minimum;
     float Maximum;
-};
+} [[static]];
 
 struct TextureInfo
 {
@@ -57,13 +57,13 @@ struct ColorRGBA
     byte G;
     byte B;
     byte Alpha;
-};
+} [[static]];
 
 struct EcoTint
 {
     ColorRGBA Color;
     int Strength;
-};
+} [[static]];
 
 struct EcoLayer
 {
@@ -102,7 +102,7 @@ struct InvisibleWall
     float UnknownValue2;
     float UnknownValue3;
     float UnknownValue4;
-};
+} [[static]];
 
 struct Vector4
 {
@@ -110,7 +110,7 @@ struct Vector4
     float Y;
     float Z;
     float W;
-};
+} [[static]];
 
 struct ObjectInstance
 {
@@ -120,7 +120,7 @@ struct ObjectInstance
     uint Id;
     byte UnknownValue1;
     float UnknownValue2;
-};
+} [[static]];
 
 struct RuntimeObject
 {
@@ -142,7 +142,7 @@ struct ColorARGB
     byte R;
     byte G;
     byte B;
-};
+} [[static]];
 
 struct Light
 {
