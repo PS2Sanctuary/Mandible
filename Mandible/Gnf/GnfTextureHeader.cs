@@ -44,7 +44,7 @@ public enum GnfTextureMemoryCoherency : byte
 /// <param name="IsReadOnly">If true, the texture is read-only.</param>
 /// <param name="Atc"></param>
 /// <param name="TextureType">The type of the texture.</param>
-/// <param name="Depth"></param>
+/// <param name="Depth">The depth of the texture, if 3D. Note that for 2D textures, this will be <c>1</c>.</param>
 /// <param name="Pitch"></param>
 /// <param name="BaseArray"></param>
 /// <param name="LastArray"></param>
@@ -105,6 +105,9 @@ public readonly record struct GnfTextureHeader
     /// <summary>
     /// Gets the number of mipmaps (mip levels) in the texture.
     /// </summary>
+    /// <remarks>
+    /// Returns <c>1</c> if the texture does not have mips, as technically it still has a single mip level.
+    /// </remarks>
     public int MipmapCount => LastMipLevel - BaseMipLevel + 1;
 
     public static GnfTextureHeader Deserialize(ref BinaryPrimitiveReader reader)
