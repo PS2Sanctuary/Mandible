@@ -17,7 +17,7 @@ public static class FileIdentifiers
         { FileType.ActorSetXml, "<ActorSet>"u8.ToArray() },
         { FileType.ApexXml, "<!DOCTYPE NxParameters>"u8.ToArray() },
         { FileType.CollisionData, "CDTA"u8.ToArray() },
-        { FileType.DdsImage, "DDS"u8.ToArray() },
+        { FileType.DdsImage, "DDS "u8.ToArray() },
         { FileType.Dske, "DSKE"u8.ToArray() },
         { FileType.Dxbc, "DXBC"u8.ToArray() },
         { FileType.Eco, "*TEXTUREPART"u8.ToArray() },
