@@ -3,6 +3,7 @@ using Mandible.Abstractions.Services;
 using Mandible.Common;
 using Mandible.Dds;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Mandible.Gnf;
@@ -17,8 +18,15 @@ public static class GnfConverter
     /// </summary>
     /// <param name="gnf">The GNF image data.</param>
     /// <param name="textureIndex">The index of the texture to convert.</param>
-    /// <param name="ddsOutput"></param>
-    public static async ValueTask ToDds(GnfImage gnf, int textureIndex, IDataWriterService ddsOutput)
+    /// <param name="ddsOutput">The sink to write the DDS data into.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> that can be used to cancel this operation.</param>
+    public static async ValueTask ToDds
+    (
+        GnfImage gnf,
+        int textureIndex,
+        IDataWriterService ddsOutput,
+        CancellationToken ct = default
+    )
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(textureIndex, 0);
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(textureIndex, gnf.Textures.Count);
@@ -77,7 +85,7 @@ public static class GnfConverter
         outputOffset += headerLen;
 
         // Unswizzle and write each mipmap
-        using MemoryOwner<byte> texData = await gnf.ReadTextureData(textureIndex);
+        using MemoryOwner<byte> texData = await gnf.ReadTextureData(textureIndex, ct);
         (int StartOffset, int Length)[] mips = GnfMipmapHelper.GetMipmapOffsets(tex);
         for (int mipIndex = 0; mipIndex < mips.Length; mipIndex++)
         {
@@ -89,7 +97,7 @@ public static class GnfConverter
             int blockSize = GnfSizeHelper.GetBlockSize(tex);
             Ps4Swizzler.PerformSwizzle(mipSpan.Span, unswizzledSpan.Span, mipWidth, mipHeight, blockSize, true);
 
-            ddsOutput.Write(unswizzledSpan.Span, outputOffset);
+            await ddsOutput.WriteAsync(unswizzledSpan.Memory, outputOffset, ct);
             outputOffset += unswizzledSpan.Length;
         }
     }

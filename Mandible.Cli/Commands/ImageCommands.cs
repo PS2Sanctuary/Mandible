@@ -59,7 +59,7 @@ public class ImageCommands
                 : $"{Path.ChangeExtension(outputPath, null)}_Texture{i}.dds";
 
             using RandomAccessDataWriterService radws = new(outPath, force ? FileMode.Create : FileMode.CreateNew);
-            await GnfConverter.ToDds(gnf, i, radws);
+            await GnfConverter.ToDds(gnf, i, radws, ct);
 
             _console.MarkupLine($"[green]Output GNF texture to {outPath}[/]");
         }
