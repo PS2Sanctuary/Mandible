@@ -70,20 +70,7 @@ public static class GnfMipmapHelper
         int lastOffset = 0;
         // Unsure if adding two is actually "correct" here, or just works by chance
         int alignment = 1 << (header.MipAlignmentShift + 2);
-
-        // Note - this algorithm only works on texels that are 4x4 pixels. This may need revising if we need to support
-        // more image data formats than below
-        int blockSize = header.DataFormat switch
-        {
-            GnmImageDataFormat.FORMAT_BC1
-                or GnmImageDataFormat.FORMAT_BC4 => 8,
-            GnmImageDataFormat.FORMAT_BC2
-                or GnmImageDataFormat.FORMAT_BC3
-                or GnmImageDataFormat.FORMAT_BC5
-                or GnmImageDataFormat.FORMAT_BC6
-                or GnmImageDataFormat.FORMAT_BC7 => 16,
-            _ => throw new NotSupportedException($"Mipmap offsets cannot be calculated for the data format {header.DataFormat}")
-        };
+        int blockSize = GnfSizeHelper.GetBlockSize(header);
 
         for (int mipLevel = 0; mipLevel < header.MipmapCount; mipLevel++)
         {
