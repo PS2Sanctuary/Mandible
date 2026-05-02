@@ -36,6 +36,7 @@ public class Program
             });
 
         app.Add<DownloadCommands>("download");
+        app.Add<ImageCommands>("image");
         app.Add<IndexCommands>("index");
         app.Add<NamelistCommands>("namelist");
         app.Add<PackCommands>("pack");
