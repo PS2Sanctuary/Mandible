@@ -91,10 +91,8 @@ public class ZoneFileCommands
         await ExportAsJsonInternal(zoneFilePath, outputStream, ct);
 
         if (!useStdOut)
-        {
             _console.MarkupLine($"Zone file exported to [cyan]{outputPath}[/]");
-            _console.MarkupLine("[green]Export complete![/]");
-        }
+        _console.MarkupLine("[green]Export complete![/]");
     }
 
     /// <summary>
