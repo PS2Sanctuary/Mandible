@@ -14,6 +14,13 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        IAnsiConsole console = AnsiConsole.Create(new AnsiConsoleSettings
+        {
+            Ansi = AnsiSupport.Detect,
+            ColorSystem = ColorSystemSupport.Detect,
+            Out = new AnsiConsoleOutput(System.Console.Error),
+        });
+
         ConsoleApp.ConsoleAppBuilder app = ConsoleApp.Create()
             .ConfigureLogging(x =>
             {
@@ -30,7 +37,7 @@ public class Program
             })
             .ConfigureServices(services =>
             {
-                services.AddSingleton<IAnsiConsole>(AnsiConsole.Console);
+                services.AddSingleton<IAnsiConsole>(console);
                 services.AddTransient<HttpClient>();
                 services.AddSingleton<IManifestService, ManifestService>();
             });
