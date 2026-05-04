@@ -2,9 +2,12 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
+using Mandible.Gui.Services;
 using Mandible.Gui.ViewModels;
 using Mandible.Gui.Views;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using Serilog.Events;
 using System;
 
 namespace Mandible.Gui;
@@ -21,7 +24,9 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         ServiceCollection services = new();
+        SetupLogger(services);
         RegisterViewComponents(services);
+        RegisterServices(services);
 
         services.AddTransient<IStorageProvider>(_ => _mainWindow!.StorageProvider);
 
@@ -42,5 +47,22 @@ public partial class App : Application
     private static void RegisterViewComponents(IServiceCollection services)
     {
         services.AddTransient<MainWindowViewModel>();
+    }
+
+    private static void RegisterServices(IServiceCollection services)
+    {
+        services.AddSingleton<PackManagerService>();
+    }
+
+    private static void SetupLogger(IServiceCollection services)
+    {
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Verbose()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .Enrich.FromLogContext()
+            .WriteTo.Debug(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
+            .CreateLogger();
+
+        services.AddLogging(builder => builder.AddSerilog());
     }
 }

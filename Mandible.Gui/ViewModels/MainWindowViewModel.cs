@@ -1,5 +1,7 @@
 ﻿using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Input;
+using Mandible.Gui.Models.Pack;
+using Mandible.Gui.Services;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -9,18 +11,21 @@ namespace Mandible.Gui.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IStorageProvider _storageProvider;
+    private readonly PackManagerService _packManager;
 
-    public ObservableCollection<string> AssetPacks { get; } = [];
+    public ObservableCollection<BasePackInfo> AssetPacks { get; } = [];
 
     public MainWindowViewModel()
     {
         // Default ctor provided for design-time context
         _storageProvider = null!;
+        _packManager = null!;
     }
 
-    public MainWindowViewModel(IStorageProvider storageProvider)
+    public MainWindowViewModel(IStorageProvider storageProvider, PackManagerService packManager)
     {
         _storageProvider = storageProvider;
+        _packManager = packManager;
     }
 
     [RelayCommand]
@@ -36,6 +41,22 @@ public partial class MainWindowViewModel : ViewModelBase
         });
 
         foreach (IStorageFile file in results)
-            AssetPacks.Add(file.Path.ToString());
+        {
+            string? filePath = file.TryGetLocalPath();
+            if (string.IsNullOrEmpty(filePath))
+            {
+                // TODO: Message box or snackbar
+                continue;
+            }
+
+            BasePackInfo? packInfo = await _packManager.AddPack(file.TryGetLocalPath()!);
+            if (packInfo is null)
+            {
+                // TODO: Message box or snackbar
+                continue;
+            }
+
+            AssetPacks.Add(packInfo);
+        }
     }
 }
