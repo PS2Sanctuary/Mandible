@@ -16,7 +16,7 @@ public interface IPackReader
     /// </summary>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>A list of chunk headers.</returns>
-    Task<IReadOnlyList<AssetHeader>> ReadAssetHeadersAsync(CancellationToken ct = default);
+    ValueTask<IReadOnlyList<AssetHeader>> ReadAssetHeadersAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Reads the asset data for a given header.
@@ -24,5 +24,5 @@ public interface IPackReader
     /// <param name="header">The asset to retrieve.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> that can be used to stop the operation.</param>
     /// <returns>Asset data.</returns>
-    Task<MemoryOwner<byte>> ReadAssetDataAsync(AssetHeader header, CancellationToken ct = default);
+    ValueTask<MemoryOwner<byte>> ReadAssetDataAsync(AssetHeader header, CancellationToken ct = default);
 }

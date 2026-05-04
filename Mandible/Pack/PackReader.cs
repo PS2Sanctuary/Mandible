@@ -25,9 +25,9 @@ public class PackReader : IPackReader
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<AssetHeader>> ReadAssetHeadersAsync(CancellationToken ct = default)
+    public async ValueTask<IReadOnlyList<AssetHeader>> ReadAssetHeadersAsync(CancellationToken ct = default)
     {
-        List<AssetHeader> assetHeaders = new();
+        List<AssetHeader> assetHeaders = [];
         long packOffset = 0;
 
         long dataLength = _dataReader.GetLength();
@@ -39,7 +39,7 @@ public class PackReader : IPackReader
 
         do
         {
-            await _dataReader.ReadAsync(buffer.Memory, packOffset, ct).ConfigureAwait(false);
+            await _dataReader.ReadAsync(buffer.Memory, packOffset, ct);
             PackChunkHeader header = PackChunkHeader.Deserialize(buffer.Span);
 
             int bufferOffset = PackChunkHeader.Size;
@@ -49,7 +49,7 @@ public class PackReader : IPackReader
                 {
                     packOffset += bufferOffset;
                     bufferOffset = 0;
-                    await _dataReader.ReadAsync(buffer.Memory, packOffset, ct).ConfigureAwait(false);
+                    await _dataReader.ReadAsync(buffer.Memory, packOffset, ct);
 
                     i--;
                     continue;
@@ -66,7 +66,7 @@ public class PackReader : IPackReader
     }
 
     /// <inheritdoc />
-    public async Task<MemoryOwner<byte>> ReadAssetDataAsync(AssetHeader header, CancellationToken ct = default)
+    public async ValueTask<MemoryOwner<byte>> ReadAssetDataAsync(AssetHeader header, CancellationToken ct = default)
     {
         MemoryOwner<byte> buffer = MemoryOwner<byte>.Allocate((int)header.DataLength);
 
@@ -75,7 +75,7 @@ public class PackReader : IPackReader
             buffer.Memory,
             header.DataOffset,
             ct
-        ).ConfigureAwait(false);
+        );
 
         return buffer;
     }
