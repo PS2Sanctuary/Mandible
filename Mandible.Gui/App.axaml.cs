@@ -47,6 +47,9 @@ public partial class App : Application
     private static void RegisterViewComponents(IServiceCollection services)
     {
         services.AddTransient<MainWindowViewModel>();
+
+        services.AddSingleton<NamelistViewModel>();
+        services.AddSingleton<NamelistWindow>();
     }
 
     private static void RegisterServices(IServiceCollection services)

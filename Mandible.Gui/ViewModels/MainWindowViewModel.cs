@@ -2,6 +2,9 @@
 using CommunityToolkit.Mvvm.Input;
 using Mandible.Gui.Models.Pack;
 using Mandible.Gui.Services;
+using Mandible.Gui.Views;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -12,6 +15,7 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IStorageProvider _storageProvider;
     private readonly PackManagerService _packManager;
+    private readonly IServiceProvider _serviceProvider;
 
     public ObservableCollection<BasePackInfo> AssetPacks { get; } = [];
 
@@ -20,12 +24,14 @@ public partial class MainWindowViewModel : ViewModelBase
         // Default ctor provided for design-time context
         _storageProvider = null!;
         _packManager = null!;
+        _serviceProvider = null!;
     }
 
-    public MainWindowViewModel(IStorageProvider storageProvider, PackManagerService packManager)
+    public MainWindowViewModel(IStorageProvider storageProvider, PackManagerService packManager, IServiceProvider serviceProvider)
     {
         _storageProvider = storageProvider;
         _packManager = packManager;
+        _serviceProvider = serviceProvider;
     }
 
     [RelayCommand]
@@ -34,7 +40,8 @@ public partial class MainWindowViewModel : ViewModelBase
         IReadOnlyList<IStorageFile> results = await _storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             AllowMultiple = true,
-            FileTypeFilter = [
+            FileTypeFilter =
+            [
                 new FilePickerFileType("ForgeLight Asset Packs") {Patterns = ["*.pack", "*.pack2"]}
             ],
             Title = "Select Pack / Pack2 Files"
@@ -58,5 +65,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
             AssetPacks.Add(packInfo);
         }
+    }
+
+    [RelayCommand]
+    public void OpenNamelistBuilder()
+    {
+        NamelistWindow window = new();
+        window.DataContext = _serviceProvider.GetRequiredService<NamelistViewModel>();
+        window.Show();
     }
 }

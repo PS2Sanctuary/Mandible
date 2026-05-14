@@ -1,0 +1,78 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Mandible.Gui.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="600"
+        x:Class="Mandible.Gui.Views.NamelistWindow"
+        x:DataType="vm:NamelistViewModel"
+        Title="Namelist Builder">
+
+    <Design.DataContext>
+        <vm:NamelistViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,*,Auto" Margin="10">
+        <!-- Output Path -->
+        <StackPanel Grid.Row="0" Spacing="5" Margin="0,0,0,10">
+            <TextBlock Text="Output Namelist Path:"/>
+            <DockPanel>
+                <Button Content="Browse" Command="{Binding BrowseOutputPathCommand}" DockPanel.Dock="Right" Margin="5,0,0,0"/>
+                <TextBox Text="{Binding OutputPath}" PlaceholderText="Select an output path..." IsReadOnly="True"/>
+            </DockPanel>
+        </StackPanel>
+
+        <!-- Pack Directories -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="0,0,0,10">
+            <DockPanel Grid.Row="0">
+                <TextBlock Text="Pack2 Directories:" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
+                    <Button Content="Add" Command="{Binding AddPackDirectoryCommand}"/>
+                </StackPanel>
+            </DockPanel>
+            <ListBox Grid.Row="1" ItemsSource="{Binding PackDirectories}" Margin="0,5,0,0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <Button Content="Remove" 
+                                    Command="{Binding $parent[Window].((vm:NamelistViewModel)DataContext).RemovePackDirectoryCommand}" 
+                                    CommandParameter="{Binding}"
+                                    DockPanel.Dock="Right"/>
+                            <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+
+        <!-- Existing Namelists -->
+        <Grid Grid.Row="2" RowDefinitions="Auto,*" Margin="0,0,0,10">
+            <DockPanel Grid.Row="0">
+                <TextBlock Text="Existing Namelists:" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
+                    <Button Content="Add" Command="{Binding AddNamelistCommand}"/>
+                </StackPanel>
+            </DockPanel>
+            <ListBox Grid.Row="1" ItemsSource="{Binding ExistingNamelists}" Margin="0,5,0,0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <Button Content="Remove"
+                                    Command="{Binding $parent[Window].((vm:NamelistViewModel)DataContext).RemoveNamelistCommand}" 
+                                    CommandParameter="{Binding}"
+                                    DockPanel.Dock="Right"/>
+                            <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+
+        <!-- Actions -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+            <Button Content="Scrape" Command="{Binding ScrapeNamelistCommand}"/>
+            <Button Content="Merge" Command="{Binding MergeNamelistsCommand}"/>
+            <Button Content="Trim" Command="{Binding TrimNamelistsCommand}"/>
+        </StackPanel>
+    </Grid>
+</Window>

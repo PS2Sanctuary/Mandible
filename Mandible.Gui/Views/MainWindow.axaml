@@ -19,6 +19,7 @@
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Header="_Open Pack" Command="{Binding OpenPackCommand}"/>
+                <MenuItem Header="_Namelist Builder" Command="{Binding OpenNamelistBuilderCommand}"/>
             </MenuItem>
         </Menu>
 
