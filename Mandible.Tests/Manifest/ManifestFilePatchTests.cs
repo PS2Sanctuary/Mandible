@@ -2,14 +2,14 @@ using Mandible.Manifest;
 using System;
 using System.IO;
 using System.Xml;
-using Xunit;
+using System.Threading.Tasks;
 
 namespace Mandible.Tests.Manifest;
 
 public class ManifestFilePatchTests
 {
-    [Fact]
-    public void TestDeserialize()
+    [Test]
+    public async Task TestDeserialize()
     {
         using XmlReader reader = GetXmlReader
         (
@@ -20,11 +20,11 @@ public class ManifestFilePatchTests
         );
         ManifestFilePatch patch = ManifestFilePatch.DeserializeFromXml(reader);
 
-        Assert.Equal(256688832, patch.SourceUncompressedSize);
-        Assert.Equal(2391518192, patch.SourceCrc);
-        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1665009966), patch.SourceTimestamp);
-        Assert.Equal(11939882, patch.PatchCompressedSize);
-        Assert.Equal(12037117, patch.PatchUncompressedSize);
+        await Assert.That(patch.SourceUncompressedSize).IsEqualTo(256688832);
+        await Assert.That(patch.SourceCrc).IsEqualTo(2391518192);
+        await Assert.That(patch.SourceTimestamp).IsEqualTo(DateTimeOffset.FromUnixTimeSeconds(1665009966));
+        await Assert.That(patch.PatchCompressedSize).IsEqualTo(11939882);
+        await Assert.That(patch.PatchUncompressedSize).IsEqualTo(12037117);
     }
 
     private static XmlReader GetXmlReader(string xml)

@@ -2,13 +2,12 @@ using Mandible.Manifest;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml;
-using Xunit;
 
 namespace Mandible.Tests.Manifest;
 
 public class FolderTests
 {
-    [Fact]
+    [Test]
     public async Task TestDeserialize_DownloadPriority()
     {
         using XmlReader reader = GetXmlReader
@@ -23,14 +22,14 @@ public class FolderTests
         );
         Folder folder = await Folder.DeserializeFromXmlAsync(reader);
 
-        Assert.Equal(30, folder.DownloadPriority);
-        Assert.Empty(folder.Children);
-        Assert.Null(folder.Name);
-        Assert.Equal(2, folder.Files.Count);
-        Assert.Equal("Installer.exe", folder.Files[1].Name);
+        await Assert.That(folder.DownloadPriority).IsEqualTo(30);
+        await Assert.That(folder.Children).IsEmpty();
+        await Assert.That(folder.Name).IsNull();
+        await Assert.That(folder.Files.Count).IsEqualTo(2);
+        await Assert.That(folder.Files[1].Name).IsEqualTo("Installer.exe");
     }
 
-    [Fact]
+    [Test]
     public async Task TestDeserialize_Nested()
     {
         using XmlReader reader = GetXmlReader
@@ -49,14 +48,14 @@ public class FolderTests
         );
         Folder folder = await Folder.DeserializeFromXmlAsync(reader);
 
-        Assert.Equal("CommonData", folder.Name);
-        Assert.Null(folder.DownloadPriority);
-        Assert.Empty(folder.Files);
-        Assert.Equal(2, folder.Children.Count);
+        await Assert.That(folder.Name).IsEqualTo("CommonData");
+        await Assert.That(folder.DownloadPriority).IsNull();
+        await Assert.That(folder.Files).IsEmpty();
+        await Assert.That(folder.Children.Count).IsEqualTo(2);
 
-        Assert.Equal("Assets", folder.Children[1].Name);
-        Assert.NotEmpty(folder.Children[1].Files);
-        Assert.Equal("2StoryRoomSmaller.cdt", folder.Children[1].Files[0].Name);
+        await Assert.That(folder.Children[1].Name).IsEqualTo("Assets");
+        await Assert.That(folder.Children[1].Files).IsNotEmpty();
+        await Assert.That(folder.Children[1].Files[0].Name).IsEqualTo("2StoryRoomSmaller.cdt");
     }
 
     private static XmlReader GetXmlReader(string xml)

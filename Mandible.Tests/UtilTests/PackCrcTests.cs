@@ -1,16 +1,16 @@
 ﻿using Mandible.Util;
-using Xunit;
+using System.Threading.Tasks;
 
 namespace Mandible.Tests.UtilTests;
 
 public class PackCrcTests
 {
-    [Fact]
-    public void TestCalculate64()
+    [Test]
+    public async Task TestCalculate64()
     {
         const string name = "{NAMELIST}";
         const ulong nameHash = 0x4137cc65bd97fd30;
 
-        Assert.Equal(nameHash, PackCrc64.Calculate(name));
+        await Assert.That(PackCrc64.Calculate(name)).IsEqualTo(nameHash);
     }
 }

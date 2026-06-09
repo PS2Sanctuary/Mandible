@@ -7,13 +7,12 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace Mandible.Tests.Manifest;
 
 public class ManifestServiceTests
 {
-    [Fact]
+    [Test]
     public async Task TestGetDigestAsync()
     {
         const string digestEndpoint = "https://my.url";
@@ -22,11 +21,11 @@ public class ManifestServiceTests
         Digest digest = await ms.GetDigestAsync(digestEndpoint, CancellationToken.None);
 
         handler.VerifyNoOutstandingExpectation();
-        Assert.Equal(159, digest.DigestBuilderVersion);
-        Assert.Single(digest.Folders);
+        await Assert.That(digest.DigestBuilderVersion).IsEqualTo(159);
+        await Assert.That(digest.Folders).HasSingleItem();
     }
 
-    [Fact]
+    [Test]
     public async Task TestGetFileDataAsync()
     {
         Digest digest = new
@@ -54,8 +53,8 @@ public class ManifestServiceTests
         Stream fileData = await ms.GetFileDataAsync(digest, file, CancellationToken.None);
 
         handler.VerifyNoOutstandingExpectation();
-        Assert.True(fileData.CanSeek);
-        Assert.Equal(0, fileData.Position);
+        await Assert.That(fileData.CanSeek).IsTrue();
+        await Assert.That(fileData.Position).IsEqualTo(0);
     }
 
     private static ManifestService GetManifestService(string expectedUrl, out MockHttpMessageHandler handlerMock)

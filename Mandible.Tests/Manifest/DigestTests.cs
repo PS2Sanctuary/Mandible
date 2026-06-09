@@ -3,7 +3,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml;
-using Xunit;
 
 namespace Mandible.Tests.Manifest;
 
@@ -50,7 +49,7 @@ public class DigestTests
         </digest>
         """;
 
-    [Fact]
+    [Test]
     public async Task TestDeserializeAsync()
     {
         using XmlReader reader = XmlReader.Create
@@ -60,31 +59,27 @@ public class DigestTests
         );
         Digest digest = await Digest.DeserializeFromXmlAsync(reader);
 
-        Assert.Equal(159, digest.DigestBuilderVersion);
-        Assert.Equal("PlanetSide 2", digest.ProductName);
-        Assert.Equal(new Uri("http://pls.patch.daybreakgames.com/patch/sha/planetside2/planetside2.sha.zs"), digest.DefaultServerFolder);
-        Assert.Equal("Sony Online Entertainment", digest.Publisher);
-        Assert.Equal("PlanetSide2_x64_BE.exe", digest.IconPath);
-        Assert.Equal(91361, digest.PackageSizeKB);
-        Assert.Equal(17, digest.FileCount);
-        Assert.Equal("PlanetSide2_x64_BE.exe", digest.LaunchPath);
-        Assert.Equal("planetside2.sha.zs", digest.DefaultLocalFolder);
-        Assert.Equal(new Uri("http://pls.patch.daybreakgames.com/patch/sha/planetside2/planetside2.sha.zs"), digest.ShaAssetUrl);
-        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1670987222), digest.Timestamp);
-        Assert.Equal("lzma", digest.CompressionType);
+        await Assert.That(digest.DigestBuilderVersion).IsEqualTo(159);
+        await Assert.That(digest.ProductName).IsEqualTo("PlanetSide 2");
+        await Assert.That(digest.DefaultServerFolder).IsEqualTo(new Uri("http://pls.patch.daybreakgames.com/patch/sha/planetside2/planetside2.sha.zs"));
+        await Assert.That(digest.Publisher).IsEqualTo("Sony Online Entertainment");
+        await Assert.That(digest.IconPath).IsEqualTo("PlanetSide2_x64_BE.exe");
+        await Assert.That(digest.PackageSizeKB).IsEqualTo(91361);
+        await Assert.That(digest.FileCount).IsEqualTo(17);
+        await Assert.That(digest.LaunchPath).IsEqualTo("PlanetSide2_x64_BE.exe");
+        await Assert.That(digest.DefaultLocalFolder).IsEqualTo("planetside2.sha.zs");
+        await Assert.That(digest.ShaAssetUrl).IsEqualTo(new Uri("http://pls.patch.daybreakgames.com/patch/sha/planetside2/planetside2.sha.zs"));
+        await Assert.That(digest.Timestamp).IsEqualTo(DateTimeOffset.FromUnixTimeSeconds(1670987222));
+        await Assert.That(digest.CompressionType).IsEqualTo("lzma");
 
-        Assert.Equal(4, digest.FallbackHosts.Count);
-        Assert.Equal("faydwer.patch.daybreakgames.com", digest.FallbackHosts[2]);
+        await Assert.That(digest.FallbackHosts.Count).IsEqualTo(4);
+        await Assert.That(digest.FallbackHosts[2]).IsEqualTo("faydwer.patch.daybreakgames.com");
 
-        Assert.Single(digest.ExternalDigests);
-        Assert.Equal
-        (
-            new Uri("http://manifest.patch.daybreakgames.com/patch/sha/manifest/planetside2/planetside2-livecommon/live/planetside2-livecommon.sha.soe"),
-            digest.ExternalDigests[0]
-        );
+        await Assert.That(digest.ExternalDigests).HasSingleItem();
+        await Assert.That(digest.ExternalDigests[0]).IsEqualTo(new Uri("http://manifest.patch.daybreakgames.com/patch/sha/manifest/planetside2/planetside2-livecommon/live/planetside2-livecommon.sha.soe"));
 
-        Assert.Single(digest.Folders);
-        Assert.Equal(4, digest.Folders[0].Children.Count);
-        Assert.Equal(8, digest.Folders[0].Files.Count);
+        await Assert.That(digest.Folders).HasSingleItem();
+        await Assert.That(digest.Folders[0].Children.Count).IsEqualTo(4);
+        await Assert.That(digest.Folders[0].Files.Count).IsEqualTo(8);
     }
 }

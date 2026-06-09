@@ -1,39 +1,37 @@
 ﻿using Mandible.Pack2;
 using System;
-using Xunit;
+using System.Threading.Tasks;
 
 namespace Mandible.Tests.Pack2Tests;
 
 public class Asset2HeaderTests
 {
     private static readonly Asset2Header EXPECTED_HEADER = new(1, 2, 3, Asset2ZipDefinition.ZippedAlternate, 4);
-    private static readonly byte[] EXPECTED_BYTES = new byte[]
-    {
-            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Name hash
+    private static readonly byte[] EXPECTED_BYTES =
+    [
+        0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Name hash
             0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Data offset
             0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Data size
             0x01, 0x00, 0x00, 0x00, // Zip status
             0x04, 0x00, 0x00, 0x00 // Data hash
-    };
+    ];
 
-    [Fact]
-    public void TestDeserialise()
+    [Test]
+    public async Task TestDeserialise()
     {
         Asset2Header header = Asset2Header.Deserialize(EXPECTED_BYTES);
-        Assert.Equal(EXPECTED_HEADER.NameHash, header.NameHash);
-        Assert.Equal(EXPECTED_HEADER.DataOffset, header.DataOffset);
-        Assert.Equal(EXPECTED_HEADER.DataSize, header.DataSize);
-        Assert.Equal(EXPECTED_HEADER.ZipStatus, header.ZipStatus);
-        Assert.Equal(EXPECTED_HEADER.DataHash, header.DataHash);
+        await Assert.That(header.NameHash).IsEqualTo(EXPECTED_HEADER.NameHash);
+        await Assert.That(header.DataOffset).IsEqualTo(EXPECTED_HEADER.DataOffset);
+        await Assert.That(header.DataSize).IsEqualTo(EXPECTED_HEADER.DataSize);
+        await Assert.That(header.ZipStatus).IsEqualTo(EXPECTED_HEADER.ZipStatus);
+        await Assert.That(header.DataHash).IsEqualTo(EXPECTED_HEADER.DataHash);
     }
 
-    [Fact]
-    public void TestSerialise()
+    [Test]
+    public async Task TestSerialise()
     {
-        Span<byte> bytes = stackalloc byte[Asset2Header.Size];
-        EXPECTED_HEADER.Serialize(bytes);
-
-        for (int i = 0; i < bytes.Length; i++)
-            Assert.Equal(EXPECTED_BYTES[i], bytes[i]);
+        Memory<byte> bytes = new byte[Asset2Header.Size];
+        EXPECTED_HEADER.Serialize(bytes.Span);
+        await Assert.That(bytes).IsEquivalentTo(EXPECTED_BYTES);
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Mandible.Pack2;
 using System;
-using Xunit;
+using System.Threading.Tasks;
 
 namespace Mandible.Tests.Pack2Tests;
 
@@ -30,24 +30,24 @@ public class Pack2HeaderTests
         EXPECTED_HEADER = new Pack2Header(1, 2, 3, checksumBytes, 4);
     }
 
-    [Fact]
-    public void TestDeserialise()
+    [Test]
+    public async Task TestDeserialise()
     {
         Pack2Header header = Pack2Header.Deserialize(EXPECTED_BYTES);
 
-        Assert.Equal(EXPECTED_HEADER.Version, header.Version);
-        Assert.Equal(EXPECTED_HEADER.AssetCount, header.AssetCount);
-        Assert.Equal(EXPECTED_HEADER.Length, header.Length);
-        Assert.Equal(EXPECTED_HEADER.AssetMapOffset, header.AssetMapOffset);
-        Assert.Equal(EXPECTED_HEADER.Unknown, header.Unknown);
-        Assert.Equal(EXPECTED_HEADER.Checksum, header.Checksum);
+        await Assert.That(header.Version).IsEqualTo(EXPECTED_HEADER.Version);
+        await Assert.That(header.AssetCount).IsEqualTo(EXPECTED_HEADER.AssetCount);
+        await Assert.That(header.Length).IsEqualTo(EXPECTED_HEADER.Length);
+        await Assert.That(header.AssetMapOffset).IsEqualTo(EXPECTED_HEADER.AssetMapOffset);
+        await Assert.That(header.Unknown).IsEqualTo(EXPECTED_HEADER.Unknown);
+        await Assert.That(header.Checksum).IsEquivalentTo(EXPECTED_HEADER.Checksum);
     }
 
-    [Fact]
-    public void TestSerialise()
+    [Test]
+    public async Task TestSerialise()
     {
-        Span<byte> bytes = stackalloc byte[Pack2Header.Size];
-        EXPECTED_HEADER.Serialize(bytes);
-        Assert.Equal(EXPECTED_BYTES, bytes);
+        Memory<byte> bytes = new byte[Pack2Header.Size];
+        EXPECTED_HEADER.Serialize(bytes.Span);
+        await Assert.That(bytes).IsEquivalentTo(EXPECTED_BYTES);
     }
 }

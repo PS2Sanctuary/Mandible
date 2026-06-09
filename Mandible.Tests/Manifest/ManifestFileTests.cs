@@ -3,13 +3,12 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml;
-using Xunit;
 
 namespace Mandible.Tests.Manifest;
 
 public class ManifestFileTests
 {
-    [Fact]
+    [Test]
     public async Task TestDeserialize_FileToDeleteAsync()
     {
         using XmlReader reader = GetXmlReader
@@ -21,15 +20,15 @@ public class ManifestFileTests
         );
         ManifestFile file = await ManifestFile.DeserializeFromXmlAsync(reader);
 
-        Assert.Equal("White.tga", file.Name);
-        Assert.True(file.Delete);
-        Assert.Null(file.CompressedSize);
-        Assert.Null(file.Timestamp);
-        Assert.Null(file.Executable);
-        Assert.Empty(file.Patches);
+        await Assert.That(file.Name).IsEqualTo("White.tga");
+        await Assert.That(file.Delete).IsTrue();
+        await Assert.That(file.CompressedSize).IsNull();
+        await Assert.That(file.Timestamp).IsNull();
+        await Assert.That(file.Executable).IsNull();
+        await Assert.That(file.Patches).IsEmpty();
     }
 
-    [Fact]
+    [Test]
     public async Task TestDeserialize_AllValuesAsync()
     {
         using XmlReader reader = GetXmlReader
@@ -41,18 +40,18 @@ public class ManifestFileTests
         );
         ManifestFile file = await ManifestFile.DeserializeFromXmlAsync(reader);
 
-        Assert.Equal("Uninstaller.exe", file.Name);
-        Assert.Equal(138583, file.CompressedSize);
-        Assert.Equal(314784, file.UncompressedSize);
-        Assert.Equal((uint)1220914910, file.Crc);
-        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1329165695), file.Timestamp);
-        Assert.Equal("windows", file.OS);
-        Assert.Equal("b3a478c93557146432e67f17477628ed26e3e830", file.Sha);
-        Assert.Equal(true, file.Executable);
-        Assert.Empty(file.Patches);
+        await Assert.That(file.Name).IsEqualTo("Uninstaller.exe");
+        await Assert.That(file.CompressedSize).IsEqualTo(138583);
+        await Assert.That(file.UncompressedSize).IsEqualTo(314784);
+        await Assert.That(file.Crc).IsEqualTo((uint)1220914910);
+        await Assert.That(file.Timestamp).IsEqualTo(DateTimeOffset.FromUnixTimeSeconds(1329165695));
+        await Assert.That(file.OS).IsEqualTo("windows");
+        await Assert.That(file.Sha).IsEqualTo("b3a478c93557146432e67f17477628ed26e3e830");
+        await Assert.That(file.Executable).IsTrue();
+        await Assert.That(file.Patches).IsEmpty();
     }
 
-    [Fact]
+    [Test]
     public async Task TestDeserialize_WithPatchesAsync()
     {
         using XmlReader reader = GetXmlReader
@@ -68,8 +67,8 @@ public class ManifestFileTests
         );
         ManifestFile file = await ManifestFile.DeserializeFromXmlAsync(reader);
 
-        Assert.Equal(3, file.Patches.Count);
-        Assert.Equal(3357894315, file.Patches[2].SourceCrc);
+        await Assert.That(file.Patches.Count).IsEqualTo(3);
+        await Assert.That(file.Patches[2].SourceCrc).IsEqualTo(3357894315);
     }
 
     private static XmlReader GetXmlReader(string xml)

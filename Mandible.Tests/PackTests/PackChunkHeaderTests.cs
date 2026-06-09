@@ -1,39 +1,37 @@
 ﻿using Mandible.Pack;
 using System;
-using Xunit;
+using System.Threading.Tasks;
 
 namespace Mandible.Tests.PackTests;
 
 public class PackChunkHeaderTests
 {
     private static readonly PackChunkHeader EXPECTED_HEADER;
-    private static readonly byte[] EXPECTED_BYTES = new byte[]
-    {
+    private static readonly byte[] EXPECTED_BYTES =
+    [
         0x00, 0x00, 0x00, 0x01, // Next chunk header
-        0x00, 0x00, 0x00, 0x02, // Asset count
-    };
+        0x00, 0x00, 0x00, 0x02 // Asset count
+    ];
 
     static PackChunkHeaderTests()
     {
         EXPECTED_HEADER = new PackChunkHeader(1, 2);
     }
 
-    [Fact]
-    public void TestDeserialise()
+    [Test]
+    public async Task TestDeserialise()
     {
         PackChunkHeader header = PackChunkHeader.Deserialize(EXPECTED_BYTES);
 
-        Assert.Equal(EXPECTED_HEADER.NextChunkOffset, header.NextChunkOffset);
-        Assert.Equal(EXPECTED_HEADER.AssetCount, header.AssetCount);
+        await Assert.That(header.NextChunkOffset).IsEqualTo(EXPECTED_HEADER.NextChunkOffset);
+        await Assert.That(header.AssetCount).IsEqualTo(EXPECTED_HEADER.AssetCount);
     }
 
-    [Fact]
-    public void TestSerialise()
+    [Test]
+    public async Task TestSerialise()
     {
-        Span<byte> bytes = stackalloc byte[PackChunkHeader.Size];
-        EXPECTED_HEADER.Serialize(bytes);
-
-        for (int i = 0; i < bytes.Length; i++)
-            Assert.Equal(EXPECTED_BYTES[i], bytes[i]);
+        Memory<byte> bytes = new byte[PackChunkHeader.Size];
+        EXPECTED_HEADER.Serialize(bytes.Span);
+        await Assert.That(bytes).IsEquivalentTo(EXPECTED_BYTES);
     }
 }

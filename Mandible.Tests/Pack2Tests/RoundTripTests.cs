@@ -1,19 +1,18 @@
+using CommunityToolkit.HighPerformance.Buffers;
 using Mandible.Pack2;
 using Mandible.Services;
-using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace Mandible.Tests.Pack2Tests;
 
 public class RoundTripTests
 {
-    private const string TEST_PACK_PATH = "Data\\Sanctuary_x64_0.pack2";
-    private const string OUTPUT_PATH = TEST_PACK_PATH + ".out";
+    private static readonly string TEST_PACK_PATH = Path.Combine("Data", "Sanctuary_x64_0.pack2");
+    private static readonly string OUTPUT_PATH = TEST_PACK_PATH + ".out";
 
-    [Fact]
+    [Test]
     public async Task TestRoundTrip()
     {
         using RandomAccessDataReaderService dr = new(TEST_PACK_PATH);
@@ -25,7 +24,7 @@ public class RoundTripTests
         IReadOnlyList<Asset2Header> assets = await reader.ReadAssetHeadersAsync();
         foreach (Asset2Header header in assets)
         {
-            IMemoryOwner<byte> assetData = await reader.ReadAssetDataAsync(header);
+            MemoryOwner<byte> assetData = await reader.ReadAssetDataAsync(header);
             await writer.WriteAssetAsync(header.NameHash, assetData.Memory, header.ZipStatus, header.DataHash);
         }
 
@@ -41,29 +40,28 @@ public class RoundTripTests
 
         Pack2Header expectedHeader = await reader.ReadHeaderAsync();
         Pack2Header actualHeader = await reader2.ReadHeaderAsync();
-        Assert.Equal(expectedHeader.AssetCount, actualHeader.AssetCount);
+        await Assert.That(actualHeader.AssetCount).IsEqualTo(expectedHeader.AssetCount);
 
         IReadOnlyList<Asset2Header> actualAssets = await reader2.ReadAssetHeadersAsync();
-        Assert.Equal(assets.Count, actualAssets.Count);
+        await Assert.That(actualAssets.Count).IsEqualTo(assets.Count);
 
         for (int i = 0; i < assets.Count; i++)
         {
             Asset2Header expectedAH = assets[i];
             Asset2Header actualAH = actualAssets[i];
 
-            Assert.Equal(expectedAH.DataHash, actualAH.DataHash);
-            Assert.Equal(expectedAH.NameHash, actualAH.NameHash);
-            Assert.Equal(expectedAH.ZipStatus, actualAH.ZipStatus);
+            await Assert.That(actualAH.DataHash).IsEqualTo(expectedAH.DataHash);
+            await Assert.That(actualAH.NameHash).IsEqualTo(expectedAH.NameHash);
+            await Assert.That(actualAH.ZipStatus).IsEqualTo(expectedAH.ZipStatus);
 
             if (expectedAH.ZipStatus is Asset2ZipDefinition.Unzipped or Asset2ZipDefinition.UnzippedAlternate)
-                Assert.Equal(expectedAH.DataSize, actualAH.DataSize);
+                await Assert.That(actualAH.DataSize).IsEqualTo(expectedAH.DataSize);
 
-            using IMemoryOwner<byte> expectedData = await reader.ReadAssetDataAsync(expectedAH);
-            using IMemoryOwner<byte> actualData = await reader2.ReadAssetDataAsync(actualAH);
+            using MemoryOwner<byte> expectedData = await reader.ReadAssetDataAsync(expectedAH);
+            using MemoryOwner<byte> actualData = await reader2.ReadAssetDataAsync(actualAH);
 
-            Assert.Equal(expectedData.Memory.Length, actualData.Memory.Length);
-            for (int j = 0; j < expectedData.Memory.Length; j++)
-                Assert.Equal(expectedData.Memory.Span[j], actualData.Memory.Span[j]);
+            await Assert.That(actualData.Memory.Length).IsEqualTo(expectedData.Memory.Length);
+            await Assert.That(actualData.Memory).IsEquivalentTo(expectedData.Memory);
         }
     }
 }
