@@ -6,6 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="600"
         x:Class="Mandible.Gui.Views.NamelistWindow"
         x:DataType="vm:NamelistViewModel"
+        Icon="/Assets/icon.png"
         Title="Namelist Builder">
 
     <Design.DataContext>
